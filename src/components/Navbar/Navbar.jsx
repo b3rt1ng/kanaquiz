@@ -19,21 +19,21 @@ class Navbar extends Component {
             <ul className="nav navbar-nav">
               {
                 this.props.gameState == 'game' ? (
-                  <>
-                    <li id="nav-choosecharacters">
-                      <a href="javascript:;" onClick={this.props.handleEndGame}>
-                        <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
-                      </a>
-                    </li>
-                    <li className="timer-display">
-                      <p className="nav navbar-text">
-                        <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
-                      </p>
-                    </li>
-                  </>
+                  <li id="nav-choosecharacters">
+                    <a href="javascript:;" onClick={this.props.handleEndGame}>
+                      <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
+                    </a>
+                  </li>
                 ) : <li id="nav-kanaquiz"><p className="nav navbar-text">Kana Pro</p></li>
               }
             </ul>
+            {
+              this.props.gameState == 'game' && (
+                <p className="nav navbar-text timer-display">
+                  <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
+                </p>
+              )
+            }
           </div>
         </div>
       </nav>
