@@ -21,7 +21,7 @@
   /* Auto-fill packs as many columns as fit the available width, keeping the table wide and short instead of a tall column. */
   .kana-table-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
     gap: 8px;
     justify-content: center;
   }
@@ -33,9 +33,10 @@
     transition: background-color 0.2s, box-shadow 0.2s;
 
     .kana-glyph {
-      font-size: 1.8em;
+      font-size: 1.6em;
       line-height: 1;
       margin-bottom: 6px;
+      white-space: nowrap;
     }
 
     .kana-input {
@@ -106,13 +107,13 @@
       padding: 0 6px;
     }
     .kana-table-grid {
-      grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
       gap: 5px;
     }
     .kana-cell {
       padding: 5px 2px;
       .kana-glyph {
-        font-size: 1.4em;
+        font-size: 1.2em;
         margin-bottom: 3px;
       }
       .kana-input {

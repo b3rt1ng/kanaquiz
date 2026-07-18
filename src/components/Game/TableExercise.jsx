@@ -5,13 +5,14 @@ import { playCorrectSound, playWrongSound } from '../../data/soundEffects';
 import ResultsCharts from './ResultsCharts';
 import './TableExercise.scss';
 
-// Only the base 46 characters (no dakuten/handakuten/yoon variants, no
-// look-alike duplicates) - the classic gojuon set, flattened out of its
-// groups since we no longer display them in their traditional a-i-u-e-o rows.
-function getBaseKanaKeys(kanaType) {
+// The base 46 gojuon characters plus dakuten/handakuten/yoon variants
+// (ga, pa, kya, fa..) - everything except the "_s" look-alike groups,
+// which just re-list characters already included elsewhere and would
+// collide with them (cells are keyed by the kana glyph itself).
+function getTableKanaKeys(kanaType) {
   const keys = [];
   Object.keys(kanaDictionary[kanaType]).forEach(groupName => {
-    if(groupName.endsWith('_a') || groupName.endsWith('_s')) return;
+    if(groupName.endsWith('_s')) return;
     keys.push(...Object.keys(kanaDictionary[kanaType][groupName].characters));
   });
   return keys;
@@ -28,7 +29,7 @@ class TableExercise extends Component {
     this.orderedKana = {};
     const cells = {};
     this.kanaTypes.forEach(type => {
-      const keys = getBaseKanaKeys(type);
+      const keys = getTableKanaKeys(type);
       shuffle(keys);
       this.orderedKana[type] = keys;
       keys.forEach(kana => {
@@ -107,7 +108,7 @@ class TableExercise extends Component {
   resetTable = () => {
     const cells = {};
     this.kanaTypes.forEach(type => {
-      const keys = getBaseKanaKeys(type);
+      const keys = getTableKanaKeys(type);
       shuffle(keys);
       this.orderedKana[type] = keys;
       keys.forEach(kana => {
