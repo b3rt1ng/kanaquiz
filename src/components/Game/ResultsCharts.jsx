@@ -16,8 +16,8 @@ function AccuracyByCharacter({ characters }) {
 
   return (
     <div className="chart-card">
-      <h4 className="chart-title">Précision par caractère</h4>
-      <p className="chart-sub">Les caractères à réviser en priorité sont en haut.</p>
+      <h4 className="chart-title">Accuracy by Character</h4>
+      <p className="chart-sub">Characters to review first are at the top.</p>
       <div className="char-rows">
         {rows.map(c => (
           <div className="char-row" key={c.kana}>
@@ -41,8 +41,8 @@ function ConfusionPairs({ pairs }) {
   if (pairs.length === 0) {
     return (
       <div className="chart-card">
-        <h4 className="chart-title">Paires de confusion</h4>
-        <p className="chart-sub empty">Aucune confusion — impeccable ! 🎉</p>
+        <h4 className="chart-title">Confusion Pairs</h4>
+        <p className="chart-sub empty">No confusion - flawless! 🎉</p>
       </div>
     );
   }
@@ -51,8 +51,8 @@ function ConfusionPairs({ pairs }) {
 
   return (
     <div className="chart-card">
-      <h4 className="chart-title">Paires de confusion</h4>
-      <p className="chart-sub">Ce que tu as répondu à la place de la bonne réponse.</p>
+      <h4 className="chart-title">Confusion Pairs</h4>
+      <p className="chart-sub">What you answered instead of the correct answer.</p>
       <div className="confusion-rows">
         {top.map((p, i) => (
           <div className="confusion-row" key={i}>
@@ -79,9 +79,9 @@ function ResponseTime({ characters, overallAvgMs }) {
 
   return (
     <div className="chart-card">
-      <h4 className="chart-title">Temps de réponse</h4>
+      <h4 className="chart-title">Response Time</h4>
       <p className="chart-sub">
-        Moyenne globale : <strong>{(overallAvgMs / 1000).toFixed(1)} s</strong> · les plus longs à te venir :
+        Overall average: <strong>{(overallAvgMs / 1000).toFixed(1)} s</strong> · The ones taking you the longest:
       </p>
       <div className="char-rows">
         {slowest.map(c => (

@@ -20,7 +20,7 @@ class ShowStage extends Component {
         // No data yet (first stage) — keep the quick auto-advance.
         this.timeoutID = setTimeout(this.removeStage, 1200);
       }
-      // else: stats exist -> wait for the user to click "Continuer" (see showStage)
+      // else: stats exist -> wait for the user to click "Continue" (see showStage)
     }
     window.scrollTo(0,0);
   }
@@ -71,19 +71,19 @@ class ShowStage extends Component {
           <div className="text-center show-stage difficulty-select">
             <h1>Stage 4</h1>
             <h3>{stageDescription}</h3>
-            <h4 className="difficulty-title">Choisissez la difficulté :</h4>
+            <h4 className="difficulty-title">Choose your difficulty:</h4>
             <div className="difficulty-buttons">
               <button className="btn btn-success difficulty-btn" onClick={() => this.selectDifficulty(1)}>
-                <div className="difficulty-level">Niveau 1</div>
-                <div className="difficulty-desc">3 caractères</div>
+                <div className="difficulty-level">Level 1</div>
+                <div className="difficulty-desc">3 characters</div>
               </button>
               <button className="btn btn-warning difficulty-btn" onClick={() => this.selectDifficulty(2)}>
-                <div className="difficulty-level">Niveau 2</div>
-                <div className="difficulty-desc">5 caractères</div>
+                <div className="difficulty-level">Level 2</div>
+                <div className="difficulty-desc">5 characters</div>
               </button>
               <button className="btn btn-danger difficulty-btn" onClick={() => this.selectDifficulty(3)}>
-                <div className="difficulty-level">Niveau 3</div>
-                <div className="difficulty-desc">8 caractères</div>
+                <div className="difficulty-level">Level 3</div>
+                <div className="difficulty-desc">8 characters</div>
               </button>
             </div>
           </div>
@@ -92,7 +92,7 @@ class ShowStage extends Component {
       
       // Show stage info with selected difficulty
       const charCount = this.props.stage4Difficulty === 1 ? 3 : this.props.stage4Difficulty === 2 ? 5 : 8;
-      stageSecondaryDescription = `${charCount} caractères`;
+      stageSecondaryDescription = `${charCount} characters`;
     }
     else if(this.props.stage==5) {
       // Display stats for all 4 stages
@@ -113,11 +113,11 @@ class ShowStage extends Component {
       
       return (
         <div className="text-center show-end">
-          <h1>Félicitations !</h1>
-          <h3>Vous avez complété les 4 stages.</h3>
+          <h1>Congratulations!</h1>
+          <h3>You completed all 4 stages.</h3>
           {allStagesStats.length > 0 && (
             <div className="all-stages-stats">
-              <h4>Vos résultats :</h4>
+              <h4>Your results:</h4>
               {allStagesStats}
             </div>
           )}
@@ -125,9 +125,9 @@ class ShowStage extends Component {
             characterStats={this.props.characterStats}
             confusionPairs={this.props.confusionPairs}
           />
-          <h4 className="continue-prompt">Que voulez-vous faire ?</h4>
-          <p><button className="btn btn-danger keep-playing" onClick={()=>this.props.lockStage(4)}>Continuer à jouer</button></p>
-          <p><button className="btn btn-primary choose-other" onClick={this.props.handleEndGame}>Choisir d'autres caractères</button></p>
+          <h4 className="continue-prompt">What do you want to do?</h4>
+          <p><button className="btn btn-danger keep-playing" onClick={()=>this.props.lockStage(4)}>Continue Playing</button></p>
+          <p><button className="btn btn-primary choose-other" onClick={this.props.handleEndGame}>Choose Other Characters</button></p>
         </div>
       );
     }
@@ -153,13 +153,13 @@ class ShowStage extends Component {
         { previousStageStats }
         { this.hasStats() &&
           <div className="interim-stats">
-            <h4 className="interim-title">Tes stats jusqu'ici</h4>
+            <h4 className="interim-title">Your stats so far</h4>
             <ResultsCharts
               characterStats={this.props.characterStats}
               confusionPairs={this.props.confusionPairs}
             />
             <button className="btn btn-primary continue-btn" onClick={this.removeStage}>
-              Continuer →
+              Continue →
             </button>
           </div>
         }
