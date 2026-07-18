@@ -1,0 +1,112 @@
+.table-exercise {
+  margin-top: 130px;
+  padding-bottom: 60px;
+
+  .table-progress {
+    color: #888;
+    margin-bottom: 25px;
+  }
+
+  .kana-table {
+    max-width: 700px;
+    margin: 0 auto 30px;
+
+    .kana-table-title {
+      margin-bottom: 15px;
+      color: #333;
+    }
+  }
+
+  .kana-table-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .kana-cell {
+    width: 62px;
+    padding: 8px 4px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    transition: background-color 0.2s, box-shadow 0.2s;
+
+    .kana-glyph {
+      font-size: 1.8em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .kana-input {
+      width: 100%;
+      text-align: center;
+      font-size: 0.95em;
+      padding: 3px 0;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      outline: none;
+      &:focus {
+        border-color: #5bc0de;
+        box-shadow: 0 0 0 2px rgba(91,192,222,0.25);
+      }
+    }
+
+    .kana-answer {
+      font-size: 0.75em;
+      margin-top: 4px;
+      min-height: 1.2em;
+      color: #888;
+    }
+
+    &.correct {
+      background-color: rgba(92,184,92,0.15);
+      .kana-input {
+        border-color: #5cb85c;
+      }
+      .kana-answer {
+        color: #4a9d4a;
+        font-weight: 600;
+      }
+    }
+
+    &.wrong {
+      background-color: rgba(217,83,79,0.12);
+      .kana-input {
+        border-color: #d9534f;
+      }
+      .kana-answer {
+        color: #d9534f;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .table-results {
+    margin-top: 40px;
+
+    .table-score {
+      font-size: 1.3em;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .try-again {
+      margin-top: 10px;
+    }
+
+    .back-to-menu {
+      margin-bottom: 20px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 100px;
+    .kana-cell {
+      width: 50px;
+      .kana-glyph {
+        font-size: 1.5em;
+      }
+    }
+  }
+}

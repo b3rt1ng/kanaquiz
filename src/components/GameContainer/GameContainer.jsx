@@ -9,6 +9,7 @@ class GameContainer extends Component {
     isLocked: false,
     decidedGroups: JSON.parse(localStorage.getItem('decidedGroups') || null) || [],
     stage4Difficulty: 1, // 1=3 chars, 2=5 chars, 3=8 chars
+    tableKanaType: null, // 'hiragana' | 'katakana' | 'both'
     stageStats: {
       1: { correct: 0, total: 0 },
       2: { correct: 0, total: 0 },
@@ -21,18 +22,11 @@ class GameContainer extends Component {
     confusionPairs: {}
   }
 
-  componentWillReceiveProps() {
-    if(!this.state.isLocked)
-      this.setState({stage: 1});
-  }
-
+  // Standard progressive flow: always starts fresh at stage 1, unlocked.
   startGame = decidedGroups => {
-    if(parseInt(this.state.stage)<1 || isNaN(parseInt(this.state.stage)))
-      this.setState({stage: 1});
-    else if(parseInt(this.state.stage)>4)
-      this.setState({stage: 4});
-
     this.setState({
+      stage: 1,
+      isLocked: false,
       decidedGroups: decidedGroups,
       stageStats: {
         1: { correct: 0, total: 0 },
@@ -44,6 +38,36 @@ class GameContainer extends Component {
       confusionPairs: {}
     });
     localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
+    this.props.handleStartGame();
+  }
+
+  // Direct practice: jump straight into a single stage, locked (no auto-advance).
+  startAtStage = (decidedGroups, stage, difficulty) => {
+    this.setState({
+      stage: stage,
+      isLocked: true,
+      decidedGroups: decidedGroups,
+      stageStats: {
+        1: { correct: 0, total: 0 },
+        2: { correct: 0, total: 0 },
+        3: { correct: 0, total: 0 },
+        4: { correct: 0, total: 0 }
+      },
+      characterStats: {},
+      confusionPairs: {},
+      ...(difficulty ? { stage4Difficulty: difficulty } : {})
+    });
+    localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
+    this.props.handleStartGame();
+  }
+
+  // Table exercise: separate self-contained mode, not part of the 1-4 stage progression.
+  startTableExercise = (kanaType) => {
+    this.setState({
+      stage: 'table',
+      isLocked: true,
+      tableKanaType: kanaType
+    });
     this.props.handleStartGame();
   }
 
@@ -113,11 +137,8 @@ class GameContainer extends Component {
         { this.props.gameState==='chooseCharacters' &&
             <ChooseCharacters selectedGroups={this.state.decidedGroups}
               handleStartGame={this.startGame}
-              stage={this.state.stage}
-              isLocked={this.state.isLocked}
-              lockStage={this.lockStage}
-              stage4Difficulty={this.state.stage4Difficulty}
-              setStage4Difficulty={this.setStage4Difficulty}
+              startAtStage={this.startAtStage}
+              startTableExercise={this.startTableExercise}
             />
           }
           { this.props.gameState==='game' &&
@@ -134,6 +155,7 @@ class GameContainer extends Component {
                 confusionPairs={this.state.confusionPairs}
                 stage4Difficulty={this.state.stage4Difficulty}
                 setStage4Difficulty={this.setStage4Difficulty}
+                tableKanaType={this.state.tableKanaType}
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}
               />

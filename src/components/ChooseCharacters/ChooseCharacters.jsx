@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import Switch from 'react-toggle-switch';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import './ChooseCharacters.scss';
 import CharacterGroup from './CharacterGroup';
@@ -10,7 +9,9 @@ class ChooseCharacters extends Component {
     selectedGroups: this.props.selectedGroups,
     showAlternatives: [],
     showSimilars: [],
-    startIsVisible: true
+    startIsVisible: true,
+    stage4PickerOpen: false,
+    tablePickerOpen: false
   }
 
   componentDidMount() {
@@ -201,6 +202,29 @@ class ChooseCharacters extends Component {
     this.props.handleStartGame(this.state.selectedGroups);
   }
 
+  startAtStage(stage) {
+    if(this.state.selectedGroups.length < 1) {
+      this.setState({ errMsg: 'Choose at least one group!'});
+      return;
+    }
+    this.setState({ errMsg: '', stage4PickerOpen: false });
+    this.props.startAtStage(this.state.selectedGroups, stage);
+  }
+
+  startStage4(difficulty) {
+    if(this.state.selectedGroups.length < 1) {
+      this.setState({ errMsg: 'Choose at least one group!'});
+      return;
+    }
+    this.setState({ errMsg: '', stage4PickerOpen: false });
+    this.props.startAtStage(this.state.selectedGroups, 4, difficulty);
+  }
+
+  startTable(kanaType) {
+    this.setState({ tablePickerOpen: false });
+    this.props.startTableExercise(kanaType);
+  }
+
   render() {
     return (
       <div className="choose-characters">
@@ -245,30 +269,36 @@ class ChooseCharacters extends Component {
             </div>
           </div>
           <div className="col-sm-3 col-xs-12 pull-right">
-            <span className="pull-right lock">Lock to stage &nbsp;
+            <div className="direct-practice">
+              <p className="direct-practice-label">Jump to an exercise:</p>
+              <div className="direct-practice-buttons">
+                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(1)}>Stage 1</button>
+                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(2)}>Stage 2</button>
+                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(3)}>Stage 3</button>
+                <button className="btn btn-default practice-btn"
+                  onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen, tablePickerOpen: false }))}
+                >Stage 4</button>
+                <button className="btn btn-info practice-btn"
+                  onClick={() => this.setState(s => ({ tablePickerOpen: !s.tablePickerOpen, stage4PickerOpen: false }))}
+                >Table</button>
+              </div>
               {
-                this.props.isLocked &&
-                  <input className="stage-choice" type="number" min="1" max="4" maxLength="1" size="1"
-                    onChange={(e)=>this.props.lockStage(e.target.value, true)}
-                    value={this.props.stage}
-                  />
+                this.state.stage4PickerOpen &&
+                  <div className="practice-subpicker">
+                    <button className="btn btn-success" onClick={() => this.startStage4(1)}>Level 1 (3 characters)</button>
+                    <button className="btn btn-warning" onClick={() => this.startStage4(2)}>Level 2 (5 characters)</button>
+                    <button className="btn btn-danger" onClick={() => this.startStage4(3)}>Level 3 (8 characters)</button>
+                  </div>
               }
-              <Switch onClick={()=>this.props.lockStage(1)} on={this.props.isLocked} /></span>
-            {
-              this.props.isLocked && this.props.stage == 4 &&
-                <div className="stage4-difficulty-selector">
-                  <label>Stage 4 Difficulty:</label>
-                  <select
-                    className="form-control difficulty-select"
-                    value={this.props.stage4Difficulty}
-                    onChange={(e) => this.props.setStage4Difficulty(parseInt(e.target.value))}
-                  >
-                    <option value="1">Level 1 (3 characters)</option>
-                    <option value="2">Level 2 (5 characters)</option>
-                    <option value="3">Level 3 (8 characters)</option>
-                  </select>
-                </div>
-            }
+              {
+                this.state.tablePickerOpen &&
+                  <div className="practice-subpicker">
+                    <button className="btn btn-default" onClick={() => this.startTable('hiragana')}>Hiragana</button>
+                    <button className="btn btn-default" onClick={() => this.startTable('katakana')}>Katakana</button>
+                    <button className="btn btn-default" onClick={() => this.startTable('both')}>Both</button>
+                  </div>
+              }
+            </div>
           </div>
           <div className="col-sm-offset-3 col-sm-6 col-xs-12 text-center">
             {

@@ -66,71 +66,47 @@
   color: #d9534f;
   padding-bottom: 10px;
 }
-.lock {
-  color: #888;
-  margin-bottom: 10px;
-}
-.stage4-difficulty-selector {
-  margin-top: 10px;
+.direct-practice {
   clear: both;
-  label {
-    display: block;
+  text-align: right;
+
+  .direct-practice-label {
+    color: #888;
     font-size: 13px;
-    color: #666;
-    margin-bottom: 5px;
-    font-weight: normal;
+    margin-bottom: 6px;
   }
-  .difficulty-select {
-    max-width: 220px;
-    font-size: 14px;
-    height: 32px;
+
+  .direct-practice-buttons {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .practice-btn {
     padding: 5px 10px;
+    font-size: 13px;
   }
-}
-.stage-choice {
-  border: 1px solid #999;
-  padding-left: 5px;
-  border-radius: 5px;
-  margin-right: 5px;
-  outline: none;
-}
-.switch {
-  border: 1px solid #ccc;
-  background: #e5e5e5;
-  width: 44px;
-  height: 19px;
-  border-radius: 13px;
-  cursor: pointer;
-  display: block;
-  float: right;
-  margin-top: 1px;
-}
 
-.switch-toggle {
-  border: 1px solid #999;
-  box-shadow: 1px 1px 1px #ccc;
-  width: 19px;
-  height: 17px;
-  left: 0;
-  border-radius: 12px;
-  background: #eee;
-  position: relative;
-  transition: left .2s ease-in-out;
-}
+  .practice-subpicker {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
 
-.switch.on {
-  border: 1px solid #4da94f;
-  background: #5cb85c;
-}
+    button {
+      padding: 5px 10px;
+      font-size: 13px;
+    }
+  }
 
-.switch.on .switch-toggle {
-  left: 23px;
-  border: 1px solid #b8ffb2;
-  background: #b8ffb2;
-}
-
-.switch.disabled {
-  cursor: not-allowed;
+  @media (max-width: 768px) {
+    text-align: center;
+    .direct-practice-buttons, .practice-subpicker {
+      justify-content: center;
+    }
+  }
 }
 
 .down-arrow {

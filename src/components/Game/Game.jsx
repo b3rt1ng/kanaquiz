@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import ShowStage from './ShowStage';
 import Question from './Question';
+import TableExercise from './TableExercise';
 
 class Game extends Component {
   state = { showScreen: '' }
@@ -10,7 +11,16 @@ class Game extends Component {
     this.setState({showScreen: 'stage'});
   }
 
+  componentDidMount() {
+    // The table exercise has no intro/question screen split - it's one
+    // continuous screen, so start the timer as soon as it's shown.
+    if(this.props.stage === 'table') {
+      this.props.startTimer();
+    }
+  }
+
   componentDidUpdate(prevProps, prevState) {
+    if(this.props.stage === 'table') return;
     if(prevState.showScreen !== this.state.showScreen) {
       if(this.state.showScreen === 'question') {
         this.props.startTimer();
@@ -39,6 +49,15 @@ class Game extends Component {
   }
 
   render() {
+    if(this.props.stage === 'table') {
+      return (
+        <TableExercise
+          tableKanaType={this.props.tableKanaType}
+          handleEndGame={this.props.handleEndGame}
+        />
+      );
+    }
+
     return (
       <div>
         {
