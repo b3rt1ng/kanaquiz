@@ -1,16 +1,20 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
-import { findRomajisAtKanaKey, arrayContains } from '../../data/helperFuncs';
+import { findRomajisAtKanaKey, arrayContains, shuffle } from '../../data/helperFuncs';
 import { playCorrectSound, playWrongSound } from '../../data/soundEffects';
 import ResultsCharts from './ResultsCharts';
 import './TableExercise.scss';
 
-// Only the base 46-character groups (no dakuten/handakuten/yoon variants,
-// no look-alike duplicates) - this is the classic gojuon table layout.
-function getBaseGroups(kanaType) {
-  return Object.keys(kanaDictionary[kanaType]).filter(
-    groupName => !groupName.endsWith('_a') && !groupName.endsWith('_s')
-  );
+// Only the base 46 characters (no dakuten/handakuten/yoon variants, no
+// look-alike duplicates) - the classic gojuon set, flattened out of its
+// groups since we no longer display them in their traditional a-i-u-e-o rows.
+function getBaseKanaKeys(kanaType) {
+  const keys = [];
+  Object.keys(kanaDictionary[kanaType]).forEach(groupName => {
+    if(groupName.endsWith('_a') || groupName.endsWith('_s')) return;
+    keys.push(...Object.keys(kanaDictionary[kanaType][groupName].characters));
+  });
+  return keys;
 }
 
 class TableExercise extends Component {
@@ -21,12 +25,14 @@ class TableExercise extends Component {
       ? ['hiragana', 'katakana']
       : [this.props.tableKanaType];
 
+    this.orderedKana = {};
     const cells = {};
     this.kanaTypes.forEach(type => {
-      getBaseGroups(type).forEach(groupName => {
-        Object.keys(kanaDictionary[type][groupName].characters).forEach(kana => {
-          cells[kana] = { value: '', status: 'empty', timeMs: 0 };
-        });
+      const keys = getBaseKanaKeys(type);
+      shuffle(keys);
+      this.orderedKana[type] = keys;
+      keys.forEach(kana => {
+        cells[kana] = { value: '', status: 'empty', timeMs: 0 };
       });
     });
 
@@ -100,8 +106,13 @@ class TableExercise extends Component {
 
   resetTable = () => {
     const cells = {};
-    Object.keys(this.state.cells).forEach(kana => {
-      cells[kana] = { value: '', status: 'empty', timeMs: 0 };
+    this.kanaTypes.forEach(type => {
+      const keys = getBaseKanaKeys(type);
+      shuffle(keys);
+      this.orderedKana[type] = keys;
+      keys.forEach(kana => {
+        cells[kana] = { value: '', status: 'empty', timeMs: 0 };
+      });
     });
     this.focusStart = {};
     this.setState({ cells });
@@ -109,38 +120,35 @@ class TableExercise extends Component {
   }
 
   renderTable(kanaType) {
-    const groups = getBaseGroups(kanaType);
     return (
       <div className="kana-table" key={kanaType}>
         <h3 className="kana-table-title">
           {kanaType === 'hiragana' ? 'Hiragana · ひらがな' : 'Katakana · カタカナ'}
         </h3>
-        {groups.map(groupName => (
-          <div className="kana-table-row" key={groupName}>
-            {Object.keys(kanaDictionary[kanaType][groupName].characters).map(kana => {
-              const cell = this.state.cells[kana];
-              const correctRomaji = findRomajisAtKanaKey(kana, kanaDictionary)[0];
-              return (
-                <div className={`kana-cell ${cell.status}`} key={kana}>
-                  <div className="kana-glyph">{kana}</div>
-                  <input
-                    type="text"
-                    className="kana-input"
-                    autoComplete="off"
-                    value={cell.value}
-                    onFocus={() => this.handleFocus(kana)}
-                    onChange={(e) => this.handleChange(kana, e.target.value)}
-                    onBlur={() => this.handleBlur(kana)}
-                    onKeyDown={this.handleKeyDown}
-                  />
-                  <div className="kana-answer">
-                    {cell.status !== 'empty' ? correctRomaji : ' '}
-                  </div>
+        <div className="kana-table-grid">
+          {this.orderedKana[kanaType].map(kana => {
+            const cell = this.state.cells[kana];
+            const correctRomaji = findRomajisAtKanaKey(kana, kanaDictionary)[0];
+            return (
+              <div className={`kana-cell ${cell.status}`} key={kana}>
+                <div className="kana-glyph">{kana}</div>
+                <input
+                  type="text"
+                  className="kana-input"
+                  autoComplete="off"
+                  value={cell.value}
+                  onFocus={() => this.handleFocus(kana)}
+                  onChange={(e) => this.handleChange(kana, e.target.value)}
+                  onBlur={() => this.handleBlur(kana)}
+                  onKeyDown={this.handleKeyDown}
+                />
+                <div className="kana-answer">
+                  {cell.status !== 'empty' ? correctRomaji : ' '}
                 </div>
-              );
-            })}
-          </div>
-        ))}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
