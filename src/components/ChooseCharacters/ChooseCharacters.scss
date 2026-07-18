@@ -70,6 +70,23 @@
   color: #888;
   margin-bottom: 10px;
 }
+.stage4-difficulty-selector {
+  margin-top: 10px;
+  clear: both;
+  label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: normal;
+  }
+  .difficulty-select {
+    max-width: 220px;
+    font-size: 14px;
+    height: 32px;
+    padding: 5px 10px;
+  }
+}
 .stage-choice {
   border: 1px solid #999;
   padding-left: 5px;

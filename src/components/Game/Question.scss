@@ -39,6 +39,12 @@
     color: #f5f5f5;
     background-color: #d9534f;
   }
+  .your-answer {
+    display: block;
+    font-size: 0.85em;
+    opacity: 0.9;
+    margin-top: 4px;
+  }
   .previous-result-none {
     max-width: 360px;
     padding: 6px;
@@ -68,7 +74,7 @@
   }
   .answer-input, .answer-input:focus {
     outline: none;
-    width: 110px;
+    width: 160px;
     text-align: center;
     font-size: 2em;
     margin: 25px 0 60px;

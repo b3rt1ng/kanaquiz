@@ -2,6 +2,15 @@ import React, { Component } from 'react';
 import './Navbar.scss';
 
 class Navbar extends Component {
+  formatTime = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
   render() {
     return (
       <nav className="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -18,6 +27,17 @@ class Navbar extends Component {
                 ) : <li id="nav-kanaquiz"><p className="nav navbar-text">Kana Pro</p></li>
               }
             </ul>
+            {
+              this.props.gameState == 'game' && (
+                <ul className="nav navbar-nav navbar-right">
+                  <li className="timer-display">
+                    <p className="nav navbar-text">
+                      <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
+                    </p>
+                  </li>
+                </ul>
+              )
+            }
           </div>
         </div>
       </nav>

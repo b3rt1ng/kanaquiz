@@ -9,15 +9,95 @@
     h3 {
         margin-top: 30px;
     }
+    .stage-stats {
+        margin-top: 25px;
+        color: #5bc0de;
+        font-weight: normal;
+    }
+    .interim-stats {
+        margin-top: 30px;
+        .interim-title {
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .continue-btn {
+            margin: 10px 0 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+        }
+    }
+    .difficulty-title {
+        margin-top: 35px;
+        margin-bottom: 25px;
+    }
+    .difficulty-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        .difficulty-btn {
+            padding: 20px 30px;
+            font-size: 16px;
+            min-width: 150px;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            .difficulty-level {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .difficulty-desc {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+        }
+    }
     @media (max-width: 768px) {
         margin-top: 100px;
         margin-bottom: 100px;
+        .difficulty-buttons {
+            flex-direction: column;
+            align-items: center;
+            .difficulty-btn {
+                min-width: 200px;
+            }
+        }
     }
 }
 .show-end {
     margin-top: 80px;
     h3, h4 {
         margin-top: 20px;
+    }
+    .all-stages-stats {
+        margin: 30px auto;
+        max-width: 400px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .stage-summary {
+            font-size: 18px;
+            padding: 8px;
+            margin: 5px 0;
+            color: #5bc0de;
+            font-weight: 500;
+        }
+    }
+    .continue-prompt {
+        margin-top: 25px;
+    }
+    .choose-other {
+        margin: 0 0 20px;
     }
 }
 

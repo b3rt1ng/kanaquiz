@@ -107,3 +107,11 @@
   color: #999 !important;
   background-color: transparent !important;
 }
+
+.timer-display {
+  padding: 15px !important;
+  .glyphicon-time {
+    margin-right: 8px;
+    color: #5cb85c;
+  }
+}

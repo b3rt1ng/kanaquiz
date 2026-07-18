@@ -254,6 +254,21 @@ class ChooseCharacters extends Component {
                   />
               }
               <Switch onClick={()=>this.props.lockStage(1)} on={this.props.isLocked} /></span>
+            {
+              this.props.isLocked && this.props.stage == 4 &&
+                <div className="stage4-difficulty-selector">
+                  <label>Difficulté Stage 4:</label>
+                  <select 
+                    className="form-control difficulty-select" 
+                    value={this.props.stage4Difficulty}
+                    onChange={(e) => this.props.setStage4Difficulty(parseInt(e.target.value))}
+                  >
+                    <option value="1">Niveau 1 (3 caractères)</option>
+                    <option value="2">Niveau 2 (5 caractères)</option>
+                    <option value="3">Niveau 3 (8 caractères)</option>
+                  </select>
+                </div>
+            }
           </div>
           <div className="col-sm-offset-3 col-sm-6 col-xs-12 text-center">
             {

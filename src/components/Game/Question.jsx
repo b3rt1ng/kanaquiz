@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { quizSettings } from '../../data/quizSettings';
-import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct } from '../../data/helperFuncs';
+import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
+import { playCorrectSound, playWrongSound, playStageUpSound } from '../../data/soundEffects';
 import './Question.scss';
 
 class Question extends Component {
@@ -69,13 +70,21 @@ class Question extends Component {
   }
 
   setNewQuestion() {
+    let questionCount = 1;
+    if(this.props.stage==4) {
+      // Use difficulty to determine number of characters
+      questionCount = this.props.stage4Difficulty === 1 ? 3 : 
+                     this.props.stage4Difficulty === 2 ? 5 : 8;
+    }
+    
     if(this.props.stage!=4)
       this.currentQuestion = this.getRandomKanas(1, false, this.previousQuestion);
     else
-      this.currentQuestion = this.getRandomKanas(3, false, this.previousQuestion);
+      this.currentQuestion = this.getRandomKanas(questionCount, false, this.previousQuestion);
     this.setState({currentQuestion: this.currentQuestion});
     this.setAnswerOptions();
     this.setAllowedAnswers();
+    this.questionShownAt = Date.now(); // start timing the response
     // console.log(this.currentQuestion);
   }
 
@@ -113,12 +122,72 @@ class Question extends Component {
     this.previousAnswer = answer;
     this.setState({previousAnswer: this.previousAnswer});
     this.previousAllowedAnswers = this.allowedAnswers;
-    if(this.isInAllowedAnswers(this.previousAnswer))
+    const isCorrect = this.isInAllowedAnswers(answer);
+
+    // Update stage stats
+    this.props.updateStageStats(this.props.stage, isCorrect);
+
+    // Record per-character detail for the introspective charts.
+    // Clamp elapsed time so an idle pause doesn't skew the averages.
+    if(this.props.recordAnswer) {
+      const elapsedMs = Math.min(Date.now() - (this.questionShownAt || Date.now()), 30000);
+      const records = [];
+
+      if(this.currentQuestion.length === 1) {
+        // Stages 1-3: a single character.
+        const kana = this.currentQuestion[0];
+        const romaji = findRomajisAtKanaKey(kana, kanaDictionary)[0];
+        // Normalize the given answer to romaji so confusion pairs read consistently.
+        const given = this.props.stage == 2
+          ? (findRomajisAtKanaKey(answer, kanaDictionary)[0] || answer)
+          : answer;
+        records.push({ kana, romaji, given, isCorrect, elapsedMs });
+      } else {
+        // Stage 4: a multi-character word. Align the typed romaji to each kana
+        // so mistakes and confusions can be attributed per character.
+        const romajiLists = this.currentQuestion.map(k => findRomajisAtKanaKey(k, kanaDictionary));
+        const perCharMs = elapsedMs / this.currentQuestion.length;
+        const alignment = alignAnswer(romajiLists, answer);
+        if(alignment) {
+          alignment.forEach(a => {
+            records.push({
+              kana: this.currentQuestion[a.index],
+              romaji: romajiLists[a.index][0],
+              given: a.correct ? '' : a.given, // only wrong chars feed confusion pairs
+              isCorrect: a.correct,
+              elapsedMs: perCharMs
+            });
+          });
+        } else {
+          // No clean alignment (answer too garbled): count each kana as missed.
+          this.currentQuestion.forEach(kana => {
+            records.push({
+              kana,
+              romaji: findRomajisAtKanaKey(kana, kanaDictionary)[0],
+              given: '',
+              isCorrect: false,
+              elapsedMs: perCharMs
+            });
+          });
+        }
+      }
+
+      this.props.recordAnswer(records);
+    }
+
+    if(isCorrect)
       this.stageProgress = this.stageProgress+1;
     else
       this.stageProgress = this.stageProgress > 0 ? this.stageProgress - 1 : 0;
     this.setState({stageProgress: this.stageProgress});
-    if(this.stageProgress >= quizSettings.stageLength[this.props.stage] && !this.props.isLocked) {
+    const stageCompleted = this.stageProgress >= quizSettings.stageLength[this.props.stage] && !this.props.isLocked;
+
+    // Play feedback sound (fanfare on the stage-completing answer)
+    if(stageCompleted) playStageUpSound();
+    else if(isCorrect) playCorrectSound();
+    else playWrongSound();
+
+    if(stageCompleted) {
       setTimeout(() => { this.props.handleStageUp() }, 300);
     }
     else
@@ -183,7 +252,7 @@ class Question extends Component {
       else
         resultString = (
           <div className="previous-result wrong" title="Wrong answer!">
-            <span className="pull-left glyphicon glyphicon-none"></span>{rightAnswer}<span className="pull-right glyphicon glyphicon-remove"></span>
+            <span className="pull-left glyphicon glyphicon-none"></span>{rightAnswer} <span className="your-answer">(votre réponse: {this.previousAnswer})</span><span className="pull-right glyphicon glyphicon-remove"></span>
           </div>
         );
     }
@@ -215,15 +284,32 @@ class Question extends Component {
   }
 
   componentDidMount() {
-    this.setNewQuestion();
+    if(this.props.stage <= 4) {
+      this.setNewQuestion();
+    }
   }
 
   render() {
+    // Safety check for stage 5 (should show completion screen instead)
+    if (this.props.stage > 4) {
+      return null;
+    }
+    
     let btnClass = "btn btn-default answer-button";
     if ('ontouchstart' in window)
       btnClass += " no-hover"; // disables hover effect on touch screens
     let stageProgressPercentage = Math.round((this.state.stageProgress/quizSettings.stageLength[this.props.stage])*100)+'%';
     let stageProgressPercentageStyle = { width: stageProgressPercentage }
+    
+    // Get current stage stats
+    const currentStageStats = this.props.stageStats[this.props.stage];
+    const statsPercentage = currentStageStats.total > 0 
+      ? Math.round((currentStageStats.correct / currentStageStats.total) * 100) 
+      : 0;
+    const statsText = currentStageStats.total > 0 
+      ? ` - ${currentStageStats.correct}/${currentStageStats.total} (${statsPercentage}%)`
+      : '';
+    
     return (
       <div className="text-center question col-xs-12">
         {this.getPreviousResult()}
@@ -253,7 +339,7 @@ class Question extends Component {
             aria-valuemax={quizSettings.stageLength[this.props.stage]}
             style={stageProgressPercentageStyle}
           >
-            <span>Stage {this.props.stage} {this.props.isLocked?' (Locked)':''}</span>
+            <span>Stage {this.props.stage} {this.props.isLocked?' (Locked)':''}{statsText}</span>
           </div>
         </div>
       </div>

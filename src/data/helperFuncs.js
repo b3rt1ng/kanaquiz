@@ -44,6 +44,58 @@ export function findRomajisAtKanaKey(needle, kanaDictionary) {
     //     return type;       
     // }
 
+// Aligns a typed romaji string to a sequence of kana (each described by its
+// list of acceptable romaji) and returns a per-kana breakdown:
+//   [{ index, given, correct }, ...]
+// Used for stage 4 (multi-character words) so a wrong answer can be attributed
+// to the individual characters that were missed, and to what was typed instead.
+// Returns null when no alignment consumes the whole input.
+export function alignAnswer(romajiLists, input) {
+    const memo = new Map();
+
+    function best(i, pos) {
+        if (i === romajiLists.length)
+            return pos === input.length ? { score: 0, seq: [] } : null;
+
+        const key = i + ':' + pos;
+        if (memo.has(key)) return memo.get(key);
+
+        let bestRes = null;
+        const consider = (given, correct, nextPos) => {
+            const sub = best(i + 1, nextPos);
+            if (sub === null) return;
+            const inc = correct ? 10 : (given === '' ? -3 : -1);
+            const total = inc + sub.score;
+            if (bestRes === null || total > bestRes.score) {
+                bestRes = {
+                    score: total,
+                    seq: [{ index: i, given: given, correct: correct }].concat(sub.seq)
+                };
+            }
+        };
+
+        const allowed = romajiLists[i];
+        // Prefer correct matches, longest romaji first (avoids greedy mis-splits).
+        allowed.slice().sort((a, b) => b.length - a.length).forEach(r => {
+            if (r.length > 0 && input.substr(pos, r.length) === r)
+                consider(r, true, pos + r.length);
+        });
+        // Otherwise the user typed something wrong here: try 0..3 characters.
+        const maxLen = Math.min(3, input.length - pos);
+        for (let len = 0; len <= maxLen; len++) {
+            const given = input.substr(pos, len);
+            if (allowed.indexOf(given) !== -1) continue; // already tried as correct
+            consider(given, false, pos + len);
+        }
+
+        memo.set(key, bestRes);
+        return bestRes;
+    }
+
+    const res = best(0, 0);
+    return res ? res.seq : null;
+}
+
 export function shuffle(array) {
     var i = 0
         , j = 0
