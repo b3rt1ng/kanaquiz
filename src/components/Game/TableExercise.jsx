@@ -28,11 +28,13 @@ class TableExercise extends Component {
       : [this.props.tableKanaType];
 
     this.orderedKana = {};
+    this.flatOrder = [];
     const cells = {};
     this.kanaTypes.forEach(type => {
       const keys = getTableKanaKeys(type);
       shuffle(keys);
       this.orderedKana[type] = keys;
+      this.flatOrder.push(...keys);
       keys.forEach(kana => {
         cells[kana] = { value: '', status: 'empty', timeMs: 0 };
       });
@@ -40,10 +42,25 @@ class TableExercise extends Component {
 
     this.state = { cells, combo: 0 };
     this.focusStart = {};
+    this.inputRefs = {};
   }
 
   componentDidMount() {
     this.updateHeaderInfo();
+    this.focusFirstCell();
+  }
+
+  focusFirstCell = () => {
+    const firstKana = this.flatOrder[0];
+    const input = this.inputRefs[firstKana];
+    if(input) input.focus();
+  }
+
+  focusNextCell = (kana) => {
+    const nextKana = this.flatOrder[this.flatOrder.indexOf(kana) + 1];
+    const input = nextKana && this.inputRefs[nextKana];
+    if(input) input.focus();
+    return !!input;
   }
 
   componentWillUnmount() {
@@ -107,9 +124,15 @@ class TableExercise extends Component {
     }), this.updateHeaderInfo);
   }
 
-  handleKeyDown = (e) => {
-    if(e.key === 'Enter') e.target.blur();
-    else playKeySound();
+  handleKeyDown = (e, kana) => {
+    if(e.key === 'Enter') {
+      e.preventDefault();
+      // Focusing the next cell blurs this one, which runs validation;
+      // fall back to a plain blur when we're on the very last cell.
+      if(!this.focusNextCell(kana)) e.target.blur();
+    } else {
+      playKeySound();
+    }
   }
 
   isComplete() {
@@ -139,16 +162,21 @@ class TableExercise extends Component {
 
   resetTable = () => {
     const cells = {};
+    this.flatOrder = [];
     this.kanaTypes.forEach(type => {
       const keys = getTableKanaKeys(type);
       shuffle(keys);
       this.orderedKana[type] = keys;
+      this.flatOrder.push(...keys);
       keys.forEach(kana => {
         cells[kana] = { value: '', status: 'empty', timeMs: 0 };
       });
     });
     this.focusStart = {};
-    this.setState({ cells, combo: 0 }, this.updateHeaderInfo);
+    this.setState({ cells, combo: 0 }, () => {
+      this.updateHeaderInfo();
+      this.focusFirstCell();
+    });
     window.scrollTo(0, 0);
   }
 
@@ -167,10 +195,11 @@ class TableExercise extends Component {
                   className="kana-input"
                   autoComplete="off"
                   value={cell.value}
+                  ref={el => this.inputRefs[kana] = el}
                   onFocus={() => this.handleFocus(kana)}
                   onChange={(e) => this.handleChange(kana, e.target.value)}
                   onBlur={() => this.handleBlur(kana)}
-                  onKeyDown={this.handleKeyDown}
+                  onKeyDown={(e) => this.handleKeyDown(e, kana)}
                 />
                 <div className="kana-answer">
                   {cell.status !== 'empty' ? correctRomaji : ' '}
