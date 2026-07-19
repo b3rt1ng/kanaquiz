@@ -1,7 +1,6 @@
 .question {
   .progress {
     position: relative;
-    background-color: #ddd;
     height: 30px;
     @media (max-width: 768px) {
       max-width: 360px;
@@ -11,15 +10,18 @@
   .progress span {
     position: absolute;
     top: 5px;
-    color: #444;
+    color: var(--text);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
     display: block;
     width: 100%;
+    font-weight: bold;
   }
   .previous-result{
     max-width: 360px;
     padding: 8px;
     margin: 30px auto 28px;
-    border-radius: 3px;
+    border-radius: 6px;
+    font-weight: bold;
     @media (max-width: 768px) {
       margin: 0px auto 0px;
     }
@@ -28,16 +30,18 @@
     font-size: 1.1em;
   }
   .none {
-    background-color: #aaa;
-    color: #f5f5f5;
+    background-color: var(--bg-panel-raised);
+    color: var(--text-muted);
   }
   .correct {
-    color: #f5f5f5;
-    background-color: #5cb85c;
+    color: #10240a;
+    background-color: var(--success);
+    box-shadow: var(--glow-success);
   }
   .wrong {
-    color: #f5f5f5;
-    background-color: #d9534f;
+    color: #2a0207;
+    background-color: var(--error);
+    box-shadow: var(--glow-error);
   }
   .your-answer {
     display: block;
@@ -49,10 +53,13 @@
     max-width: 360px;
     padding: 6px;
     margin: 30px auto;
-    color: #f5f5f5;
+    color: var(--text);
   }
   .big-character {
     font-size: 5em;
+    color: var(--text);
+    text-shadow: 0 0 14px rgba(255, 77, 109, 0.55), 0 0 34px rgba(255, 46, 136, 0.3);
+    animation: kq-pop-in 0.25s ease-out;
   }
   .answer-container {
     max-width: 360px;
@@ -79,15 +86,20 @@
     font-size: 2em;
     margin: 25px 0 60px;
     background: none;
+    color: var(--text);
     border: none;
-    border-bottom: solid 1px #aaa;
+    border-bottom: solid 2px var(--accent-coral);
     @media (max-width: 768px) {
       margin: 0px 0 25px;
     }
   }
+  .answer-input:focus {
+    border-bottom-color: var(--accent-pink);
+    text-shadow: var(--glow-pink);
+  }
   .no-hover {
     /* disables hover effect on touch screens */
-    background-color: #fff;
-    border-color: #ccc;
+    background-color: var(--bg-panel-raised);
+    border-color: var(--accent-coral);
   }
 }

@@ -4,6 +4,8 @@
   }
   h4 {
     margin-top: 0;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
   }
 }
 .choose-characters
@@ -12,32 +14,39 @@
     font-weight: bold;
   }
   .panel-heading span {
-    color: #aaa;
+    color: var(--text-muted);
   }
   .panel-footer a {
     text-decoration: none;
-    color: #337ab7;
+    color: var(--accent-orange);
+    font-weight: bold;
+  }
+  .panel-footer a:hover {
+    color: var(--accent-pink);
+    text-shadow: var(--glow-pink);
   }
   .choose-row {
     font-size: 1em;
     padding: 5px;
+    transition: background-color 0.12s;
   }
   .choose-row:not(:last-child) {
-    border-bottom: 1px #eee solid;
+    border-bottom: 1px solid rgba(255, 77, 109, 0.15);
   }
   .alt-row {
     padding-left: 20px;
-    background-color: #fafafa;
+    background-color: rgba(0, 0, 0, 0.15);
   }
   .divider-row {
-    border-top: 2px #ddd solid;
+    border-top: 2px solid rgba(255, 183, 3, 0.4);
   }
   .toggle-caret {
     margin: 0 4px;
+    color: var(--text-muted);
   }
   @media (min-width: 768px) {
     .choose-row:hover {
-      background-color: #f4f4f4;
+      background-color: rgba(255, 46, 136, 0.12);
     }
   }
   .choose-row:hover {
@@ -47,33 +56,38 @@
     font-size: 0.9em;
   }
   .glyphicon-check {
-    color: green;
+    color: var(--success);
+    text-shadow: var(--glow-success);
   }
   .glyphicon-check.half {
-    color: #ccc;
+    color: var(--accent-orange);
   }
   .glyphicon-unchecked {
-    color: #ccc;
+    color: var(--text-muted);
   }
   .selection-areas {
     padding: 7px;
   }
   .success-percent {
-    color: #ccc;
+    color: var(--text-muted);
   }
 }
 .error-message {
-  color: #d9534f;
+  color: var(--error);
+  text-shadow: var(--glow-error);
   padding-bottom: 10px;
+  font-weight: bold;
 }
 .direct-practice {
   clear: both;
   text-align: right;
 
   .direct-practice-label {
-    color: #888;
+    color: var(--text-muted);
     font-size: 13px;
     margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .direct-practice-buttons {
@@ -109,6 +123,12 @@
   }
 }
 
+.startgame-button {
+  font-size: 1.3em;
+  padding: 12px 40px;
+  animation: kq-pulse-invite 1.8s infinite;
+}
+
 .down-arrow {
   user-select: none;
   cursor: pointer;
@@ -117,11 +137,13 @@
   position: fixed;
   bottom: 20px;
   right: 12px;
-  color: #fff;
-  background: #d9534f;
+  color: var(--bg);
+  background: var(--accent-coral);
   padding: 7px 0 2px;
   width: 60px;
   text-align: center;
+  font-weight: bold;
+  box-shadow: var(--glow-coral);
 }
 
 .down-arrow:after {
@@ -132,7 +154,7 @@
   top: 100%;
   width: 0;
   height: 0;
-  border-top: 10px solid #d9534f;
+  border-top: 10px solid var(--accent-coral);
   border-right: 30px solid transparent;
   border-bottom: 0 solid transparent;
   border-left: 30px solid transparent;

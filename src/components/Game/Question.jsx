@@ -14,6 +14,10 @@ class Question extends Component {
     answerOptions: [],
     stageProgress: 0
   }
+  // Bumped on every answer/question so the feedback + big-character divs
+  // remount (via key=) and their CSS animations replay every time, even
+  // across two consecutive right/wrong answers.
+  answerSeq = 0
     // this.setNewQuestion = this.setNewQuestion.bind(this);
     // this.handleAnswer = this.handleAnswer.bind(this);
     // this.handleAnswerChange = this.handleAnswerChange.bind(this);
@@ -73,14 +77,15 @@ class Question extends Component {
     let questionCount = 1;
     if(this.props.stage==4) {
       // Use difficulty to determine number of characters
-      questionCount = this.props.stage4Difficulty === 1 ? 3 : 
+      questionCount = this.props.stage4Difficulty === 1 ? 3 :
                      this.props.stage4Difficulty === 2 ? 5 : 8;
     }
-    
+
     if(this.props.stage!=4)
       this.currentQuestion = this.getRandomKanas(1, false, this.previousQuestion);
     else
       this.currentQuestion = this.getRandomKanas(questionCount, false, this.previousQuestion);
+    this.answerSeq++;
     this.setState({currentQuestion: this.currentQuestion});
     this.setAnswerOptions();
     this.setAllowedAnswers();
@@ -245,13 +250,13 @@ class Question extends Component {
 
       if(this.isInAllowedAnswers(this.previousAnswer))
         resultString = (
-          <div className="previous-result correct" title="Correct answer!">
+          <div className="previous-result correct kq-pulse-success" title="Correct answer!" key={this.answerSeq}>
             <span className="pull-left glyphicon glyphicon-none"></span>{rightAnswer}<span className="pull-right glyphicon glyphicon-ok"></span>
           </div>
         );
       else
         resultString = (
-          <div className="previous-result wrong" title="Wrong answer!">
+          <div className="previous-result wrong kq-shake" title="Wrong answer!" key={this.answerSeq}>
             <span className="pull-left glyphicon glyphicon-none"></span>{rightAnswer} <span className="your-answer">(your answer: {this.previousAnswer})</span><span className="pull-right glyphicon glyphicon-remove"></span>
           </div>
         );
@@ -313,7 +318,7 @@ class Question extends Component {
     return (
       <div className="text-center question col-xs-12">
         {this.getPreviousResult()}
-        <div className="big-character">{this.getShowableQuestion()}</div>
+        <div className="big-character" key={'q'+this.answerSeq}>{this.getShowableQuestion()}</div>
         <div className="answer-container">
           {
             this.props.stage<3 ?

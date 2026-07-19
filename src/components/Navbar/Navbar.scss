@@ -10,11 +10,13 @@
   }
   .glyphicon {
     font-size: 0.9em;
-    color: #d9534f;
+    color: var(--accent-coral);
   }
 }
 .navbar-inverse {
-  background-color: #333;
+  background-color: var(--bg);
+  border-bottom: 2px solid var(--accent-coral);
+  box-shadow: 0 0 20px rgba(255, 46, 136, 0.35), 0 2px 0 rgba(255, 183, 3, 0.4);
 }
 .hidden-nano {
   @media (max-width: 390px) {
@@ -22,13 +24,18 @@
   }
 }
 .nav a {
-  color: #fff !important;
+  color: var(--text) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: bold;
+  transition: color 0.15s, text-shadow 0.15s;
 }
 .nav a:hover {
-  color: #bbb !important;
+  color: var(--accent-orange) !important;
+  text-shadow: var(--glow-orange);
 }
 .navbar-text {
-  color: #fff !important;
+  color: var(--text) !important;
   cursor: default;
   margin-bottom: 0;
 }
@@ -119,9 +126,11 @@
   margin: 0 0 0 auto;
   padding: 15px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   .glyphicon-time {
     margin-right: 6px;
-    color: #5cb85c;
+    color: var(--success);
+    text-shadow: var(--glow-success);
   }
 }
 
@@ -133,8 +142,14 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  strong {
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
   .table-header-subtitle {
-    color: #bbb;
+    color: var(--text-muted);
     font-weight: normal;
   }
   @media (max-width: 768px) {

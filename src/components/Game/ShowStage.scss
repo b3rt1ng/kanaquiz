@@ -8,17 +8,20 @@
     margin-top: 130px;
     h3 {
         margin-top: 30px;
+        color: var(--text-muted);
     }
     .stage-stats {
         margin-top: 25px;
-        color: #5bc0de;
+        color: var(--accent-orange);
+        text-shadow: var(--glow-orange);
         font-weight: normal;
     }
     .interim-stats {
         margin-top: 30px;
         .interim-title {
             margin-bottom: 5px;
-            color: #333;
+            color: var(--accent-orange);
+            text-shadow: var(--glow-orange);
         }
         .continue-btn {
             margin: 10px 0 30px;
@@ -41,11 +44,6 @@
             font-size: 16px;
             min-width: 150px;
             border-radius: 8px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            }
             .difficulty-level {
                 font-size: 18px;
                 font-weight: bold;
@@ -73,23 +71,26 @@
     margin-top: 80px;
     h3, h4 {
         margin-top: 20px;
+        color: var(--text-muted);
     }
     .all-stages-stats {
         margin: 30px auto;
         max-width: 400px;
         padding: 20px;
-        background-color: #f8f9fa;
+        background-color: var(--bg-panel);
+        border: 1px solid rgba(255, 77, 109, 0.35);
         border-radius: 8px;
         h4 {
             margin-top: 0;
             margin-bottom: 15px;
-            color: #333;
+            color: var(--accent-orange);
+            text-shadow: var(--glow-orange);
         }
         .stage-summary {
             font-size: 18px;
             padding: 8px;
             margin: 5px 0;
-            color: #5bc0de;
+            color: var(--success);
             font-weight: 500;
         }
     }
