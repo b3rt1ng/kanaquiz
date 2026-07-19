@@ -19,29 +19,25 @@ class Navbar extends Component {
             <ul className="nav navbar-nav">
               {
                 this.props.gameState == 'game' ? (
-                  <React.Fragment>
-                    <li id="nav-choosecharacters">
-                      <a href="javascript:;" onClick={this.props.handleEndGame}>
-                        <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
-                      </a>
-                    </li>
-                    {
-                      this.props.tableHeaderInfo && (
-                        <li className="table-header-info">
-                          <p className="nav navbar-text">
-                            <strong>{this.props.tableHeaderInfo.title}</strong>
-                            {
-                              this.props.tableHeaderInfo.subtitle &&
-                                <span className="table-header-subtitle"> — {this.props.tableHeaderInfo.subtitle}</span>
-                            }
-                          </p>
-                        </li>
-                      )
-                    }
-                  </React.Fragment>
+                  <li id="nav-choosecharacters">
+                    <a href="javascript:;" onClick={this.props.handleEndGame}>
+                      <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
+                    </a>
+                  </li>
                 ) : <li id="nav-kanaquiz"><p className="nav navbar-text">Kana Pro</p></li>
               }
             </ul>
+            {
+              this.props.gameState == 'game' && this.props.tableHeaderInfo && (
+                <p className="nav navbar-text table-header-info">
+                  <strong>{this.props.tableHeaderInfo.title}</strong>
+                  {
+                    this.props.tableHeaderInfo.subtitle &&
+                      <span className="table-header-subtitle"> — {this.props.tableHeaderInfo.subtitle}</span>
+                  }
+                </p>
+              )
+            }
             {
               this.props.gameState == 'game' && (
                 <p className="nav navbar-text timer-display">
