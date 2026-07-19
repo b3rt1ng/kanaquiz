@@ -1,4 +1,9 @@
 .question {
+  .question-tremble.tremble-active {
+    animation-name: kq-tremble;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
   .progress {
     position: relative;
     height: 30px;
@@ -43,12 +48,6 @@
     background-color: var(--error);
     box-shadow: var(--glow-error);
   }
-  .your-answer {
-    display: block;
-    font-size: 0.85em;
-    opacity: 0.9;
-    margin-top: 4px;
-  }
   .previous-result-none {
     max-width: 360px;
     padding: 6px;
@@ -68,7 +67,9 @@
     justify-content: space-between;
   }
   .answer-form-container {
-    max-width: 100px;
+    /* Matches .answer-input's own width below so the input doesn't overflow
+       this container to one side and throw off the centering. */
+    max-width: 160px;
     margin: 0 auto;
   }
   .answer-button {

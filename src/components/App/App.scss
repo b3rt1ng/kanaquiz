@@ -60,6 +60,36 @@
   50% { text-shadow: 0 0 10px rgba(255, 77, 109, 0.85), 0 0 26px rgba(255, 46, 136, 0.55); }
 }
 
+/* --tremble-amp controls amplitude; irregular x/y stops + linear timing
+   read as a constant vibration rather than a slow sway. */
+@keyframes kq-tremble {
+  0%   { transform: translate(0, 0); }
+  8%   { transform: translate(calc(var(--tremble-amp, 0px) * -0.6), calc(var(--tremble-amp, 0px) * 0.8)); }
+  16%  { transform: translate(calc(var(--tremble-amp, 0px) * 0.9), calc(var(--tremble-amp, 0px) * -0.4)); }
+  24%  { transform: translate(calc(var(--tremble-amp, 0px) * -0.3), calc(var(--tremble-amp, 0px) * -0.9)); }
+  32%  { transform: translate(calc(var(--tremble-amp, 0px) * 0.7), calc(var(--tremble-amp, 0px) * 0.5)); }
+  40%  { transform: translate(calc(var(--tremble-amp, 0px) * -0.8), calc(var(--tremble-amp, 0px) * -0.2)); }
+  48%  { transform: translate(calc(var(--tremble-amp, 0px) * 0.4), calc(var(--tremble-amp, 0px) * 0.9)); }
+  56%  { transform: translate(calc(var(--tremble-amp, 0px) * -0.9), calc(var(--tremble-amp, 0px) * 0.3)); }
+  64%  { transform: translate(calc(var(--tremble-amp, 0px) * 0.6), calc(var(--tremble-amp, 0px) * -0.7)); }
+  72%  { transform: translate(calc(var(--tremble-amp, 0px) * -0.4), calc(var(--tremble-amp, 0px) * 0.6)); }
+  80%  { transform: translate(calc(var(--tremble-amp, 0px) * 0.8), calc(var(--tremble-amp, 0px) * -0.5)); }
+  88%  { transform: translate(calc(var(--tremble-amp, 0px) * -0.7), calc(var(--tremble-amp, 0px) * -0.8)); }
+  96%  { transform: translate(calc(var(--tremble-amp, 0px) * 0.5), calc(var(--tremble-amp, 0px) * 0.4)); }
+  100% { transform: translate(0, 0); }
+}
+
+/* steps() gives a hard jump-cut instead of a slide; ends invisible so the
+   rect can just be unmounted after. */
+@keyframes kq-glitch-rect {
+  0% { transform: translateX(0); opacity: 0.85; }
+  20% { transform: translateX(calc(var(--glitch-offset, 0px) * -1)); opacity: 1; }
+  40% { transform: translateX(var(--glitch-offset, 0px)); opacity: 0.55; }
+  60% { transform: translateX(calc(var(--glitch-offset, 0px) * -0.6)); opacity: 0.9; }
+  80% { transform: translateX(calc(var(--glitch-offset, 0px) * 0.7)); opacity: 0.6; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+
 .kq-shake {
   animation: kq-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }

@@ -34,11 +34,27 @@
   font-weight: 900;
   font-size: calc(2.2em * var(--combo-scale, 1));
   color: var(--accent-coral);
-  text-shadow: 0 0 10px rgba(255, 77, 109, 0.8), 0 0 24px rgba(255, 46, 136, 0.5);
+  text-shadow:
+    0 0 10px rgba(255, 77, 109, 0.8),
+    0 0 24px rgba(255, 46, 136, 0.5),
+    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.85),
+    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.85);
 
   @media (max-width: 768px) {
     font-size: calc(1.5em * var(--combo-scale, 1));
   }
+}
+
+.combo-indicator.ca-unstable {
+  animation: combo-pop 0.35s cubic-bezier(.34,1.56,.64,1) both, ca-jitter 0.12s infinite;
+}
+
+@keyframes ca-jitter {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1px, 0.5px); }
+  40% { transform: translate(1px, -0.5px); }
+  60% { transform: translate(-0.5px, 1px); }
+  80% { transform: translate(0.5px, -1px); }
 }
 
 @keyframes combo-pop {
@@ -67,13 +83,21 @@
 /* Tier 2 (combo 3-5): hotter pink, stronger glow. */
 .combo-tier-2 .combo-x {
   color: var(--accent-pink);
-  text-shadow: 0 0 12px rgba(255, 46, 136, 0.9), 0 0 30px rgba(255, 46, 136, 0.6);
+  text-shadow:
+    0 0 12px rgba(255, 46, 136, 0.9),
+    0 0 30px rgba(255, 46, 136, 0.6),
+    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.85),
+    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.85);
 }
 
 /* Tier 3 (combo 6-9): orange-hot, starts vibrating. */
 .combo-tier-3 .combo-x {
   color: var(--accent-orange);
-  text-shadow: 0 0 14px rgba(255, 183, 3, 0.9), 0 0 34px rgba(255, 77, 109, 0.6);
+  text-shadow:
+    0 0 14px rgba(255, 183, 3, 0.9),
+    0 0 34px rgba(255, 77, 109, 0.6),
+    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.85),
+    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.85);
   animation: combo-vibrate 0.25s infinite;
 }
 .combo-tier-3 .combo-ring {
@@ -86,7 +110,9 @@
   text-shadow:
     0 0 10px var(--accent-coral),
     0 0 22px var(--accent-pink),
-    0 0 40px var(--accent-orange);
+    0 0 40px var(--accent-orange),
+    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.9),
+    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.9);
   animation: combo-vibrate 0.18s infinite, combo-hue 1.2s linear infinite;
 }
 .combo-tier-4 .combo-ring {
@@ -101,6 +127,8 @@
     0 0 12px #fff,
     0 0 24px var(--accent-pink),
     0 0 46px var(--accent-orange),
+    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.95),
+    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.95),
     0 0 70px var(--accent-coral);
 }
 .combo-tier-5 .combo-ring {

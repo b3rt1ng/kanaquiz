@@ -9,6 +9,12 @@
   margin-top: 20px;
   padding-bottom: 60px;
 
+  .table-tremble.tremble-active {
+    animation-name: kq-tremble;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
   .kana-table {
     max-width: 100%;
     margin: 0 auto 30px;

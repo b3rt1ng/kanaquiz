@@ -39,10 +39,12 @@ function ComboIndicator({ combo }) {
   const tier = getTier(combo);
   const scale = Math.min(1 + (combo - 1) * 0.05, 2.4);
   const isMilestone = combo % 5 === 0;
+  const caOffset = Math.min(combo * 0.4, 8);
+  const style = { '--combo-scale': scale, '--ca-offset': caOffset + 'px' };
 
   return (
     <div className="combo-root">
-      <div className={`combo-indicator combo-tier-${tier}`} style={{ '--combo-scale': scale }}>
+      <div className={`combo-indicator combo-tier-${tier}${combo >= 10 ? ' ca-unstable' : ''}`} style={style}>
         <span className="combo-ring"></span>
         <span className="combo-x">×{toKanjiNumeral(combo)}</span>
       </div>

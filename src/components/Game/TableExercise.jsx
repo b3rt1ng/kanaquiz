@@ -1,9 +1,12 @@
-import React, { Component } from 'react';
+import React, { Component, PureComponent } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { findRomajisAtKanaKey, arrayContains, shuffle } from '../../data/helperFuncs';
 import { playWrongSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
+import { pickCompliment } from '../../data/compliments';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
+import GlitchEffect from './GlitchEffect';
+import ComplimentPopup, { buildCompliment } from './ComplimentPopup';
 import './TableExercise.scss';
 
 // Kana keys drawn from the character groups the user selected on the menu
@@ -44,9 +47,15 @@ class TableExercise extends Component {
       });
     });
 
-    this.state = { cells, combo: 0 };
+    this.state = { cells, combo: 0, compliment: null };
     this.focusStart = {};
     this.inputRefs = {};
+    // Stable per-kana callbacks, needed for TableCell's PureComponent check
+    // to actually skip untouched cells on every keystroke.
+    this.cellHandlers = {};
+    this.complimentSeq = 0;
+    // Read by GlitchEffect to keep its rectangles off the grid.
+    this.trembleRef = React.createRef();
   }
 
   componentDidMount() {
@@ -69,6 +78,16 @@ class TableExercise extends Component {
 
   componentWillUnmount() {
     if(this.props.setTableHeaderInfo) this.props.setTableHeaderInfo(null);
+    clearTimeout(this.complimentTimeout);
+  }
+
+  showCompliment = (isFast, combo) => {
+    clearTimeout(this.complimentTimeout);
+    this.complimentSeq++;
+    this.setState({ compliment: buildCompliment(pickCompliment(isFast), combo) });
+    this.complimentTimeout = setTimeout(() => {
+      this.setState({ compliment: null });
+    }, 1500);
   }
 
   getKanaTypeLabel() {
@@ -82,7 +101,7 @@ class TableExercise extends Component {
     const attemptedCells = Object.values(this.state.cells).filter(c => c.status !== 'empty').length;
     this.props.setTableHeaderInfo({
       title: 'Table Exercise',
-      subtitle: `${this.getKanaTypeLabel()} — ${attemptedCells}/${totalCells} filled`
+      subtitle: `${this.getKanaTypeLabel()} - ${attemptedCells}/${totalCells} filled`
     });
   }
 
@@ -115,6 +134,10 @@ class TableExercise extends Component {
     else if(hadActiveCombo) playComboBreakSound();
     else playWrongSound();
 
+    if(isCorrect) {
+      this.showCompliment(elapsedMs < 1500, newCombo);
+    }
+
     this.setState(prevState => ({
       cells: {
         ...prevState.cells,
@@ -137,6 +160,19 @@ class TableExercise extends Component {
     } else {
       playKeySound();
     }
+  }
+
+  getCellHandlers = (kana) => {
+    if(!this.cellHandlers[kana]) {
+      this.cellHandlers[kana] = {
+        inputRef: el => this.inputRefs[kana] = el,
+        onFocus: () => this.handleFocus(kana),
+        onChange: (e) => this.handleChange(kana, e.target.value),
+        onBlur: () => this.handleBlur(kana),
+        onKeyDown: (e) => this.handleKeyDown(e, kana)
+      };
+    }
+    return this.cellHandlers[kana];
   }
 
   isComplete() {
@@ -188,29 +224,15 @@ class TableExercise extends Component {
     return (
       <div className="kana-table" key={kanaType}>
         <div className="kana-table-grid">
-          {this.orderedKana[kanaType].map(kana => {
-            const cell = this.state.cells[kana];
-            const correctRomaji = findRomajisAtKanaKey(kana, kanaDictionary)[0];
-            return (
-              <div className={`kana-cell ${cell.status}`} key={kana}>
-                <div className="kana-glyph">{kana}</div>
-                <input
-                  type="text"
-                  className="kana-input"
-                  autoComplete="off"
-                  value={cell.value}
-                  ref={el => this.inputRefs[kana] = el}
-                  onFocus={() => this.handleFocus(kana)}
-                  onChange={(e) => this.handleChange(kana, e.target.value)}
-                  onBlur={() => this.handleBlur(kana)}
-                  onKeyDown={(e) => this.handleKeyDown(e, kana)}
-                />
-                <div className="kana-answer">
-                  {cell.status !== 'empty' ? correctRomaji : ' '}
-                </div>
-              </div>
-            );
-          })}
+          {this.orderedKana[kanaType].map(kana => (
+            <TableCell
+              key={kana}
+              kana={kana}
+              cell={this.state.cells[kana]}
+              correctRomaji={findRomajisAtKanaKey(kana, kanaDictionary)[0]}
+              {...this.getCellHandlers(kana)}
+            />
+          ))}
         </div>
       </div>
     );
@@ -221,30 +243,68 @@ class TableExercise extends Component {
     const totalCells = Object.keys(this.state.cells).length;
     const correctCells = Object.values(this.state.cells).filter(c => c.status === 'correct').length;
 
+    const trembleAmp = Math.min(this.state.combo * 0.6, 1.2);
+    const trembleDuration = Math.max(2.2 - this.state.combo * 0.09, 1.3);
+    const trembleStyle = this.state.combo > 0
+      ? { '--tremble-amp': trembleAmp + 'px', animationDuration: trembleDuration + 's' }
+      : {};
+    const trembleClass = 'table-tremble' + (this.state.combo > 0 ? ' tremble-active' : '');
+
     return (
       <div className="table-exercise text-center">
         <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />
-        {this.kanaTypes.map(type => this.renderTable(type))}
+        <GlitchEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />
+        <ComplimentPopup compliment={this.state.compliment} key={'compliment'+this.complimentSeq} />
+        <div className={trembleClass} style={trembleStyle} ref={this.trembleRef}>
+          {this.kanaTypes.map(type => this.renderTable(type))}
 
-        {
-          complete && (() => {
-            const { characterStats, confusionPairs } = this.buildResultsData();
-            const percentage = Math.round((correctCells / totalCells) * 100);
-            return (
-              <div className="table-results">
-                <h2>Results</h2>
-                <p className="table-score">{correctCells}/{totalCells} correct ({percentage}%)</p>
-                <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} />
-                <p>
-                  <button className="btn btn-primary try-again" onClick={this.resetTable}>Try Again</button>
-                </p>
-                <p>
-                  <button className="btn btn-default back-to-menu" onClick={this.props.handleEndGame}>Back to menu</button>
-                </p>
-              </div>
-            );
-          })()
-        }
+          {
+            complete && (() => {
+              const { characterStats, confusionPairs } = this.buildResultsData();
+              const percentage = Math.round((correctCells / totalCells) * 100);
+              return (
+                <div className="table-results">
+                  <h2>Results</h2>
+                  <p className="table-score">{correctCells}/{totalCells} correct ({percentage}%)</p>
+                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} />
+                  <p>
+                    <button className="btn btn-primary try-again" onClick={this.resetTable}>Try Again</button>
+                  </p>
+                  <p>
+                    <button className="btn btn-default back-to-menu" onClick={this.props.handleEndGame}>Back to menu</button>
+                  </p>
+                </div>
+              );
+            })()
+          }
+        </div>
+      </div>
+    );
+  }
+}
+
+// PureComponent + stable per-kana props (see getCellHandlers) so a keystroke
+// only re-renders this cell, not the whole grid.
+class TableCell extends PureComponent {
+  render() {
+    const { kana, cell, correctRomaji, inputRef, onFocus, onChange, onBlur, onKeyDown } = this.props;
+    return (
+      <div className={`kana-cell ${cell.status}`}>
+        <div className="kana-glyph">{kana}</div>
+        <input
+          type="text"
+          className="kana-input"
+          autoComplete="off"
+          value={cell.value}
+          ref={inputRef}
+          onFocus={onFocus}
+          onChange={onChange}
+          onBlur={onBlur}
+          onKeyDown={onKeyDown}
+        />
+        <div className="kana-answer">
+          {cell.status !== 'empty' ? correctRomaji : ' '}
+        </div>
       </div>
     );
   }

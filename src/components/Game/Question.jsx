@@ -3,7 +3,10 @@ import { kanaDictionary } from '../../data/kanaDictionary';
 import { quizSettings } from '../../data/quizSettings';
 import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
 import { playWrongSound, playStageUpSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
+import { pickCompliment } from '../../data/compliments';
 import ComboIndicator from './ComboIndicator';
+import GlitchEffect from './GlitchEffect';
+import ComplimentPopup, { buildCompliment } from './ComplimentPopup';
 import './Question.scss';
 
 class Question extends Component {
@@ -14,12 +17,16 @@ class Question extends Component {
     currentQuestion: [],
     answerOptions: [],
     stageProgress: 0,
-    combo: 0
+    combo: 0,
+    compliment: null
   }
   // Bumped on every answer/question so the feedback + big-character divs
   // remount (via key=) and their CSS animations replay every time, even
   // across two consecutive right/wrong answers.
   answerSeq = 0
+  complimentSeq = 0
+  // Read by GlitchEffect to keep its rectangles off the readable area.
+  trembleRef = React.createRef()
     // this.setNewQuestion = this.setNewQuestion.bind(this);
     // this.handleAnswer = this.handleAnswer.bind(this);
     // this.handleAnswerChange = this.handleAnswerChange.bind(this);
@@ -134,10 +141,11 @@ class Question extends Component {
     // Update stage stats
     this.props.updateStageStats(this.props.stage, isCorrect);
 
+    // Clamp elapsed time so an idle pause doesn't skew the averages/compliments.
+    const elapsedMs = Math.min(Date.now() - (this.questionShownAt || Date.now()), 30000);
+
     // Record per-character detail for the introspective charts.
-    // Clamp elapsed time so an idle pause doesn't skew the averages.
     if(this.props.recordAnswer) {
-      const elapsedMs = Math.min(Date.now() - (this.questionShownAt || Date.now()), 30000);
       const records = [];
 
       if(this.currentQuestion.length === 1) {
@@ -200,11 +208,24 @@ class Question extends Component {
     else if(hadActiveCombo) playComboBreakSound();
     else playWrongSound();
 
+    if(isCorrect && !stageCompleted) {
+      this.showCompliment(elapsedMs < 1500, newCombo);
+    }
+
     if(stageCompleted) {
       setTimeout(() => { this.props.handleStageUp() }, 300);
     }
     else
       this.setNewQuestion();
+  }
+
+  showCompliment = (isFast, combo) => {
+    clearTimeout(this.complimentTimeout);
+    this.complimentSeq++;
+    this.setState({ compliment: buildCompliment(pickCompliment(isFast), combo) });
+    this.complimentTimeout = setTimeout(() => {
+      this.setState({ compliment: null });
+    }, 1500);
   }
 
   initializeCharacters() {
@@ -265,7 +286,7 @@ class Question extends Component {
       else
         resultString = (
           <div className="previous-result wrong kq-shake" title="Wrong answer!" key={this.answerSeq}>
-            <span className="pull-left glyphicon glyphicon-none"></span>{rightAnswer} <span className="your-answer">(your answer: {this.previousAnswer})</span><span className="pull-right glyphicon glyphicon-remove"></span>
+            <span className="pull-left glyphicon glyphicon-none"></span>{rightAnswer}<span className="pull-right glyphicon glyphicon-remove"></span>
           </div>
         );
     }
@@ -308,6 +329,10 @@ class Question extends Component {
     }
   }
 
+  componentWillUnmount() {
+    clearTimeout(this.complimentTimeout);
+  }
+
   render() {
     // Safety check for stage 5 (should show completion screen instead)
     if (this.props.stage > 4) {
@@ -325,41 +350,52 @@ class Question extends Component {
     const statsPercentage = currentStageStats.total > 0 
       ? Math.round((currentStageStats.correct / currentStageStats.total) * 100) 
       : 0;
-    const statsText = currentStageStats.total > 0 
+    const statsText = currentStageStats.total > 0
       ? ` - ${currentStageStats.correct}/${currentStageStats.total} (${statsPercentage}%)`
       : '';
-    
+
+    const trembleAmp = Math.min(this.state.combo * 0.6, 1.2);
+    const trembleDuration = Math.max(2.2 - this.state.combo * 0.09, 1.3);
+    const trembleStyle = this.state.combo > 0
+      ? { '--tremble-amp': trembleAmp + 'px', animationDuration: trembleDuration + 's' }
+      : {};
+    const trembleClass = 'question-tremble' + (this.state.combo > 0 ? ' tremble-active' : '');
+
     return (
       <div className="text-center question col-xs-12">
         <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />
-        {this.getPreviousResult()}
-        <div className="big-character" key={'q'+this.answerSeq}>{this.getShowableQuestion()}</div>
-        <div className="answer-container">
-          {
-            this.props.stage<3 ?
-              this.state.answerOptions.map((answer, idx) => {
-                return <AnswerButton answer={answer}
-                  className={btnClass}
-                  key={idx}
-                  answertype={this.getAnswerType()}
-                  handleAnswer={this.handleAnswer} />
-              })
-            : <div className="answer-form-container">
-                <form onSubmit={this.handleSubmit}>
-                  <input autoFocus className="answer-input" type="text" value={this.state.currentAnswer} onChange={this.handleAnswerChange} onKeyDown={this.handleAnswerKeyDown} />
-                </form>
-              </div>
-          }
-        </div>
-        <div className="progress">
-          <div className="progress-bar progress-bar-info"
-            role="progressbar"
-            aria-valuenow={this.state.stageProgress}
-            aria-valuemin="0"
-            aria-valuemax={quizSettings.stageLength[this.props.stage]}
-            style={stageProgressPercentageStyle}
-          >
-            <span>Stage {this.props.stage} {this.props.isLocked?' (Locked)':''}{statsText}</span>
+        <GlitchEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />
+        <ComplimentPopup compliment={this.state.compliment} key={'compliment'+this.complimentSeq} />
+        <div className={trembleClass} style={trembleStyle} ref={this.trembleRef}>
+          {this.getPreviousResult()}
+          <div className="big-character" key={'q'+this.answerSeq}>{this.getShowableQuestion()}</div>
+          <div className="answer-container">
+            {
+              this.props.stage<3 ?
+                this.state.answerOptions.map((answer, idx) => {
+                  return <AnswerButton answer={answer}
+                    className={btnClass}
+                    key={idx}
+                    answertype={this.getAnswerType()}
+                    handleAnswer={this.handleAnswer} />
+                })
+              : <div className="answer-form-container">
+                  <form onSubmit={this.handleSubmit}>
+                    <input autoFocus className="answer-input" type="text" value={this.state.currentAnswer} onChange={this.handleAnswerChange} onKeyDown={this.handleAnswerKeyDown} />
+                  </form>
+                </div>
+            }
+          </div>
+          <div className="progress">
+            <div className="progress-bar progress-bar-info"
+              role="progressbar"
+              aria-valuenow={this.state.stageProgress}
+              aria-valuemin="0"
+              aria-valuemax={quizSettings.stageLength[this.props.stage]}
+              style={stageProgressPercentageStyle}
+            >
+              <span>Stage {this.props.stage} {this.props.isLocked?' (Locked)':''}{statsText}</span>
+            </div>
           </div>
         </div>
       </div>

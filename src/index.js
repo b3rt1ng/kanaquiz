@@ -6,7 +6,7 @@ import App from './components/App/App';
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    const wb = new Workbox("/sw.js");
+    const wb = new Workbox("sw.js");
     const updateButton = document.querySelector("#app-update");
     // Fires when the registered service worker has installed but is waiting to activate.
     wb.addEventListener("waiting", event => {
