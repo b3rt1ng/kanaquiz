@@ -29,6 +29,11 @@
     background-color: var(--bg-panel);
     border: 1px solid rgba(255, 77, 109, 0.2);
     transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
+    /* Skip layout/paint for cells that are scrolled out of view (big grids
+       can be 100+ cells in "both" mode) - the intrinsic-size keeps scroll
+       height stable before a cell has ever actually been laid out. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 90px;
 
     .kana-glyph {
       font-size: 1.6em;
@@ -120,6 +125,7 @@
     }
     .kana-cell {
       padding: 5px 2px;
+      contain-intrinsic-size: auto 66px;
       .kana-glyph {
         font-size: 1.2em;
         margin-bottom: 3px;

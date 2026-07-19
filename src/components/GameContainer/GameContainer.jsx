@@ -1,9 +1,13 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import ChooseCharacters from '../ChooseCharacters/ChooseCharacters';
 import Game from '../Game/Game';
 
-class GameContainer extends Component {
+// PureComponent so App's 100ms timer tick (which only Navbar actually needs)
+// doesn't cascade a full re-render down through the entire game tree - the
+// props App passes here are stable references except when gameState itself
+// changes, so the shallow prop/state comparison correctly short-circuits.
+class GameContainer extends PureComponent {
   state = {
     stage:1,
     isLocked: false,
