@@ -158,6 +158,7 @@ class GameContainer extends Component {
                 tableKanaType={this.state.tableKanaType}
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}
+                setTableHeaderInfo={this.props.setTableHeaderInfo}
               />
           }
         </div>

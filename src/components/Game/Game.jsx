@@ -54,6 +54,7 @@ class Game extends Component {
         <TableExercise
           tableKanaType={this.props.tableKanaType}
           handleEndGame={this.props.handleEndGame}
+          setTableHeaderInfo={this.props.setTableHeaderInfo}
         />
       );
     }

@@ -7,7 +7,7 @@ import { removeHash } from '../../data/helperFuncs';
 const options = {};
 
 class App extends Component {
-  state = { gameState: 'chooseCharacters', totalTimeMs: 0 };
+  state = { gameState: 'chooseCharacters', totalTimeMs: 0, tableHeaderInfo: null };
   timerInterval = null;
 
   startGame = () => {
@@ -15,8 +15,12 @@ class App extends Component {
   }
 
   endGame = () => {
-    this.setState({gameState: 'chooseCharacters'});
+    this.setState({gameState: 'chooseCharacters', tableHeaderInfo: null});
     this.stopTimer();
+  }
+
+  setTableHeaderInfo = (tableHeaderInfo) => {
+    this.setState({tableHeaderInfo});
   }
 
   startTimer = () => {
@@ -77,6 +81,7 @@ class App extends Component {
           gameState={this.state.gameState}
           handleEndGame={this.endGame}
           totalTimeMs={this.state.totalTimeMs}
+          tableHeaderInfo={this.state.tableHeaderInfo}
         />
         <div className="outercontainer">
           <div className="container game">
@@ -86,6 +91,7 @@ class App extends Component {
               handleEndGame={this.endGame}
               startTimer={this.startTimer}
               stopTimer={this.stopTimer}
+              setTableHeaderInfo={this.setTableHeaderInfo}
             />
           </div>
         </div>

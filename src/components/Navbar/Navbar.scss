@@ -117,3 +117,19 @@
     color: #5cb85c;
   }
 }
+
+.table-header-info {
+  padding: 15px 0 15px 20px !important;
+  overflow: hidden;
+  .table-header-subtitle {
+    color: #bbb;
+    font-weight: normal;
+  }
+  @media (max-width: 768px) {
+    padding-left: 10px !important;
+    font-size: 0.8em;
+    .table-header-subtitle {
+      display: block;
+    }
+  }
+}

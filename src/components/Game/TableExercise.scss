@@ -1,21 +1,18 @@
 .table-exercise {
-  margin-top: 130px;
-  padding-bottom: 60px;
+  /* Break out of the Bootstrap .container's max-width so the grid can use the full viewport width instead of being capped at ~968px. */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+  box-sizing: border-box;
 
-  .table-progress {
-    color: #888;
-    margin-bottom: 25px;
-  }
+  margin-top: 20px;
+  padding-bottom: 60px;
 
   .kana-table {
     max-width: 100%;
     margin: 0 auto 30px;
-    padding: 0 15px;
-
-    .kana-table-title {
-      margin-bottom: 15px;
-      color: #333;
-    }
+    padding: 0 25px;
   }
 
   /* Auto-fill packs as many columns as fit the available width, keeping the table wide and short instead of a tall column. */
@@ -102,7 +99,7 @@
   }
 
   @media (max-width: 768px) {
-    margin-top: 100px;
+    margin-top: 30px;
     .kana-table {
       padding: 0 6px;
     }

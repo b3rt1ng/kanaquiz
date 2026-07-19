@@ -7,6 +7,9 @@ body {
   font-family: "Trebuchet MS","Lucida Grande","Lucida Sans Unicode","Lucida Sans",Tahoma,sans-serif;
   background-color: #e5e5e5;
   color: #111;
+  /* Full-bleed elements (like the table exercise) use 100vw, which can be
+     a hair wider than the visible viewport when a scrollbar is present. */
+  overflow-x: hidden;
 }
 .outercontainer {
   background-color: #f5f5f5;

@@ -41,6 +41,29 @@ class TableExercise extends Component {
     this.focusStart = {};
   }
 
+  componentDidMount() {
+    this.updateHeaderInfo();
+  }
+
+  componentWillUnmount() {
+    if(this.props.setTableHeaderInfo) this.props.setTableHeaderInfo(null);
+  }
+
+  getKanaTypeLabel() {
+    if(this.props.tableKanaType === 'both') return 'Hiragana & Katakana';
+    return this.props.tableKanaType === 'hiragana' ? 'Hiragana · ひらがな' : 'Katakana · カタカナ';
+  }
+
+  updateHeaderInfo = () => {
+    if(!this.props.setTableHeaderInfo) return;
+    const totalCells = Object.keys(this.state.cells).length;
+    const attemptedCells = Object.values(this.state.cells).filter(c => c.status !== 'empty').length;
+    this.props.setTableHeaderInfo({
+      title: 'Table Exercise',
+      subtitle: `${this.getKanaTypeLabel()} — ${attemptedCells}/${totalCells} filled`
+    });
+  }
+
   handleFocus = (kana) => {
     this.focusStart[kana] = Date.now();
   }
@@ -73,7 +96,7 @@ class TableExercise extends Component {
           timeMs: elapsedMs
         }
       }
-    }));
+    }), this.updateHeaderInfo);
   }
 
   handleKeyDown = (e) => {
@@ -116,16 +139,13 @@ class TableExercise extends Component {
       });
     });
     this.focusStart = {};
-    this.setState({ cells });
+    this.setState({ cells }, this.updateHeaderInfo);
     window.scrollTo(0, 0);
   }
 
   renderTable(kanaType) {
     return (
       <div className="kana-table" key={kanaType}>
-        <h3 className="kana-table-title">
-          {kanaType === 'hiragana' ? 'Hiragana · ひらがな' : 'Katakana · カタカナ'}
-        </h3>
         <div className="kana-table-grid">
           {this.orderedKana[kanaType].map(kana => {
             const cell = this.state.cells[kana];
@@ -157,14 +177,10 @@ class TableExercise extends Component {
   render() {
     const complete = this.isComplete();
     const totalCells = Object.keys(this.state.cells).length;
-    const attemptedCells = Object.values(this.state.cells).filter(c => c.status !== 'empty').length;
     const correctCells = Object.values(this.state.cells).filter(c => c.status === 'correct').length;
 
     return (
       <div className="table-exercise text-center">
-        <h1>Table Exercise</h1>
-        <p className="table-progress">{attemptedCells}/{totalCells} filled</p>
-
         {this.kanaTypes.map(type => this.renderTable(type))}
 
         {
