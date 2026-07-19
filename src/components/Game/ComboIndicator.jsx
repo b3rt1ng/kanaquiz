@@ -39,8 +39,7 @@ function ComboIndicator({ combo }) {
   const tier = getTier(combo);
   const scale = Math.min(1 + (combo - 1) * 0.05, 2.4);
   const isMilestone = combo % 5 === 0;
-  const caOffset = Math.min(combo * 0.4, 8);
-  const style = { '--combo-scale': scale, '--ca-offset': caOffset + 'px' };
+  const style = { '--combo-scale': scale };
 
   return (
     <div className="combo-root">

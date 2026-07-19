@@ -1,10 +1,17 @@
 // Sound effects. Most are synthesized on the fly with the Web Audio API;
 // the combo/stage/dojo sounds are real samples (Jet Set Radio SFX).
-import comboTickUrl from '../assets/sounds/e_s004.ogg';
-import comboMelodyUrl from '../assets/sounds/e_s013.ogg';
-import comboBigMelodyUrl from '../assets/sounds/e_s012.ogg';
-import enterDojoUrl from '../assets/sounds/se_menu_enter_dojo_1.wav';
-import comboBreakUrl from '../assets/sounds/se_menu_spirits_target_exit_lose.wav';
+import comboTickUrl from '../assets/sounds/combo-tick.ogg';
+import comboMelodyUrl from '../assets/sounds/combo-melody-short.ogg';
+import comboBigMelodyUrl from '../assets/sounds/combo-melody-long.ogg';
+import enterDojoUrl from '../assets/sounds/stage-start.wav';
+import comboBreakUrl from '../assets/sounds/combo-break.wav';
+import bigStreakLostUrl from '../assets/sounds/big-streak-lost.wav';
+import crowdUrl1 from '../assets/sounds/crowd-applause-1.wav';
+import crowdUrl2 from '../assets/sounds/crowd-applause-2.wav';
+import crowdUrl3 from '../assets/sounds/crowd-applause-3.wav';
+import crowdUrl4 from '../assets/sounds/crowd-applause-4.wav';
+
+const crowdUrls = [crowdUrl1, crowdUrl2, crowdUrl3, crowdUrl4];
 
 let audioCtx = null;
 
@@ -64,7 +71,7 @@ function loadBuffer(url) {
 
 // Kick off decoding as soon as the module loads so the first combo tick
 // isn't held up waiting on the network/decode.
-[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl, enterDojoUrl, comboBreakUrl].forEach(loadBuffer);
+[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl, enterDojoUrl, comboBreakUrl, bigStreakLostUrl, ...crowdUrls].forEach(loadBuffer);
 
 function playSample(url, { playbackRate = 1, gain = 0.5 } = {}) {
   const ctx = getAudioContext();
@@ -112,7 +119,7 @@ export function playStageUpSound() {
 }
 
 // Combo tick, played on every consecutive correct answer: the Jet Set Radio
-// combo blip (e_s004), sped up a little more each step so it climbs in pitch
+// combo blip, sped up a little more each step so it climbs in pitch
 // without turning into an unrecognisable chipmunk squeal. On every 5th combo
 // it's replaced (not layered) by one of JSR's little melodic combos of that
 // same sound for a bigger payoff, with the longer one reserved for every
@@ -137,8 +144,137 @@ export function playEnterDojoSound() {
 
 // Played when an active combo streak gets broken by a wrong answer (as
 // opposed to just missing with no streak on the line, see playWrongSound).
-export function playComboBreakSound() {
-  playSample(comboBreakUrl, { gain: 0.55 });
+// Losing a big streak (5+) hurts more, so it gets its own sting.
+export function playComboBreakSound(lostCombo = 0) {
+  if (lostCombo >= 5) playSample(bigStreakLostUrl, { gain: 0.8 });
+  else playSample(comboBreakUrl, { gain: 0.55 });
+}
+
+// --- Fire loop (synthesized) --------------------------------------------
+
+let fireNodes = null;
+let fireCrackleTimer = null;
+
+// One shared 2s noise buffer allocated on first ignition and reused for the
+// looping bed, the boom and every crackle (via start()'s offset/duration
+// slicing) - crackles fire up to ~10x/s, so allocating per-crackle would
+// churn the GC the whole time the fire burns.
+let noiseBuffer = null;
+
+function getNoiseBuffer(ctx) {
+  if (!noiseBuffer) {
+    noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 2), ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  }
+  return noiseBuffer;
+}
+
+// Ignites with a small explosion (noise burst swept down + sub thump), then
+// keeps a looping roar going: lowpassed noise wobbled by a slow LFO, with
+// randomly timed bandpassed pops on top for the crackle. Idempotent - calling
+// while already burning does nothing.
+export function startFireSound() {
+  const ctx = getAudioContext();
+  if (!ctx || fireNodes) return;
+
+  const now = ctx.currentTime;
+
+  const boomSrc = ctx.createBufferSource();
+  boomSrc.buffer = getNoiseBuffer(ctx);
+  const boomFilter = ctx.createBiquadFilter();
+  boomFilter.type = 'lowpass';
+  boomFilter.frequency.setValueAtTime(2200, now);
+  boomFilter.frequency.exponentialRampToValueAtTime(120, now + 0.55);
+  const boomGain = ctx.createGain();
+  boomGain.gain.setValueAtTime(0.8, now);
+  boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+  boomSrc.connect(boomFilter);
+  boomFilter.connect(boomGain);
+  boomGain.connect(ctx.destination);
+  boomSrc.start(now);
+  boomSrc.stop(now + 0.7);
+
+  const thump = ctx.createOscillator();
+  thump.type = 'sine';
+  thump.frequency.setValueAtTime(95, now);
+  thump.frequency.exponentialRampToValueAtTime(38, now + 0.35);
+  const thumpGain = ctx.createGain();
+  thumpGain.gain.setValueAtTime(0.5, now);
+  thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+  thump.connect(thumpGain);
+  thumpGain.connect(ctx.destination);
+  thump.start(now);
+  thump.stop(now + 0.45);
+
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuffer(ctx);
+  src.loop = true;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 480;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.22, now + 0.5);
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 3.1;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.05;
+  lfo.connect(lfoGain);
+  lfoGain.connect(gain.gain);
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  src.start(now);
+  lfo.start(now);
+
+  fireNodes = { src, lfo, gain };
+
+  const crackle = () => {
+    if (!fireNodes) return;
+    const t = ctx.currentTime;
+    const cSrc = ctx.createBufferSource();
+    cSrc.buffer = getNoiseBuffer(ctx);
+    const cFilter = ctx.createBiquadFilter();
+    cFilter.type = 'bandpass';
+    cFilter.frequency.value = 1800 + Math.random() * 2600;
+    cFilter.Q.value = 2;
+    const cGain = ctx.createGain();
+    cGain.gain.setValueAtTime(0.12 + Math.random() * 0.1, t);
+    cGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    cSrc.connect(cFilter);
+    cFilter.connect(cGain);
+    cGain.connect(ctx.destination);
+    // Random slice of the shared buffer so each pop still sounds different.
+    cSrc.start(t, Math.random() * 1.9, 0.06);
+    fireCrackleTimer = setTimeout(crackle, 60 + Math.random() * 220);
+  };
+  fireCrackleTimer = setTimeout(crackle, 250);
+}
+
+// Crowd applause for clearing a stage (played alongside the confetti) -
+// one of the SP2 crowd samples, picked at random for variety.
+export function playApplauseSound() {
+  playSample(crowdUrls[Math.floor(Math.random() * crowdUrls.length)], { gain: 0.8 });
+}
+
+// Fades the roar out over ~0.4s rather than cutting, so a broken combo
+// doesn't end on a click.
+export function stopFireSound() {
+  if (!fireNodes) return;
+  clearTimeout(fireCrackleTimer);
+  fireCrackleTimer = null;
+  const { src, lfo, gain } = fireNodes;
+  fireNodes = null;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(gain.gain.value, now);
+  gain.gain.linearRampToValueAtTime(0.0001, now + 0.4);
+  src.stop(now + 0.45);
+  lfo.stop(now + 0.45);
 }
 
 // Soft, short blip for keyboard input - a bit of randomized detune per

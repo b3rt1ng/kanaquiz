@@ -14,6 +14,11 @@ const HOVER_SELECTOR = 'button, .choose-row, .panel-footer a, .navbar a, .down-a
 class App extends Component {
   state = { gameState: 'chooseCharacters', totalTimeMs: 0, tableHeaderInfo: null };
   timerInterval = null;
+  // Authoritative elapsed time, accumulated outside of state: the interval
+  // ticks every 100ms (so pause/resume stays accurate) but the display only
+  // shows whole seconds, so re-rendering on every tick would waste 9 out of
+  // 10 renders of the whole App + Navbar tree.
+  elapsedMs = 0;
 
   startGame = () => {
     this.setState({gameState: 'game'});
@@ -29,10 +34,12 @@ class App extends Component {
   }
 
   startTimer = () => {
+    if(this.timerInterval) return;
     this.timerInterval = setInterval(() => {
-      this.setState(prevState => ({
-        totalTimeMs: prevState.totalTimeMs + 100
-      }));
+      this.elapsedMs += 100;
+      if(this.elapsedMs % 1000 === 0) {
+        this.setState({ totalTimeMs: this.elapsedMs });
+      }
     }, 100);
   }
 

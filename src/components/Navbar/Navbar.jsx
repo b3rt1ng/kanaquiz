@@ -1,7 +1,18 @@
 import React, { Component } from 'react';
+import { EFFECT_LIST, getEffectSettings, setEffectSetting } from '../../data/effectSettings';
 import './Navbar.scss';
 
 class Navbar extends Component {
+  state = { settingsOpen: false, effects: getEffectSettings() };
+
+  toggleSettings = () => {
+    this.setState(prev => ({ settingsOpen: !prev.settingsOpen }));
+  }
+
+  handleEffectToggle = (key) => {
+    this.setState(prev => ({ effects: setEffectSetting(key, !prev.effects[key]) }));
+  }
+
   formatTime = (ms) => {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
@@ -24,7 +35,37 @@ class Navbar extends Component {
                       <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
                     </a>
                   </li>
-                ) : <li id="nav-kanaquiz"><p className="nav navbar-text">Kana Pro</p></li>
+                ) : (
+                  <li id="nav-kanaquiz">
+                    <p className="nav navbar-text">
+                      Kana Pro
+                      <button
+                        className="effect-settings-toggle"
+                        title="Effect settings"
+                        onClick={this.toggleSettings}
+                      >
+                        <span className="glyphicon glyphicon-cog"></span>
+                      </button>
+                    </p>
+                    {
+                      this.state.settingsOpen && (
+                        <div className="effect-settings-panel">
+                          <p className="effect-settings-title">Effects</p>
+                          {EFFECT_LIST.map(({ key, label }) => (
+                            <label className="effect-settings-row" key={key}>
+                              <input
+                                type="checkbox"
+                                checked={this.state.effects[key] !== false}
+                                onChange={() => this.handleEffectToggle(key)}
+                              />
+                              <span>{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )
+                    }
+                  </li>
+                )
               }
             </ul>
             {

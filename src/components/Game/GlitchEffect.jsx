@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { getEdgeMargins } from './edgeMargins';
 import './GlitchEffect.scss';
 
 const EDGES = ['top', 'bottom', 'left', 'right'];
@@ -35,7 +36,9 @@ function randomGlitchRect(margins) {
 class GlitchEffect extends Component {
   state = { rects: [] };
   seq = 0;
-  cleanupTimers = [];
+  // Set, not array: each timer removes itself once fired, so pending timers
+  // don't accumulate over a long session.
+  cleanupTimers = new Set();
 
   componentDidMount() {
     this.scheduleNext();
@@ -61,20 +64,8 @@ class GlitchEffect extends Component {
     }, delay);
   }
 
-  getMargins = () => {
-    const safeEl = this.props.safeZoneRef && this.props.safeZoneRef.current;
-    if (!safeEl) return null;
-    const safeRect = safeEl.getBoundingClientRect();
-    return {
-      top: Math.max(safeRect.top, 0),
-      bottom: Math.max(window.innerHeight - safeRect.bottom, 0),
-      left: Math.max(safeRect.left, 0),
-      right: Math.max(window.innerWidth - safeRect.right, 0)
-    };
-  }
-
   spawnBurst = () => {
-    const margins = this.getMargins();
+    const margins = getEdgeMargins(this.props.safeZoneRef && this.props.safeZoneRef.current);
     if (!margins) return;
 
     const combo = this.props.combo || 0;
@@ -92,9 +83,10 @@ class GlitchEffect extends Component {
       newRects.push({ id, ...rect, duration, offset });
 
       const cleanupTimer = setTimeout(() => {
+        this.cleanupTimers.delete(cleanupTimer);
         this.setState(prev => ({ rects: prev.rects.filter(r => r.id !== id) }));
       }, duration + 40);
-      this.cleanupTimers.push(cleanupTimer);
+      this.cleanupTimers.add(cleanupTimer);
     }
 
     if (newRects.length) this.setState(prev => ({ rects: [...prev.rects, ...newRects] }));

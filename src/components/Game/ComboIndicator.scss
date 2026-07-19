@@ -33,15 +33,86 @@
   display: block;
   font-weight: 900;
   font-size: calc(2.2em * var(--combo-scale, 1));
-  color: var(--accent-coral);
-  text-shadow:
-    0 0 10px rgba(255, 77, 109, 0.8),
-    0 0 24px rgba(255, 46, 136, 0.5),
-    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.85),
-    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.85);
+  color: #fff3e0;
+  animation: combo-404-shadow 10s infinite linear;
 
   @media (max-width: 768px) {
     font-size: calc(1.5em * var(--combo-scale, 1));
+  }
+}
+
+/* Depth extrusion in the style of jonaszpotoniec's 404 pen: a stack of
+   text-shadows whose offset grows 1px per layer, colors stepping through
+   the palette's pink -> red -> orange range. Each keyframe holds the full
+   list pointing at a different diagonal, and since every list has the same
+   length the browser interpolates them - the slab sweeps around smoothly.
+   (The pen builds these lists with a Sass loop; precss has none, so they
+   are written out by hand.) */
+@keyframes combo-404-shadow {
+  0% {
+    text-shadow:
+      hsl(330, 90%, 58%) 0 0,
+      hsl(330, 90%, 58%) 0 0,
+      hsl(339, 90%, 58%) 1px 1px,
+      hsl(348, 90%, 58%) 2px 2px,
+      hsl(357, 90%, 58%) 3px 3px,
+      hsl(6, 90%, 58%) 4px 4px,
+      hsl(15, 90%, 58%) 5px 5px,
+      hsl(24, 90%, 58%) 6px 6px,
+      hsl(33, 90%, 58%) 7px 7px,
+      hsl(42, 90%, 58%) 8px 8px;
+  }
+  25% {
+    text-shadow:
+      hsl(330, 90%, 58%) 0 0,
+      hsl(330, 90%, 58%) 0 0,
+      hsl(339, 90%, 58%) 1px -1px,
+      hsl(348, 90%, 58%) 2px -2px,
+      hsl(357, 90%, 58%) 3px -3px,
+      hsl(6, 90%, 58%) 4px -4px,
+      hsl(15, 90%, 58%) 5px -5px,
+      hsl(24, 90%, 58%) 6px -6px,
+      hsl(33, 90%, 58%) 7px -7px,
+      hsl(42, 90%, 58%) 8px -8px;
+  }
+  50% {
+    text-shadow:
+      hsl(330, 90%, 58%) 0 0,
+      hsl(330, 90%, 58%) 0 0,
+      hsl(339, 90%, 58%) -1px -1px,
+      hsl(348, 90%, 58%) -2px -2px,
+      hsl(357, 90%, 58%) -3px -3px,
+      hsl(6, 90%, 58%) -4px -4px,
+      hsl(15, 90%, 58%) -5px -5px,
+      hsl(24, 90%, 58%) -6px -6px,
+      hsl(33, 90%, 58%) -7px -7px,
+      hsl(42, 90%, 58%) -8px -8px;
+  }
+  75% {
+    text-shadow:
+      hsl(330, 90%, 58%) 0 0,
+      hsl(330, 90%, 58%) 0 0,
+      hsl(339, 90%, 58%) -1px 1px,
+      hsl(348, 90%, 58%) -2px 2px,
+      hsl(357, 90%, 58%) -3px 3px,
+      hsl(6, 90%, 58%) -4px 4px,
+      hsl(15, 90%, 58%) -5px 5px,
+      hsl(24, 90%, 58%) -6px 6px,
+      hsl(33, 90%, 58%) -7px 7px,
+      hsl(42, 90%, 58%) -8px 8px;
+  }
+  100% {
+    text-shadow:
+      hsl(330, 90%, 58%) 0 0,
+      hsl(330, 90%, 58%) 0 0,
+      hsl(339, 90%, 58%) 1px 1px,
+      hsl(348, 90%, 58%) 2px 2px,
+      hsl(357, 90%, 58%) 3px 3px,
+      hsl(6, 90%, 58%) 4px 4px,
+      hsl(15, 90%, 58%) 5px 5px,
+      hsl(24, 90%, 58%) 6px 6px,
+      hsl(33, 90%, 58%) 7px 7px,
+      hsl(42, 90%, 58%) 8px 8px;
   }
 }
 
@@ -75,61 +146,25 @@
   75% { transform: translate(-1px, -1px) rotate(-1deg); }
 }
 
-@keyframes combo-hue {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
-}
-
-/* Tier 2 (combo 3-5): hotter pink, stronger glow. */
-.combo-tier-2 .combo-x {
-  color: var(--accent-pink);
-  text-shadow:
-    0 0 12px rgba(255, 46, 136, 0.9),
-    0 0 30px rgba(255, 46, 136, 0.6),
-    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.85),
-    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.85);
-}
-
-/* Tier 3 (combo 6-9): orange-hot, starts vibrating. */
+/* The number's color/extrusion is the 404-style sweep above at every tier;
+   tiers escalate the ring and stack an ever-faster vibrate on top. */
 .combo-tier-3 .combo-x {
-  color: var(--accent-orange);
-  text-shadow:
-    0 0 14px rgba(255, 183, 3, 0.9),
-    0 0 34px rgba(255, 77, 109, 0.6),
-    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.85),
-    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.85);
-  animation: combo-vibrate 0.25s infinite;
+  animation: combo-404-shadow 10s infinite linear, combo-vibrate 0.25s infinite;
 }
 .combo-tier-3 .combo-ring {
   border-color: var(--accent-orange);
 }
 
-/* Tier 4 (combo 10-14): white-hot layered glow, faster vibrate + color cycling. */
 .combo-tier-4 .combo-x {
-  color: #fff3e0;
-  text-shadow:
-    0 0 10px var(--accent-coral),
-    0 0 22px var(--accent-pink),
-    0 0 40px var(--accent-orange),
-    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.9),
-    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.9);
-  animation: combo-vibrate 0.18s infinite, combo-hue 1.2s linear infinite;
+  animation: combo-404-shadow 10s infinite linear, combo-vibrate 0.18s infinite;
 }
 .combo-tier-4 .combo-ring {
   border-color: var(--accent-pink);
   border-width: 4px;
 }
 
-/* Tier 5 (combo 15+): maximum chaos. */
 .combo-tier-5 .combo-x {
-  animation: combo-vibrate 0.12s infinite, combo-hue 0.6s linear infinite;
-  text-shadow:
-    0 0 12px #fff,
-    0 0 24px var(--accent-pink),
-    0 0 46px var(--accent-orange),
-    calc(var(--ca-offset, 0px) * -1) 0 rgba(255, 20, 60, 0.95),
-    var(--ca-offset, 0px) 0 rgba(0, 225, 255, 0.95),
-    0 0 70px var(--accent-coral);
+  animation: combo-404-shadow 10s infinite linear, combo-vibrate 0.12s infinite;
 }
 .combo-tier-5 .combo-ring {
   border-color: #fff3e0;

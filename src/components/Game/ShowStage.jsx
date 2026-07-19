@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './ShowStage.scss';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import ResultsCharts from './ResultsCharts';
-import { playEnterDojoSound } from '../../data/soundEffects';
 
 class ShowStage extends Component {
   state = {
@@ -14,7 +13,6 @@ class ShowStage extends Component {
   componentDidMount() {
     this.setState({show: true});
     if(this.props.stage <= 4) {
-      playEnterDojoSound();
       // For stage 4, show difficulty selection first (unless locked from menu)
       if(this.props.stage === 4 && !this.props.isLocked) {
         this.setState({showDifficultySelect: true});

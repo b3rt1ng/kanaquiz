@@ -4,6 +4,7 @@
   z-index: 300;
   pointer-events: none;
   overflow: hidden;
+  contain: layout style paint;
 }
 
 .glitch-rect {

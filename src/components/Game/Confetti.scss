@@ -1,0 +1,31 @@
+.confetti-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 650;
+  pointer-events: none;
+  overflow: hidden;
+  contain: layout style paint;
+}
+
+/* Hidden (opacity 0) until its delayed animation kicks in, then falls past
+   the bottom edge where the overlay's overflow clips it. */
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: kq-confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+@keyframes kq-confetti-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotateZ(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--confetti-sway, 0px), 105vh, 0) rotateZ(var(--confetti-spin, 540deg));
+    opacity: 1;
+  }
+}

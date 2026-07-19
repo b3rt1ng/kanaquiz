@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
+import { playApplauseSound } from '../../data/soundEffects';
 import ShowStage from './ShowStage';
 import Question from './Question';
 import TableExercise from './TableExercise';
+import Confetti from './Confetti';
 
 class Game extends Component {
-  state = { showScreen: '' }
+  state = { showScreen: '', celebrate: false }
+  celebrateSeq = 0
 
   componentWillMount() {
     this.setState({showScreen: 'stage'});
@@ -32,11 +35,19 @@ class Game extends Component {
 
   componentWillUnmount() {
     this.props.stopTimer();
+    clearTimeout(this.celebrateTimeout);
   }
 
+  // Only reached by actually finishing a stage (starting mid-game from the
+  // menu goes through startAtStage instead), so celebrating here can't
+  // misfire on a fresh start.
   stageUp = () => {
     this.props.stageUp();
-    this.setState({showScreen: 'stage'});
+    playApplauseSound();
+    this.celebrateSeq++;
+    this.setState({showScreen: 'stage', celebrate: true});
+    clearTimeout(this.celebrateTimeout);
+    this.celebrateTimeout = setTimeout(() => this.setState({celebrate: false}), 4000);
   }
 
   lockStage = stage => {
@@ -61,9 +72,10 @@ class Game extends Component {
 
     return (
       <div>
+        {this.state.celebrate && <Confetti key={'confetti'+this.celebrateSeq} />}
         {
           this.state.showScreen==='stage' &&
-            <ShowStage 
+            <ShowStage
               lockStage={this.lockStage} 
               handleShowQuestion={this.showQuestion} 
               handleEndGame={this.props.handleEndGame} 

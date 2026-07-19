@@ -2,6 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 const path = require('path');
 const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   mode: 'production',
@@ -18,6 +19,12 @@ module.exports = {
   },
   plugins: [
     new webpack.HashedModuleIdsPlugin(),
+    // Real .css files instead of style-loader's runtime injection: the
+    // browser parses CSS in parallel with the (smaller) JS bundle, and the
+    // stylesheet text no longer lives on the JS heap.
+    new MiniCssExtractPlugin({
+      filename: '[name].[contenthash].css'
+    }),
     new HtmlWebpackPlugin({
       template: './index.html',
       minify: { collapseWhitespace: true, removeCommecnts: true },
@@ -25,7 +32,10 @@ module.exports = {
     }),
     new WorkboxWebpackPlugin.InjectManifest({
       swSrc: './src/src-sw.js',
-      swDest: 'sw.js'
+      swDest: 'sw.js',
+      // Keep the ~2.5MB of sound samples out of the install-time precache;
+      // they're fetched on demand and land in the regular HTTP cache.
+      exclude: [/\.(wav|ogg|mp3)$/, /\.map$/]
     })
   ],
   devtool: "source-map",
@@ -41,9 +51,7 @@ module.exports = {
       {
         test: /\.scss$/,
         use: [
-          {
-            loader: 'style-loader'
-          },
+          MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
             options: {
@@ -57,7 +65,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
       },
       {
         test: /\.(png|jpg|svg|woff|woff2)?(\?v=\d+.\d+.\d+)?$/,

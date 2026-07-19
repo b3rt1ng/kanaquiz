@@ -1,0 +1,61 @@
+/* CSS-only fire, following the technique of simeydotme's "css only fire"
+   (https://codepen.io/simeydotme/pen/xxWNLNa): two scrolling copies of a
+   grainy glitter texture blended (hard-light + color-dodge) over a white-hot
+   linear gradient (multiply) and a radial vignette that arcs the shape, the
+   whole thing composited onto the page with color-dodge and blown out via
+   brightness/blur/contrast so the drifting grain reads as flame licks.
+
+   The one ingredient swapped out is the glitter photo itself: it is
+   reproduced procedurally (SVG feTurbulence thresholded into sparse bright
+   clumps on black) so no external asset is needed - the discrete transfer
+   keeps ~1/3 of the noise as graded specks, which is what gives distinct
+   tongues with dark notches between them instead of one solid blob. */
+$fire-glitter: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'350'%20height%3D'500'%3E%3Cfilter%20id%3D'g'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.05%200.1'%20numOctaves%3D'5'%20seed%3D'8'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D'discrete'%20tableValues%3D'0%200%200%200%200%200.3%200.65%201'%2F%3E%3CfeFuncG%20type%3D'discrete'%20tableValues%3D'0%200%200%200%200%200.3%200.65%201'%2F%3E%3CfeFuncB%20type%3D'discrete'%20tableValues%3D'0%200%200%200%200%200.3%200.65%201'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23g)'%2F%3E%3C%2Fsvg%3E");
+
+.flame-band {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  /* Rendered at HALF resolution and compositor-scaled 2x: the fire is the
+     most expensive layer on screen (full-width, blur + blend repainted
+     every frame), and since it's blurry by nature the upscale is invisible
+     while quartering the pixels the GPU has to filter, blend and keep in
+     memory. Every px value below is therefore half its visual size (the
+     JSX halves the band height the same way). */
+  width: 50%;
+  transform: scale(2);
+  transform-origin: left bottom;
+  z-index: 250;
+  pointer-events: none;
+  contain: layout style paint;
+
+  /* Tuned down from the pen's original values (brightness 3.7 / contrast 6
+     saturated the whole band solid yellow-white): a dimmer, taller gradient
+     keeps the flame licks reaching just as high with far less blown-out
+     core, and the oversized vignette ellipse spans the full page width
+     instead of arcing the fire into a centered dome. */
+  background-image: $fire-glitter, $fire-glitter,
+    linear-gradient(
+      0deg,
+      white 0px,
+      #ff8951 2px,
+      rgba(220, 188, 22, 0.4) 28%,
+      transparent 92%
+    ),
+    radial-gradient(ellipse 200% 120% at bottom, transparent 50%, black 85%);
+  background-size: 175px 250px, 200px 325px, 100% 100%, 100% 100%;
+  background-blend-mode: hard-light, color-dodge, multiply;
+  background-repeat: repeat, repeat, repeat, no-repeat;
+  mix-blend-mode: color-dodge;
+  filter: brightness(2.6) blur(3.5px) contrast(3.8);
+  animation: kq-fire 1.75s linear infinite;
+}
+
+@keyframes kq-fire {
+  0% {
+    background-position: center 0px, center 0px, 50% 100%, center center;
+  }
+  100% {
+    background-position: center -250px, center -325px, 50% 100%, center center;
+  }
+}

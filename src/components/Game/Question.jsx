@@ -2,10 +2,12 @@ import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { quizSettings } from '../../data/quizSettings';
 import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
-import { playWrongSound, playStageUpSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
+import { playWrongSound, playStageUpSound, playComboSound, playKeySound, playComboBreakSound, playEnterDojoSound } from '../../data/soundEffects';
 import { pickCompliment } from '../../data/compliments';
+import { getEffectSettings } from '../../data/effectSettings';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
+import FlameEffect from './FlameEffect';
 import ComplimentPopup, { buildCompliment } from './ComplimentPopup';
 import './Question.scss';
 
@@ -205,7 +207,7 @@ class Question extends Component {
     // Play feedback sound (fanfare on the stage-completing answer)
     if(stageCompleted) playStageUpSound();
     else if(isCorrect) playComboSound(newCombo);
-    else if(hadActiveCombo) playComboBreakSound();
+    else if(hadActiveCombo) playComboBreakSound(this.state.combo);
     else playWrongSound();
 
     if(isCorrect && !stageCompleted) {
@@ -326,6 +328,9 @@ class Question extends Component {
   componentDidMount() {
     if(this.props.stage <= 4) {
       this.setNewQuestion();
+      // "Entering the dojo" as the first question appears (the stage intro
+      // screen itself stays silent).
+      playEnterDojoSound();
     }
   }
 
@@ -354,18 +359,21 @@ class Question extends Component {
       ? ` - ${currentStageStats.correct}/${currentStageStats.total} (${statsPercentage}%)`
       : '';
 
+    const effects = getEffectSettings();
+    const trembleOn = effects.tremble && this.state.combo > 0;
     const trembleAmp = Math.min(this.state.combo * 0.6, 1.2);
     const trembleDuration = Math.max(2.2 - this.state.combo * 0.09, 1.3);
-    const trembleStyle = this.state.combo > 0
+    const trembleStyle = trembleOn
       ? { '--tremble-amp': trembleAmp + 'px', animationDuration: trembleDuration + 's' }
       : {};
-    const trembleClass = 'question-tremble' + (this.state.combo > 0 ? ' tremble-active' : '');
+    const trembleClass = 'question-tremble' + (trembleOn ? ' tremble-active' : '');
 
     return (
       <div className="text-center question col-xs-12">
-        <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />
-        <GlitchEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />
-        <ComplimentPopup compliment={this.state.compliment} key={'compliment'+this.complimentSeq} />
+        {effects.combo && <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />}
+        {effects.glitch && <GlitchEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
+        {effects.flames && <FlameEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
+        {effects.compliments && <ComplimentPopup compliment={this.state.compliment} key={'compliment'+this.complimentSeq} />}
         <div className={trembleClass} style={trembleStyle} ref={this.trembleRef}>
           {this.getPreviousResult()}
           <div className="big-character" key={'q'+this.answerSeq}>{this.getShowableQuestion()}</div>
