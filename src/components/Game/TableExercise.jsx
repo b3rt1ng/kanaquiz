@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { findRomajisAtKanaKey, arrayContains, shuffle } from '../../data/helperFuncs';
-import { playCorrectSound, playWrongSound } from '../../data/soundEffects';
+import { playWrongSound, playComboSound } from '../../data/soundEffects';
 import ResultsCharts from './ResultsCharts';
+import ComboIndicator from './ComboIndicator';
 import './TableExercise.scss';
 
 // The base 46 gojuon characters plus dakuten/handakuten/yoon variants
@@ -37,7 +38,7 @@ class TableExercise extends Component {
       });
     });
 
-    this.state = { cells };
+    this.state = { cells, combo: 0 };
     this.focusStart = {};
   }
 
@@ -85,7 +86,10 @@ class TableExercise extends Component {
     const isCorrect = arrayContains(cell.value.toLowerCase(), acceptable);
     const elapsedMs = this.focusStart[kana] ? Math.min(Date.now() - this.focusStart[kana], 30000) : 0;
 
-    if(isCorrect) playCorrectSound(); else playWrongSound();
+    // Combo streak: climbs on consecutive correct cells, resets on a miss.
+    const newCombo = isCorrect ? this.state.combo + 1 : 0;
+
+    if(isCorrect) playComboSound(newCombo); else playWrongSound();
 
     this.setState(prevState => ({
       cells: {
@@ -95,7 +99,8 @@ class TableExercise extends Component {
           status: isCorrect ? 'correct' : 'wrong',
           timeMs: elapsedMs
         }
-      }
+      },
+      combo: newCombo
     }), this.updateHeaderInfo);
   }
 
@@ -139,7 +144,7 @@ class TableExercise extends Component {
       });
     });
     this.focusStart = {};
-    this.setState({ cells }, this.updateHeaderInfo);
+    this.setState({ cells, combo: 0 }, this.updateHeaderInfo);
     window.scrollTo(0, 0);
   }
 
@@ -181,6 +186,7 @@ class TableExercise extends Component {
 
     return (
       <div className="table-exercise text-center">
+        <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />
         {this.kanaTypes.map(type => this.renderTable(type))}
 
         {

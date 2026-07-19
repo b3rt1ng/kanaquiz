@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { quizSettings } from '../../data/quizSettings';
 import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
-import { playCorrectSound, playWrongSound, playStageUpSound } from '../../data/soundEffects';
+import { playWrongSound, playStageUpSound, playComboSound } from '../../data/soundEffects';
+import ComboIndicator from './ComboIndicator';
 import './Question.scss';
 
 class Question extends Component {
@@ -12,7 +13,8 @@ class Question extends Component {
     currentAnswer: '',
     currentQuestion: [],
     answerOptions: [],
-    stageProgress: 0
+    stageProgress: 0,
+    combo: 0
   }
   // Bumped on every answer/question so the feedback + big-character divs
   // remount (via key=) and their CSS animations replay every time, even
@@ -187,9 +189,13 @@ class Question extends Component {
     this.setState({stageProgress: this.stageProgress});
     const stageCompleted = this.stageProgress >= quizSettings.stageLength[this.props.stage] && !this.props.isLocked;
 
+    // Combo streak: climbs on consecutive correct answers, resets on a miss.
+    const newCombo = isCorrect ? this.state.combo + 1 : 0;
+    this.setState({combo: newCombo});
+
     // Play feedback sound (fanfare on the stage-completing answer)
     if(stageCompleted) playStageUpSound();
-    else if(isCorrect) playCorrectSound();
+    else if(isCorrect) playComboSound(newCombo);
     else playWrongSound();
 
     if(stageCompleted) {
@@ -317,6 +323,7 @@ class Question extends Component {
     
     return (
       <div className="text-center question col-xs-12">
+        <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />
         {this.getPreviousResult()}
         <div className="big-character" key={'q'+this.answerSeq}>{this.getShowableQuestion()}</div>
         <div className="answer-container">

@@ -64,3 +64,23 @@ export function playStageUpSound() {
     { freq: 1046.5, start: 0.36, duration: 0.30, type: 'triangle', gain: 0.16 }  // C6
   ]);
 }
+
+// Combo tick, played on every consecutive correct answer. Pitch climbs a
+// semitone per combo step (capped so it never goes ultrasonic), and extra
+// harmonic layers stack in as the combo grows for a "powering up" feel.
+export function playComboSound(combo) {
+  const step = Math.min(combo - 1, 20);
+  const freq = 392.0 * Math.pow(2, step / 12); // starts at G4, climbs ~1.7 octaves by combo 21+
+  const gain = 0.10 + Math.min(combo, 12) * 0.006;
+
+  const notes = [
+    { freq, start: 0, duration: 0.14, type: 'square', gain }
+  ];
+  if (combo >= 5) {
+    notes.push({ freq: freq * 1.5, start: 0.015, duration: 0.13, type: 'triangle', gain: gain * 0.85 });
+  }
+  if (combo >= 10) {
+    notes.push({ freq: freq * 2, start: 0.03, duration: 0.17, type: 'sawtooth', gain: gain * 0.7 });
+  }
+  playNotes(notes);
+}
