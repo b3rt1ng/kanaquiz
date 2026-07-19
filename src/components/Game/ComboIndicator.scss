@@ -32,8 +32,6 @@
 .combo-x {
   display: block;
   font-weight: 900;
-  font-style: italic;
-  letter-spacing: -0.02em;
   font-size: calc(2.2em * var(--combo-scale, 1));
   color: var(--accent-coral);
   text-shadow: 0 0 10px rgba(255, 77, 109, 0.8), 0 0 24px rgba(255, 46, 136, 0.5);

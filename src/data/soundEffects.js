@@ -1,8 +1,29 @@
 // Sound effects. Most are synthesized on the fly with the Web Audio API;
-// the combo sounds are real samples (Jet Set Radio's "combo" SFX).
+// the combo/stage/dojo sounds are real samples (Jet Set Radio SFX).
 import comboTickUrl from '../assets/sounds/e_s004.ogg';
 import comboMelodyUrl from '../assets/sounds/e_s013.ogg';
 import comboBigMelodyUrl from '../assets/sounds/e_s012.ogg';
+import enterDojoUrl from '../assets/sounds/se_menu_enter_dojo_1.wav';
+import comboBreakUrl from '../assets/sounds/se_menu_spirits_target_exit_lose.wav';
+import winningLevel0 from '../assets/sounds/se_menu_winning_level_0.wav';
+import winningLevel1 from '../assets/sounds/se_menu_winning_level_1.wav';
+import winningLevel2 from '../assets/sounds/se_menu_winning_level_2.wav';
+import winningLevel3 from '../assets/sounds/se_menu_winning_level_3.wav';
+import winningLevel4 from '../assets/sounds/se_menu_winning_level_4.wav';
+import winningLevel5 from '../assets/sounds/se_menu_winning_level_5.wav';
+import winningLevel6 from '../assets/sounds/se_menu_winning_level_6.wav';
+import winningLevel7 from '../assets/sounds/se_menu_winning_level_7.wav';
+import winningLevel8 from '../assets/sounds/se_menu_winning_level_8.wav';
+import winningLevel9 from '../assets/sounds/se_menu_winning_level_9.wav';
+import winningLevel10 from '../assets/sounds/se_menu_winning_level_10.wav';
+
+// Layered "winning" stems - played simultaneously, one more stacking in for
+// every combo step past 10, building into a big wall of sound at high streaks.
+const winningLevels = [
+  winningLevel0, winningLevel1, winningLevel2, winningLevel3, winningLevel4,
+  winningLevel5, winningLevel6, winningLevel7, winningLevel8, winningLevel9,
+  winningLevel10
+];
 
 let audioCtx = null;
 
@@ -62,7 +83,7 @@ function loadBuffer(url) {
 
 // Kick off decoding as soon as the module loads so the first combo tick
 // isn't held up waiting on the network/decode.
-[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl].forEach(loadBuffer);
+[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl, enterDojoUrl, comboBreakUrl, ...winningLevels].forEach(loadBuffer);
 
 function playSample(url, { playbackRate = 1, gain = 0.5 } = {}) {
   const ctx = getAudioContext();
@@ -113,7 +134,9 @@ export function playStageUpSound() {
 // combo blip (e_s004), sped up a little more each step so it climbs in pitch
 // without turning into an unrecognisable chipmunk squeal. Every 5th combo
 // layers in one of JSR's little melodic combos of that same sound for a
-// bigger payoff, with the longer one reserved for every 10th.
+// bigger payoff, with the longer one reserved for every 10th. Past 10, one
+// more "winning level" stem stacks in on every single step, building into a
+// full wall of sound the longer the streak holds.
 export function playComboSound(combo) {
   const step = Math.min(combo - 1, 24);
   const playbackRate = 1 + step * 0.035; // +3.5%/step, caps around 1.84x
@@ -126,6 +149,24 @@ export function playComboSound(combo) {
   } else if (combo > 0 && combo % 5 === 0) {
     playSample(comboMelodyUrl, { gain: 0.55 });
   }
+
+  if (combo > 10) {
+    const layers = Math.min(combo - 10, winningLevels.length);
+    for (let i = 0; i < layers; i++) {
+      playSample(winningLevels[i], { gain: 0.45 });
+    }
+  }
+}
+
+// Played when a stage's intro screen appears - "entering the dojo".
+export function playEnterDojoSound() {
+  playSample(enterDojoUrl, { gain: 0.6 });
+}
+
+// Played when an active combo streak gets broken by a wrong answer (as
+// opposed to just missing with no streak on the line, see playWrongSound).
+export function playComboBreakSound() {
+  playSample(comboBreakUrl, { gain: 0.55 });
 }
 
 // Soft, short blip for keyboard input - a bit of randomized detune per

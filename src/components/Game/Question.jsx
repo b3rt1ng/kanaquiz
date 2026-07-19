@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { quizSettings } from '../../data/quizSettings';
 import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
-import { playWrongSound, playStageUpSound, playComboSound, playKeySound } from '../../data/soundEffects';
+import { playWrongSound, playStageUpSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
 import ComboIndicator from './ComboIndicator';
 import './Question.scss';
 
@@ -190,12 +190,14 @@ class Question extends Component {
     const stageCompleted = this.stageProgress >= quizSettings.stageLength[this.props.stage] && !this.props.isLocked;
 
     // Combo streak: climbs on consecutive correct answers, resets on a miss.
+    const hadActiveCombo = this.state.combo > 0;
     const newCombo = isCorrect ? this.state.combo + 1 : 0;
     this.setState({combo: newCombo});
 
     // Play feedback sound (fanfare on the stage-completing answer)
     if(stageCompleted) playStageUpSound();
     else if(isCorrect) playComboSound(newCombo);
+    else if(hadActiveCombo) playComboBreakSound();
     else playWrongSound();
 
     if(stageCompleted) {

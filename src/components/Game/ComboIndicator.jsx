@@ -11,6 +11,28 @@ function getTier(combo) {
   return 1;
 }
 
+const KANJI_DIGITS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+const KANJI_UNITS = ['', '十', '百', '千'];
+
+// Renders a positive integer as kanji numerals (15 -> 十五, 104 -> 百四..).
+function toKanjiNumeral(num) {
+  if (num <= 0) return '〇';
+
+  const str = String(num);
+  const len = str.length;
+  let result = '';
+
+  for (let i = 0; i < len; i++) {
+    const digit = parseInt(str[i], 10);
+    const unitIndex = len - i - 1;
+    if (digit === 0) continue;
+    // "十" not "一十" for 10, but "十一" keeps its 一 in the ones place.
+    result += (digit === 1 && unitIndex > 0) ? KANJI_UNITS[unitIndex] : KANJI_DIGITS[digit] + KANJI_UNITS[unitIndex];
+  }
+
+  return result;
+}
+
 function ComboIndicator({ combo }) {
   if (!combo || combo < 1) return null;
 
@@ -22,7 +44,7 @@ function ComboIndicator({ combo }) {
     <div className="combo-root">
       <div className={`combo-indicator combo-tier-${tier}`} style={{ '--combo-scale': scale }}>
         <span className="combo-ring"></span>
-        <span className="combo-x">×{combo}</span>
+        <span className="combo-x">×{toKanjiNumeral(combo)}</span>
       </div>
       {isMilestone && <div className="combo-flash"></div>}
     </div>

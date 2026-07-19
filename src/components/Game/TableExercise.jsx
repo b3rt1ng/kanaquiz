@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { findRomajisAtKanaKey, arrayContains, shuffle } from '../../data/helperFuncs';
-import { playWrongSound, playComboSound, playKeySound } from '../../data/soundEffects';
+import { playWrongSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import './TableExercise.scss';
@@ -87,9 +87,12 @@ class TableExercise extends Component {
     const elapsedMs = this.focusStart[kana] ? Math.min(Date.now() - this.focusStart[kana], 30000) : 0;
 
     // Combo streak: climbs on consecutive correct cells, resets on a miss.
+    const hadActiveCombo = this.state.combo > 0;
     const newCombo = isCorrect ? this.state.combo + 1 : 0;
 
-    if(isCorrect) playComboSound(newCombo); else playWrongSound();
+    if(isCorrect) playComboSound(newCombo);
+    else if(hadActiveCombo) playComboBreakSound();
+    else playWrongSound();
 
     this.setState(prevState => ({
       cells: {
