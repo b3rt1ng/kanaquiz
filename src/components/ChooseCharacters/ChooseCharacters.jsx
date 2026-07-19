@@ -10,8 +10,7 @@ class ChooseCharacters extends Component {
     showAlternatives: [],
     showSimilars: [],
     startIsVisible: true,
-    stage4PickerOpen: false,
-    tablePickerOpen: false
+    stage4PickerOpen: false
   }
 
   componentDidMount() {
@@ -220,9 +219,13 @@ class ChooseCharacters extends Component {
     this.props.startAtStage(this.state.selectedGroups, 4, difficulty);
   }
 
-  startTable(kanaType) {
-    this.setState({ tablePickerOpen: false });
-    this.props.startTableExercise(kanaType);
+  startTable() {
+    if(this.state.selectedGroups.length < 1) {
+      this.setState({ errMsg: 'Choose at least one group!'});
+      return;
+    }
+    this.setState({ errMsg: '' });
+    this.props.startTableExercise(this.state.selectedGroups);
   }
 
   render() {
@@ -278,9 +281,7 @@ class ChooseCharacters extends Component {
                 <button className="btn btn-default practice-btn"
                   onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen, tablePickerOpen: false }))}
                 >Stage 4</button>
-                <button className="btn btn-info practice-btn"
-                  onClick={() => this.setState(s => ({ tablePickerOpen: !s.tablePickerOpen, stage4PickerOpen: false }))}
-                >Table</button>
+                <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
               </div>
               {
                 this.state.stage4PickerOpen &&
@@ -288,14 +289,6 @@ class ChooseCharacters extends Component {
                     <button className="btn btn-success" onClick={() => this.startStage4(1)}>Level 1 (3 characters)</button>
                     <button className="btn btn-warning" onClick={() => this.startStage4(2)}>Level 2 (5 characters)</button>
                     <button className="btn btn-danger" onClick={() => this.startStage4(3)}>Level 3 (8 characters)</button>
-                  </div>
-              }
-              {
-                this.state.tablePickerOpen &&
-                  <div className="practice-subpicker">
-                    <button className="btn btn-default" onClick={() => this.startTable('hiragana')}>Hiragana</button>
-                    <button className="btn btn-default" onClick={() => this.startTable('katakana')}>Katakana</button>
-                    <button className="btn btn-default" onClick={() => this.startTable('both')}>Both</button>
                   </div>
               }
             </div>

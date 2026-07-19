@@ -52,7 +52,7 @@ class Game extends Component {
     if(this.props.stage === 'table') {
       return (
         <TableExercise
-          tableKanaType={this.props.tableKanaType}
+          decidedGroups={this.props.decidedGroups}
           handleEndGame={this.props.handleEndGame}
           setTableHeaderInfo={this.props.setTableHeaderInfo}
         />

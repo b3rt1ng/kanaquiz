@@ -6,15 +6,17 @@ import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import './TableExercise.scss';
 
-// The base 46 gojuon characters plus dakuten/handakuten/yoon variants
-// (ga, pa, kya, fa..) - everything except the "_s" look-alike groups,
-// which just re-list characters already included elsewhere and would
-// collide with them (cells are keyed by the kana glyph itself).
-function getTableKanaKeys(kanaType) {
+// Kana keys drawn from the character groups the user selected on the menu
+// screen - the same selection used to start Stage 1-4 / the full quiz. A
+// character can end up here via more than one selected group (e.g. its base
+// group and a "look-alike" group both selected); the object-keyed cells
+// dedupe that naturally.
+function getSelectedKanaKeys(kanaType, decidedGroups) {
   const keys = [];
   Object.keys(kanaDictionary[kanaType]).forEach(groupName => {
-    if(groupName.endsWith('_s')) return;
-    keys.push(...Object.keys(kanaDictionary[kanaType][groupName].characters));
+    if(arrayContains(groupName, decidedGroups)) {
+      keys.push(...Object.keys(kanaDictionary[kanaType][groupName].characters));
+    }
   });
   return keys;
 }
@@ -23,15 +25,17 @@ class TableExercise extends Component {
   constructor(props) {
     super(props);
 
-    this.kanaTypes = this.props.tableKanaType === 'both'
-      ? ['hiragana', 'katakana']
-      : [this.props.tableKanaType];
+    // Only build a grid for a script (hiragana/katakana) if at least one of
+    // its groups was actually selected.
+    this.kanaTypes = Object.keys(kanaDictionary).filter(type =>
+      Object.keys(kanaDictionary[type]).some(groupName => arrayContains(groupName, this.props.decidedGroups))
+    );
 
     this.orderedKana = {};
     this.flatOrder = [];
     const cells = {};
     this.kanaTypes.forEach(type => {
-      const keys = getTableKanaKeys(type);
+      const keys = getSelectedKanaKeys(type, this.props.decidedGroups);
       shuffle(keys);
       this.orderedKana[type] = keys;
       this.flatOrder.push(...keys);
@@ -68,8 +72,8 @@ class TableExercise extends Component {
   }
 
   getKanaTypeLabel() {
-    if(this.props.tableKanaType === 'both') return 'Hiragana & Katakana';
-    return this.props.tableKanaType === 'hiragana' ? 'Hiragana · ひらがな' : 'Katakana · カタカナ';
+    if(this.kanaTypes.length === 2) return 'Hiragana & Katakana';
+    return this.kanaTypes[0] === 'hiragana' ? 'Hiragana · ひらがな' : 'Katakana · カタカナ';
   }
 
   updateHeaderInfo = () => {
@@ -164,7 +168,7 @@ class TableExercise extends Component {
     const cells = {};
     this.flatOrder = [];
     this.kanaTypes.forEach(type => {
-      const keys = getTableKanaKeys(type);
+      const keys = getSelectedKanaKeys(type, this.props.decidedGroups);
       shuffle(keys);
       this.orderedKana[type] = keys;
       this.flatOrder.push(...keys);

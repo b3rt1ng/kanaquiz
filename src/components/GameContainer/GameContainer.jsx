@@ -13,7 +13,6 @@ class GameContainer extends PureComponent {
     isLocked: false,
     decidedGroups: JSON.parse(localStorage.getItem('decidedGroups') || null) || [],
     stage4Difficulty: 1, // 1=3 chars, 2=5 chars, 3=8 chars
-    tableKanaType: null, // 'hiragana' | 'katakana' | 'both'
     stageStats: {
       1: { correct: 0, total: 0 },
       2: { correct: 0, total: 0 },
@@ -65,13 +64,15 @@ class GameContainer extends PureComponent {
     this.props.handleStartGame();
   }
 
-  // Table exercise: separate self-contained mode, not part of the 1-4 stage progression.
-  startTableExercise = (kanaType) => {
+  // Table exercise: separate self-contained mode, not part of the 1-4 stage
+  // progression, but built from the same character selection as everything else.
+  startTableExercise = (decidedGroups) => {
     this.setState({
       stage: 'table',
       isLocked: true,
-      tableKanaType: kanaType
+      decidedGroups: decidedGroups
     });
+    localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
     this.props.handleStartGame();
   }
 
@@ -159,7 +160,6 @@ class GameContainer extends PureComponent {
                 confusionPairs={this.state.confusionPairs}
                 stage4Difficulty={this.state.stage4Difficulty}
                 setStage4Difficulty={this.setStage4Difficulty}
-                tableKanaType={this.state.tableKanaType}
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}
                 setTableHeaderInfo={this.props.setTableHeaderInfo}
