@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { quizSettings } from '../../data/quizSettings';
 import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
-import { playWrongSound, playStageUpSound, playComboSound } from '../../data/soundEffects';
+import { playWrongSound, playStageUpSound, playComboSound, playKeySound } from '../../data/soundEffects';
 import ComboIndicator from './ComboIndicator';
 import './Question.scss';
 
@@ -282,6 +282,12 @@ class Question extends Component {
     this.setState({currentAnswer: e.target.value.replace(/\s+/g, '')});
   }
 
+  handleAnswerKeyDown = e => {
+    // Enter submits the form (playing its own sounds); only give the
+    // "typing" feedback to actual character input.
+    if(e.key !== 'Enter') playKeySound();
+  }
+
   handleSubmit = e => {
     e.preventDefault();
     if(this.state.currentAnswer!='') {
@@ -338,7 +344,7 @@ class Question extends Component {
               })
             : <div className="answer-form-container">
                 <form onSubmit={this.handleSubmit}>
-                  <input autoFocus className="answer-input" type="text" value={this.state.currentAnswer} onChange={this.handleAnswerChange} />
+                  <input autoFocus className="answer-input" type="text" value={this.state.currentAnswer} onChange={this.handleAnswerChange} onKeyDown={this.handleAnswerKeyDown} />
                 </form>
               </div>
           }

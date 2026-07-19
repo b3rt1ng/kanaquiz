@@ -1,5 +1,8 @@
-// Simple sound effects generated with the Web Audio API.
-// No audio files needed — tones are synthesized on the fly.
+// Sound effects. Most are synthesized on the fly with the Web Audio API;
+// the combo sounds are real samples (Jet Set Radio's "combo" SFX).
+import comboTickUrl from '../assets/sounds/e_s004.ogg';
+import comboMelodyUrl from '../assets/sounds/e_s013.ogg';
+import comboBigMelodyUrl from '../assets/sounds/e_s012.ogg';
 
 let audioCtx = null;
 
@@ -39,6 +42,47 @@ function playNotes(notes) {
   });
 }
 
+// --- Sample playback (for the Jet Set Radio combo sounds) ---------------
+
+const bufferCache = {};
+
+function loadBuffer(url) {
+  if (bufferCache[url]) return bufferCache[url];
+  const ctx = getAudioContext();
+  if (!ctx) return Promise.resolve(null);
+
+  const promise = fetch(url)
+    .then(res => res.arrayBuffer())
+    .then(data => ctx.decodeAudioData(data))
+    .catch(() => null);
+
+  bufferCache[url] = promise;
+  return promise;
+}
+
+// Kick off decoding as soon as the module loads so the first combo tick
+// isn't held up waiting on the network/decode.
+[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl].forEach(loadBuffer);
+
+function playSample(url, { playbackRate = 1, gain = 0.5 } = {}) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  loadBuffer(url).then(buffer => {
+    if (!buffer) return;
+    const source = ctx.createBufferSource();
+    const gainNode = ctx.createGain();
+
+    source.buffer = buffer;
+    source.playbackRate.value = playbackRate;
+    gainNode.gain.value = gain;
+
+    source.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    source.start(0);
+  });
+}
+
 // Bright ascending two-note chime for a correct answer.
 export function playCorrectSound() {
   playNotes([
@@ -65,22 +109,37 @@ export function playStageUpSound() {
   ]);
 }
 
-// Combo tick, played on every consecutive correct answer. Pitch climbs a
-// semitone per combo step (capped so it never goes ultrasonic), and extra
-// harmonic layers stack in as the combo grows for a "powering up" feel.
+// Combo tick, played on every consecutive correct answer: the Jet Set Radio
+// combo blip (e_s004), sped up a little more each step so it climbs in pitch
+// without turning into an unrecognisable chipmunk squeal. Every 5th combo
+// layers in one of JSR's little melodic combos of that same sound for a
+// bigger payoff, with the longer one reserved for every 10th.
 export function playComboSound(combo) {
-  const step = Math.min(combo - 1, 20);
-  const freq = 392.0 * Math.pow(2, step / 12); // starts at G4, climbs ~1.7 octaves by combo 21+
-  const gain = 0.10 + Math.min(combo, 12) * 0.006;
+  const step = Math.min(combo - 1, 24);
+  const playbackRate = 1 + step * 0.035; // +3.5%/step, caps around 1.84x
+  const gain = 0.5 + Math.min(combo, 10) * 0.02;
 
-  const notes = [
-    { freq, start: 0, duration: 0.14, type: 'square', gain }
-  ];
-  if (combo >= 5) {
-    notes.push({ freq: freq * 1.5, start: 0.015, duration: 0.13, type: 'triangle', gain: gain * 0.85 });
+  playSample(comboTickUrl, { playbackRate, gain });
+
+  if (combo > 0 && combo % 10 === 0) {
+    playSample(comboBigMelodyUrl, { gain: 0.6 });
+  } else if (combo > 0 && combo % 5 === 0) {
+    playSample(comboMelodyUrl, { gain: 0.55 });
   }
-  if (combo >= 10) {
-    notes.push({ freq: freq * 2, start: 0.03, duration: 0.17, type: 'sawtooth', gain: gain * 0.7 });
-  }
-  playNotes(notes);
+}
+
+// Soft, short blip for keyboard input - a bit of randomized detune per
+// keystroke so typing doesn't sound like a machine gun.
+export function playKeySound() {
+  const detune = (Math.random() - 0.5) * 60;
+  playNotes([
+    { freq: 720 + detune, start: 0, duration: 0.045, type: 'square', gain: 0.045 }
+  ]);
+}
+
+// Very light tick for hovering over buttons/interactive rows.
+export function playHoverSound() {
+  playNotes([
+    { freq: 1046.5, start: 0, duration: 0.05, type: 'sine', gain: 0.035 }
+  ]);
 }

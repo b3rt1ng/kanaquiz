@@ -3,8 +3,13 @@ import './App.scss';
 import Navbar from '../Navbar/Navbar';
 import GameContainer from '../GameContainer/GameContainer';
 import { removeHash } from '../../data/helperFuncs';
+import { playHoverSound } from '../../data/soundEffects';
 
 const options = {};
+
+// Delegated hover sound: one listener for the whole app instead of wiring
+// onMouseEnter into every button/row individually.
+const HOVER_SELECTOR = 'button, .choose-row, .panel-footer a, .navbar a, .down-arrow';
 
 class App extends Component {
   state = { gameState: 'chooseCharacters', totalTimeMs: 0, tableHeaderInfo: null };
@@ -56,12 +61,16 @@ class App extends Component {
   componentDidMount() {
     window.addEventListener('blur', this.handleWindowBlur);
     window.addEventListener('focus', this.handleWindowFocus);
+    document.addEventListener('mouseover', this.handleGlobalMouseOver);
+    document.addEventListener('mouseout', this.handleGlobalMouseOut);
   }
 
   componentWillUnmount() {
     this.stopTimer();
     window.removeEventListener('blur', this.handleWindowBlur);
     window.removeEventListener('focus', this.handleWindowFocus);
+    document.removeEventListener('mouseover', this.handleGlobalMouseOver);
+    document.removeEventListener('mouseout', this.handleGlobalMouseOut);
   }
 
   handleWindowBlur = () => {
@@ -71,6 +80,28 @@ class App extends Component {
   handleWindowFocus = () => {
     if(this.state.gameState === 'game') {
       this.startTimer();
+    }
+  }
+
+  lastHoverTarget = null
+  lastHoverSoundAt = 0
+
+  handleGlobalMouseOver = (e) => {
+    const target = e.target.closest(HOVER_SELECTOR);
+    if(!target || target === this.lastHoverTarget) return;
+    this.lastHoverTarget = target;
+
+    // Throttle so sweeping the mouse across many small elements (e.g. the
+    // character checklist) doesn't turn into a wall of noise.
+    const now = Date.now();
+    if(now - this.lastHoverSoundAt < 35) return;
+    this.lastHoverSoundAt = now;
+    playHoverSound();
+  }
+
+  handleGlobalMouseOut = (e) => {
+    if(this.lastHoverTarget && !this.lastHoverTarget.contains(e.relatedTarget)) {
+      this.lastHoverTarget = null;
     }
   }
 

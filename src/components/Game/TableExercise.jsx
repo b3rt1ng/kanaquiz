@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { findRomajisAtKanaKey, arrayContains, shuffle } from '../../data/helperFuncs';
-import { playWrongSound, playComboSound } from '../../data/soundEffects';
+import { playWrongSound, playComboSound, playKeySound } from '../../data/soundEffects';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import './TableExercise.scss';
@@ -106,6 +106,7 @@ class TableExercise extends Component {
 
   handleKeyDown = (e) => {
     if(e.key === 'Enter') e.target.blur();
+    else playKeySound();
   }
 
   isComplete() {
