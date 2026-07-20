@@ -87,6 +87,16 @@ class GameContainer extends PureComponent {
     this.props.handleStartGame();
   }
 
+  // Counting exercise: self-contained like table/listening, but not tied to
+  // a kana-group selection at all (numbers, not characters).
+  startCountingExercise = () => {
+    this.setState({
+      stage: 'counting',
+      isLocked: true
+    });
+    this.props.handleStartGame();
+  }
+
   updateStageStats = (stage, isCorrect) => {
     this.setState(prevState => {
       const newStats = { ...prevState.stageStats };
@@ -156,6 +166,7 @@ class GameContainer extends PureComponent {
               startAtStage={this.startAtStage}
               startTableExercise={this.startTableExercise}
               startListeningExercise={this.startListeningExercise}
+              startCountingExercise={this.startCountingExercise}
             />
           }
           { this.props.gameState==='game' &&
@@ -175,6 +186,7 @@ class GameContainer extends PureComponent {
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}
                 setTableHeaderInfo={this.props.setTableHeaderInfo}
+                setHelpContent={this.props.setHelpContent}
               />
           }
         </div>

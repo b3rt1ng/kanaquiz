@@ -16,7 +16,7 @@ const crowdUrls = [crowdUrl1, crowdUrl2, crowdUrl3, crowdUrl4];
 
 let audioCtx = null;
 
-function getAudioContext() {
+export function getAudioContext() {
   if (audioCtx === null) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (AudioContextClass) audioCtx = new AudioContextClass();
@@ -98,6 +98,17 @@ export function playCorrectSound() {
   playNotes([
     { freq: 587.33, start: 0, duration: 0.12, type: 'sine' },    // D5
     { freq: 880.0, start: 0.1, duration: 0.18, type: 'sine' }    // A5
+  ]);
+}
+
+// Gentle two-note "heads up" chime for the Counting exercise's "right
+// value, non-standard spelling" nudge - deliberately NOT the bright correct
+// chime (this isn't a full pass) and NOT the wrong buzz (it isn't an
+// error either) - a softer triangle-wave tone in between the two.
+export function playSpellingNoteSound() {
+  playNotes([
+    { freq: 784.0, start: 0, duration: 0.1, type: 'triangle', gain: 0.12 },    // G5
+    { freq: 1046.5, start: 0.09, duration: 0.16, type: 'triangle', gain: 0.13 } // C6
   ]);
 }
 

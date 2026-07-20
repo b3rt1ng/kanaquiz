@@ -3,10 +3,21 @@ import { EFFECT_LIST, getEffectSettings, setEffectSetting } from '../../data/eff
 import './Navbar.scss';
 
 class Navbar extends Component {
-  state = { settingsOpen: false, effects: getEffectSettings() };
+  state = { settingsOpen: false, helpOpen: false, effects: getEffectSettings() };
 
   toggleSettings = () => {
     this.setState(prev => ({ settingsOpen: !prev.settingsOpen }));
+  }
+
+  toggleHelp = () => {
+    this.setState(prev => ({ helpOpen: !prev.helpOpen }));
+  }
+
+  componentDidUpdate(prevProps) {
+    // Don't leave a stale open panel behind once its exercise unmounts.
+    if (prevProps.helpContent && !this.props.helpContent && this.state.helpOpen) {
+      this.setState({ helpOpen: false });
+    }
   }
 
   handleEffectToggle = (key) => {
@@ -81,9 +92,29 @@ class Navbar extends Component {
             }
             {
               this.props.gameState == 'game' && (
-                <p className="nav navbar-text timer-display">
-                  <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
-                </p>
+                <div className="timer-help-group">
+                  <p className="nav navbar-text timer-display">
+                    <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
+                  </p>
+                  {
+                    this.props.helpContent && (
+                      <button
+                        className="help-toggle"
+                        title="How to type"
+                        onClick={this.toggleHelp}
+                      >
+                        <span className="glyphicon glyphicon-question-sign"></span>
+                      </button>
+                    )
+                  }
+                  {
+                    this.props.helpContent && this.state.helpOpen && (
+                      <div className="help-panel help-panel-right">
+                        {this.props.helpContent}
+                      </div>
+                    )
+                  }
+                </div>
               )
             }
           </div>

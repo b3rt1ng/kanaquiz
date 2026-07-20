@@ -12,7 +12,7 @@ const options = {};
 const HOVER_SELECTOR = 'button, .choose-row, .panel-footer a, .navbar a, .down-arrow';
 
 class App extends Component {
-  state = { gameState: 'chooseCharacters', totalTimeMs: 0, tableHeaderInfo: null };
+  state = { gameState: 'chooseCharacters', totalTimeMs: 0, tableHeaderInfo: null, helpContent: null };
   timerInterval = null;
   // Authoritative elapsed time, accumulated outside of state: the interval
   // ticks every 100ms (so pause/resume stays accurate) but the display only
@@ -25,12 +25,16 @@ class App extends Component {
   }
 
   endGame = () => {
-    this.setState({gameState: 'chooseCharacters', tableHeaderInfo: null});
+    this.setState({gameState: 'chooseCharacters', tableHeaderInfo: null, helpContent: null});
     this.stopTimer();
   }
 
   setTableHeaderInfo = (tableHeaderInfo) => {
     this.setState({tableHeaderInfo});
+  }
+
+  setHelpContent = (helpContent) => {
+    this.setState({helpContent});
   }
 
   startTimer = () => {
@@ -120,6 +124,7 @@ class App extends Component {
           handleEndGame={this.endGame}
           totalTimeMs={this.state.totalTimeMs}
           tableHeaderInfo={this.state.tableHeaderInfo}
+          helpContent={this.state.helpContent}
         />
         <div className="outercontainer">
           <div className="container game">
@@ -130,6 +135,7 @@ class App extends Component {
               startTimer={this.startTimer}
               stopTimer={this.stopTimer}
               setTableHeaderInfo={this.setTableHeaderInfo}
+              setHelpContent={this.setHelpContent}
             />
           </div>
         </div>

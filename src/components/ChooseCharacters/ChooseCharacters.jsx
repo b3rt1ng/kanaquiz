@@ -10,7 +10,8 @@ class ChooseCharacters extends Component {
     showAlternatives: [],
     showSimilars: [],
     startIsVisible: true,
-    stage4PickerOpen: false
+    stage4PickerOpen: false,
+    otherExercisesOpen: false
   }
 
   componentDidMount() {
@@ -237,6 +238,12 @@ class ChooseCharacters extends Component {
     this.props.startListeningExercise(this.state.selectedGroups);
   }
 
+  startCounting() {
+    // Not kana-group dependent, so the group checkboxes above are ignored.
+    this.setState({ errMsg: '' });
+    this.props.startCountingExercise();
+  }
+
   render() {
     return (
       <div className="choose-characters">
@@ -282,23 +289,34 @@ class ChooseCharacters extends Component {
           </div>
           <div className="col-sm-3 col-xs-12 pull-right">
             <div className="direct-practice">
-              <p className="direct-practice-label">Jump to an exercise:</p>
               <div className="direct-practice-buttons">
-                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(1)}>Stage 1</button>
-                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(2)}>Stage 2</button>
-                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(3)}>Stage 3</button>
-                <button className="btn btn-default practice-btn"
-                  onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen, tablePickerOpen: false }))}
-                >Stage 4</button>
-                <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
-                <button className="btn btn-info practice-btn" onClick={() => this.startListening()}>Listening</button>
+                <button
+                  className="btn btn-default practice-btn"
+                  onClick={() => this.setState(s => ({ otherExercisesOpen: !s.otherExercisesOpen, stage4PickerOpen: false }))}
+                >Other exercises</button>
               </div>
               {
-                this.state.stage4PickerOpen &&
-                  <div className="practice-subpicker">
-                    <button className="btn btn-success" onClick={() => this.startStage4(1)}>Level 1 (3 characters)</button>
-                    <button className="btn btn-warning" onClick={() => this.startStage4(2)}>Level 2 (5 characters)</button>
-                    <button className="btn btn-danger" onClick={() => this.startStage4(3)}>Level 3 (8 characters)</button>
+                this.state.otherExercisesOpen &&
+                  <div className="other-exercises-panel">
+                    <div className="practice-subpicker">
+                      <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(1)}>Stage 1</button>
+                      <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(2)}>Stage 2</button>
+                      <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(3)}>Stage 3</button>
+                      <button className="btn btn-default practice-btn"
+                        onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen }))}
+                      >Stage 4</button>
+                      <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
+                      <button className="btn btn-info practice-btn" onClick={() => this.startListening()}>Listening</button>
+                      <button className="btn btn-info practice-btn" onClick={() => this.startCounting()}>Counting</button>
+                    </div>
+                    {
+                      this.state.stage4PickerOpen &&
+                        <div className="practice-subpicker stage4-subpicker">
+                          <button className="btn btn-success" onClick={() => this.startStage4(1)}>Level 1 (3 characters)</button>
+                          <button className="btn btn-warning" onClick={() => this.startStage4(2)}>Level 2 (5 characters)</button>
+                          <button className="btn btn-danger" onClick={() => this.startStage4(3)}>Level 3 (8 characters)</button>
+                        </div>
+                    }
                   </div>
               }
             </div>

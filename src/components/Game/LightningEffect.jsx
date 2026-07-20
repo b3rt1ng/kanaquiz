@@ -3,7 +3,13 @@ import { getEdgeMargins } from './edgeMargins';
 import { startLightningSound, stopLightningSound } from '../../data/soundEffects';
 import './LightningEffect.scss';
 
-const MIN_BAND = 40;
+// The reach is already clamped to whatever margin is actually available
+// (see leftReach/rightReach below), so MIN_BAND only needs to filter out
+// truly no room at all - it doesn't need to guarantee a long bolt. It used
+// to be 40, which is more than the ~30px gutter Bootstrap's .container
+// leaves on phone-width screens, so the effect silently never appeared on
+// mobile even though there was visible room for a shorter spark.
+const MIN_BAND = 16;
 const MAX_REACH = 140;
 const ACTIVE_COMBO = 5;
 

@@ -12,9 +12,32 @@
     transform: translate(-50%, -50%);
   }
 
+  /* The pop-in animation scales up to 1.2x at its peak (see compliment-life
+     below). Left/right zones are anchored flush to the screen edge, so
+     scaling from the box's own center pushed the far side out over the
+     edge - anchoring the scale origin to the SAME edge instead means it
+     grows inward, toward the screen, rather than outward off of it. */
+  &.compliment-zone-left .compliment-pop {
+    transform-origin: left center;
+  }
+  &.compliment-zone-right .compliment-pop {
+    transform-origin: right center;
+  }
+
   @media (max-width: 768px) {
     &.compliment-zone-left, &.compliment-zone-right {
       max-width: 42vw;
+      .compliment-text, .compliment-romaji {
+        white-space: normal;
+        text-align: center;
+      }
+    }
+    /* Bottom zone has no edge to anchor the scale origin to (it's centered
+       horizontally), so it's kept narrow enough on small screens that even
+       the 1.2x pop-in peak has room on both sides - see randomZonePosition
+       in ComplimentPopup.jsx, which also narrows the spawn range to match. */
+    &.compliment-zone-bottom {
+      max-width: 56vw;
       .compliment-text, .compliment-romaji {
         white-space: normal;
         text-align: center;

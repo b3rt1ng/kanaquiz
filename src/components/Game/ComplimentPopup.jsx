@@ -8,7 +8,14 @@ const ZONES = ['left', 'right', 'bottom'];
 function randomZonePosition() {
   const zone = ZONES[Math.floor(Math.random() * ZONES.length)];
   if (zone === 'bottom') {
-    return { zone, horizontal: 15 + Math.random() * 70, vertical: 76 + Math.random() * 12 };
+    // Narrower spawn band on small screens: the bottom zone is centered
+    // (not edge-anchored, see ComplimentPopup.scss), so it has no "grow
+    // inward" trick available - it needs the position itself kept away
+    // from the edges to leave room for the pop-in animation's peak scale.
+    const narrow = typeof window !== 'undefined' && window.innerWidth <= 768;
+    return narrow
+      ? { zone, horizontal: 25 + Math.random() * 50, vertical: 76 + Math.random() * 12 }
+      : { zone, horizontal: 15 + Math.random() * 70, vertical: 76 + Math.random() * 12 };
   }
   if (zone === 'right') {
     // Keep clear of the combo indicator's 32-58% vertical band on this edge.

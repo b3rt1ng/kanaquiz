@@ -45,6 +45,50 @@
 #nav-kanaquiz {
   position: relative;
 }
+.timer-help-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
+}
+.help-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 15px 0 -6px;
+  cursor: pointer;
+  vertical-align: middle;
+  .glyphicon {
+    color: var(--text-muted);
+    transition: color 0.15s;
+  }
+  &:hover .glyphicon {
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+  }
+}
+.help-panel {
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  z-index: 1100;
+  min-width: 260px;
+  max-width: 92vw;
+  padding: 14px 18px;
+  background-color: var(--bg-panel-raised);
+  border: 1px solid var(--accent-coral);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), var(--glow-coral);
+  animation: kq-pop-in 0.2s ease-out;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+}
+.help-panel-right {
+  left: auto;
+  right: 0;
+}
 .effect-settings-toggle {
   background: none;
   border: none;
@@ -182,7 +226,7 @@
 
 .timer-display {
   flex: 0 0 auto;
-  margin: 0 0 0 auto;
+  margin: 0;
   padding: 15px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

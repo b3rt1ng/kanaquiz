@@ -5,6 +5,7 @@ import ShowStage from './ShowStage';
 import Question from './Question';
 import TableExercise from './TableExercise';
 import ListeningExercise from './ListeningExercise';
+import CountingExercise from './CountingExercise';
 import Confetti from './Confetti';
 
 class Game extends Component {
@@ -18,13 +19,13 @@ class Game extends Component {
   componentDidMount() {
     // The table and listening exercises have no intro/question screen split -
     // they're one continuous screen, so start the timer as soon as shown.
-    if(this.props.stage === 'table' || this.props.stage === 'listening') {
+    if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting') {
       this.props.startTimer();
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if(this.props.stage === 'table' || this.props.stage === 'listening') return;
+    if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting') return;
     if(prevState.showScreen !== this.state.showScreen) {
       if(this.state.showScreen === 'question') {
         this.props.startTimer();
@@ -76,6 +77,15 @@ class Game extends Component {
         <ListeningExercise
           decidedGroups={this.props.decidedGroups}
           handleEndGame={this.props.handleEndGame}
+        />
+      );
+    }
+
+    if(this.props.stage === 'counting') {
+      return (
+        <CountingExercise
+          handleEndGame={this.props.handleEndGame}
+          setHelpContent={this.props.setHelpContent}
         />
       );
     }

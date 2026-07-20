@@ -1,0 +1,192 @@
+.counting-exercise {
+  .counting-tremble.tremble-active {
+    animation-name: kq-tremble;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .counting-question {
+    max-width: 420px;
+    margin: 40px auto 0;
+  }
+
+  .counting-progress {
+    color: var(--text-muted);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+
+  .counting-number {
+    font-size: 4.5em;
+    font-weight: 900;
+    color: var(--text);
+    text-shadow: 0 0 14px rgba(255, 77, 109, 0.55), 0 0 34px rgba(255, 46, 136, 0.3);
+    animation: kq-pop-in 0.25s ease-out;
+    margin-bottom: 6px;
+  }
+
+  .counting-kanji-preview {
+    min-height: 1.6em;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    margin-bottom: 18px;
+  }
+
+  .counting-kanji-placeholder {
+    color: var(--text-muted);
+    opacity: 0.4;
+  }
+
+  .counting-leftover {
+    color: var(--error);
+    opacity: 0.7;
+    margin-left: 4px;
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+
+  .counting-input {
+    width: 100%;
+    max-width: 340px;
+    padding: 10px 14px;
+    font-size: 1.3em;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid var(--accent-coral);
+    background-color: var(--bg-panel-raised);
+    color: var(--text);
+
+    &:focus {
+      outline: none;
+      box-shadow: var(--glow-coral);
+    }
+
+    &.wrong {
+      border-color: var(--error);
+      color: var(--error);
+      box-shadow: var(--glow-error);
+    }
+
+    &.note {
+      border-color: var(--accent-orange);
+      box-shadow: var(--glow-orange);
+    }
+  }
+
+  .counting-hint {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    margin-top: 10px;
+  }
+
+  .counting-correction {
+    color: var(--error);
+    font-size: 0.95em;
+    margin-top: 10px;
+    strong {
+      color: var(--accent-orange);
+      text-shadow: var(--glow-orange);
+      font-size: 1.2em;
+    }
+  }
+
+  .counting-note {
+    color: var(--text);
+    font-size: 0.95em;
+    margin-top: 10px;
+    strong {
+      color: var(--accent-orange);
+      text-shadow: var(--glow-orange);
+      font-size: 1.2em;
+    }
+  }
+
+  .counting-previous-button {
+    display: block;
+    margin: 20px auto 0;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    .glyphicon {
+      color: inherit;
+      margin-right: 4px;
+    }
+    &:hover {
+      color: var(--accent-orange);
+    }
+  }
+
+  .counting-results {
+    max-width: 700px;
+    margin: 40px auto 60px;
+  }
+  .counting-score {
+    font-size: 1.3em;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    font-weight: bold;
+  }
+}
+
+/* Rendered inside Navbar's .help-panel (not under .counting-exercise - the
+   Navbar is a sibling of the exercise, not an ancestor), so this is a
+   top-level block. */
+.counting-help {
+  .counting-help-title {
+    margin: 0 0 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+  }
+
+  .counting-help-intro {
+    margin: 0 0 10px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    strong {
+      color: var(--text);
+    }
+  }
+
+  .counting-help-table {
+    width: 100%;
+    margin-bottom: 10px;
+    border-collapse: collapse;
+    font-size: 0.95em;
+
+    td {
+      padding: 2px 8px 2px 0;
+      color: var(--text);
+    }
+    td:first-child {
+      color: var(--text-muted);
+      width: 1.5em;
+    }
+    td:last-child {
+      color: var(--accent-coral);
+      font-size: 1.1em;
+    }
+  }
+
+  .counting-help-notes {
+    margin: 0 0 10px;
+    padding-left: 18px;
+    font-size: 0.9em;
+    color: var(--text);
+    strong {
+      color: var(--accent-orange);
+    }
+  }
+
+  .counting-help-example {
+    margin: 8px 0 0;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    strong {
+      color: var(--accent-coral);
+    }
+  }
+}

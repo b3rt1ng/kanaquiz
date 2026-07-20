@@ -81,14 +81,7 @@
 .direct-practice {
   clear: both;
   text-align: right;
-
-  .direct-practice-label {
-    color: var(--text-muted);
-    font-size: 13px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+  position: relative;
 
   .direct-practice-buttons {
     display: flex;
@@ -102,12 +95,29 @@
     font-size: 13px;
   }
 
+  /* Floats above the toggle button like the header's effect-settings panel,
+     just anchored to the bottom instead of the top - this button sits low
+     on the page, so opening downward would usually go off-screen. */
+  .other-exercises-panel {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    z-index: 1100;
+    min-width: 280px;
+    padding: 14px 16px;
+    background-color: var(--bg-panel-raised);
+    border: 1px solid var(--accent-coral);
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), var(--glow-coral);
+    animation: kq-pop-in 0.2s ease-out;
+  }
+
   .practice-subpicker {
     display: flex;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 8px;
 
     button {
       padding: 5px 10px;
@@ -115,10 +125,20 @@
     }
   }
 
+  .stage4-subpicker {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
   @media (max-width: 768px) {
     text-align: center;
     .direct-practice-buttons, .practice-subpicker {
       justify-content: center;
+    }
+    .other-exercises-panel {
+      left: 0;
+      right: 0;
     }
   }
 }
