@@ -76,6 +76,17 @@ class GameContainer extends PureComponent {
     this.props.handleStartGame();
   }
 
+  // Listening exercise: same self-contained shape as the table.
+  startListeningExercise = (decidedGroups) => {
+    this.setState({
+      stage: 'listening',
+      isLocked: true,
+      decidedGroups: decidedGroups
+    });
+    localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
+    this.props.handleStartGame();
+  }
+
   updateStageStats = (stage, isCorrect) => {
     this.setState(prevState => {
       const newStats = { ...prevState.stageStats };
@@ -144,6 +155,7 @@ class GameContainer extends PureComponent {
               handleStartGame={this.startGame}
               startAtStage={this.startAtStage}
               startTableExercise={this.startTableExercise}
+              startListeningExercise={this.startListeningExercise}
             />
           }
           { this.props.gameState==='game' &&

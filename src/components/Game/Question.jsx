@@ -4,10 +4,12 @@ import { quizSettings } from '../../data/quizSettings';
 import { findRomajisAtKanaKey, removeFromArray, arrayContains, shuffle, cartesianProduct, alignAnswer } from '../../data/helperFuncs';
 import { playWrongSound, playStageUpSound, playComboSound, playKeySound, playComboBreakSound, playEnterDojoSound } from '../../data/soundEffects';
 import { pickCompliment } from '../../data/compliments';
+import { playComplimentVoice } from '../../data/complimentVoice';
 import { getEffectSettings } from '../../data/effectSettings';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
 import FlameEffect from './FlameEffect';
+import LightningEffect from './LightningEffect';
 import ComplimentPopup, { buildCompliment } from './ComplimentPopup';
 import './Question.scss';
 
@@ -211,7 +213,7 @@ class Question extends Component {
     else playWrongSound();
 
     if(isCorrect && !stageCompleted) {
-      this.showCompliment(elapsedMs < 1500, newCombo);
+      this.showCompliment(elapsedMs < 1000, newCombo);
     }
 
     if(stageCompleted) {
@@ -224,7 +226,9 @@ class Question extends Component {
   showCompliment = (isFast, combo) => {
     clearTimeout(this.complimentTimeout);
     this.complimentSeq++;
-    this.setState({ compliment: buildCompliment(pickCompliment(isFast), combo) });
+    const compliment = buildCompliment(pickCompliment(isFast), combo);
+    this.setState({ compliment });
+    playComplimentVoice(compliment.text);
     this.complimentTimeout = setTimeout(() => {
       this.setState({ compliment: null });
     }, 1500);
@@ -372,6 +376,7 @@ class Question extends Component {
       <div className="text-center question col-xs-12">
         {effects.combo && <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />}
         {effects.glitch && <GlitchEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
+        {effects.lightning && <LightningEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
         {effects.flames && <FlameEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
         {effects.compliments && <ComplimentPopup compliment={this.state.compliment} key={'compliment'+this.complimentSeq} />}
         <div className={trembleClass} style={trembleStyle} ref={this.trembleRef}>

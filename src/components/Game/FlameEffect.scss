@@ -9,7 +9,25 @@
    reproduced procedurally (SVG feTurbulence thresholded into sparse bright
    clumps on black) so no external asset is needed - the discrete transfer
    keeps ~1/3 of the noise as graded specks, which is what gives distinct
-   tongues with dark notches between them instead of one solid blob. */
+   tongues with dark notches between them instead of one solid blob.
+
+   Originally the glitter layers scrolled by animating `background-position`
+   on one element (two glitter images + two gradients all as background
+   layers of a single div, combined with background-blend-mode). Measured
+   cost breakdown of that version (full band, all combo-15+ streaks):
+   idle ~60fps -> ~14fps from the background-position animation ALONE, before
+   any filter or blend mode is even added. `background-position` isn't a
+   compositor-only property in any engine, so every tick forced a full
+   repaint of two tiled SVG rasters across the band.
+
+   Fixed by splitting the glitter layers into their own elements and
+   scrolling them with `transform: translateY` instead (GPU-compositable,
+   no repaint needed - the browser just shifts an already-rasterized
+   layer). The gradient/vignette shape doesn't need to scroll at all, so it
+   stays a separate static layer. Stacking order and blend modes reproduce
+   the original single-element composite: gradient (base) -> glitter2
+   color-dodge -> glitter1 hard-light, then the outer band still gets
+   brightness/blur/contrast + color-dodge onto the page, same as before. */
 $fire-glitter: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'350'%20height%3D'500'%3E%3Cfilter%20id%3D'g'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.05%200.1'%20numOctaves%3D'5'%20seed%3D'8'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D'discrete'%20tableValues%3D'0%200%200%200%200%200.3%200.65%201'%2F%3E%3CfeFuncG%20type%3D'discrete'%20tableValues%3D'0%200%200%200%200%200.3%200.65%201'%2F%3E%3CfeFuncB%20type%3D'discrete'%20tableValues%3D'0%200%200%200%200%200.3%200.65%201'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23g)'%2F%3E%3C%2Fsvg%3E");
 
 .flame-band {
@@ -28,13 +46,21 @@ $fire-glitter: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w
   z-index: 250;
   pointer-events: none;
   contain: layout style paint;
+  overflow: hidden;
 
   /* Tuned down from the pen's original values (brightness 3.7 / contrast 6
      saturated the whole band solid yellow-white): a dimmer, taller gradient
      keeps the flame licks reaching just as high with far less blown-out
      core, and the oversized vignette ellipse spans the full page width
      instead of arcing the fire into a centered dome. */
-  background-image: $fire-glitter, $fire-glitter,
+  filter: brightness(2.6) blur(3.5px) contrast(3.8);
+  mix-blend-mode: color-dodge;
+}
+
+.flame-gradient {
+  position: absolute;
+  inset: 0;
+  background-image:
     linear-gradient(
       0deg,
       white 0px,
@@ -43,19 +69,42 @@ $fire-glitter: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w
       transparent 92%
     ),
     radial-gradient(ellipse 200% 120% at bottom, transparent 50%, black 85%);
-  background-size: 175px 250px, 200px 325px, 100% 100%, 100% 100%;
-  background-blend-mode: hard-light, color-dodge, multiply;
-  background-repeat: repeat, repeat, repeat, no-repeat;
-  mix-blend-mode: color-dodge;
-  filter: brightness(2.6) blur(3.5px) contrast(3.8);
-  animation: kq-fire 1.75s linear infinite;
+  background-blend-mode: multiply;
 }
 
-@keyframes kq-fire {
-  0% {
-    background-position: center 0px, center 0px, 50% 100%, center center;
-  }
-  100% {
-    background-position: center -250px, center -325px, 50% 100%, center center;
-  }
+.flame-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background-image: $fire-glitter;
+  background-repeat: repeat;
+  will-change: transform;
+}
+
+/* Each layer's own height is exactly 2x its tile height, and it scrolls by
+   exactly one tile: at 100% it has moved a whole period, so it snaps back
+   to 0% looking identical - a seamless loop with only `transform`. */
+.flame-layer-2 {
+  height: 650px; /* 2 x 325px tile */
+  background-size: 200px 325px;
+  mix-blend-mode: color-dodge;
+  animation: kq-fire-scroll-2 1.75s linear infinite;
+}
+
+.flame-layer-1 {
+  height: 500px; /* 2 x 250px tile */
+  background-size: 175px 250px;
+  mix-blend-mode: hard-light;
+  animation: kq-fire-scroll-1 1.75s linear infinite;
+}
+
+@keyframes kq-fire-scroll-1 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-250px); }
+}
+
+@keyframes kq-fire-scroll-2 {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-325px); }
 }

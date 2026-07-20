@@ -4,6 +4,7 @@ import { playApplauseSound } from '../../data/soundEffects';
 import ShowStage from './ShowStage';
 import Question from './Question';
 import TableExercise from './TableExercise';
+import ListeningExercise from './ListeningExercise';
 import Confetti from './Confetti';
 
 class Game extends Component {
@@ -15,15 +16,15 @@ class Game extends Component {
   }
 
   componentDidMount() {
-    // The table exercise has no intro/question screen split - it's one
-    // continuous screen, so start the timer as soon as it's shown.
-    if(this.props.stage === 'table') {
+    // The table and listening exercises have no intro/question screen split -
+    // they're one continuous screen, so start the timer as soon as shown.
+    if(this.props.stage === 'table' || this.props.stage === 'listening') {
       this.props.startTimer();
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if(this.props.stage === 'table') return;
+    if(this.props.stage === 'table' || this.props.stage === 'listening') return;
     if(prevState.showScreen !== this.state.showScreen) {
       if(this.state.showScreen === 'question') {
         this.props.startTimer();
@@ -66,6 +67,15 @@ class Game extends Component {
           decidedGroups={this.props.decidedGroups}
           handleEndGame={this.props.handleEndGame}
           setTableHeaderInfo={this.props.setTableHeaderInfo}
+        />
+      );
+    }
+
+    if(this.props.stage === 'listening') {
+      return (
+        <ListeningExercise
+          decidedGroups={this.props.decidedGroups}
+          handleEndGame={this.props.handleEndGame}
         />
       );
     }

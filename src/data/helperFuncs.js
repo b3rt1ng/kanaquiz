@@ -1,5 +1,22 @@
+import { kanaDictionary } from './kanaDictionary';
+
 export function arrayContains(needle, haystack) {
     return (haystack.indexOf(needle) > -1) ? true : false;
+}
+
+// Kana keys drawn from the character groups the user selected on the menu
+// screen - the same selection used to start Stage 1-4 / the Table / the
+// Listening exercise. A character can end up here via more than one selected
+// group (e.g. its base group and a "look-alike" group both selected); callers
+// that key an object by kana (like TableExercise's cells) dedupe that naturally.
+export function getSelectedKanaKeys(kanaType, decidedGroups) {
+    const keys = [];
+    Object.keys(kanaDictionary[kanaType]).forEach(groupName => {
+        if(arrayContains(groupName, decidedGroups)) {
+            keys.push(...Object.keys(kanaDictionary[kanaType][groupName].characters));
+        }
+    });
+    return keys;
 }
 
 export function removeFromArray(needle, haystack) {

@@ -1,0 +1,47 @@
+.lightning-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 275;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.lightning-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.lightning-edge-left {
+  left: 0;
+}
+.lightning-edge-right {
+  right: 0;
+  /* Bolts are always drawn from local x=0 outward to x=reach; mirroring the
+     right-edge lane is simpler than generating a second, reversed geometry. */
+  transform: scaleX(-1);
+}
+
+.lightning-bolt {
+  position: absolute;
+  transform: translateY(-50%);
+  overflow: visible;
+  animation-name: kq-lightning-flicker;
+  animation-timing-function: steps(2, end);
+  animation-iteration-count: infinite;
+
+  polygon {
+    fill: #fff3e0;
+    filter: drop-shadow(0 0 4px var(--accent-coral)) drop-shadow(0 0 9px var(--accent-pink));
+  }
+}
+
+/* Hard steps() cuts rather than a smooth fade - real arcs flicker in jumps. */
+@keyframes kq-lightning-flicker {
+  0%, 100% { opacity: 0; }
+  15% { opacity: 1; }
+  30% { opacity: 0.25; }
+  45% { opacity: 1; }
+  60% { opacity: 0; }
+  75% { opacity: 0.75; }
+  90% { opacity: 0; }
+}

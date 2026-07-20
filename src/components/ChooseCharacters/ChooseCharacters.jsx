@@ -228,6 +228,15 @@ class ChooseCharacters extends Component {
     this.props.startTableExercise(this.state.selectedGroups);
   }
 
+  startListening() {
+    if(this.state.selectedGroups.length < 1) {
+      this.setState({ errMsg: 'Choose at least one group!'});
+      return;
+    }
+    this.setState({ errMsg: '' });
+    this.props.startListeningExercise(this.state.selectedGroups);
+  }
+
   render() {
     return (
       <div className="choose-characters">
@@ -282,6 +291,7 @@ class ChooseCharacters extends Component {
                   onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen, tablePickerOpen: false }))}
                 >Stage 4</button>
                 <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
+                <button className="btn btn-info practice-btn" onClick={() => this.startListening()}>Listening</button>
               </div>
               {
                 this.state.stage4PickerOpen &&

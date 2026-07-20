@@ -29,13 +29,11 @@ function ComplimentPopup({ compliment }) {
   else if (zone === 'right') style.right = horizontal + 'vw';
   else style.left = horizontal + '%';
 
-  const caOffset = Math.min((combo || 0) * 0.4, 8);
-  const popStyle = { '--ca-offset': caOffset + 'px' };
   const popClass = `compliment-pop compliment-${color}` + (combo >= 10 ? ' ca-unstable' : '');
 
   return (
     <div className={`compliment-root compliment-zone-${zone}`} style={style}>
-      <div className={popClass} style={popStyle}>
+      <div className={popClass}>
         <span className="compliment-shockwave"></span>
         <span className="compliment-flash"></span>
         <span className="compliment-text">{text}</span>

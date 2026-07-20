@@ -10,6 +10,7 @@ import crowdUrl1 from '../assets/sounds/crowd-applause-1.wav';
 import crowdUrl2 from '../assets/sounds/crowd-applause-2.wav';
 import crowdUrl3 from '../assets/sounds/crowd-applause-3.wav';
 import crowdUrl4 from '../assets/sounds/crowd-applause-4.wav';
+import lightningLoopUrl from '../assets/sounds/lightning-arc-loop.wav';
 
 const crowdUrls = [crowdUrl1, crowdUrl2, crowdUrl3, crowdUrl4];
 
@@ -71,7 +72,7 @@ function loadBuffer(url) {
 
 // Kick off decoding as soon as the module loads so the first combo tick
 // isn't held up waiting on the network/decode.
-[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl, enterDojoUrl, comboBreakUrl, bigStreakLostUrl, ...crowdUrls].forEach(loadBuffer);
+[comboTickUrl, comboMelodyUrl, comboBigMelodyUrl, enterDojoUrl, comboBreakUrl, bigStreakLostUrl, lightningLoopUrl, ...crowdUrls].forEach(loadBuffer);
 
 function playSample(url, { playbackRate = 1, gain = 0.5 } = {}) {
   const ctx = getAudioContext();
@@ -275,6 +276,53 @@ export function stopFireSound() {
   gain.gain.linearRampToValueAtTime(0.0001, now + 0.4);
   src.stop(now + 0.45);
   lfo.stop(now + 0.45);
+}
+
+// Looping electric-arc sample for the lightning effect (combo 5+).
+// Idempotent start, faded stop (mirrors the fire loop below) - the extra
+// `lightningWantsSound` flag exists because, unlike the fire loop's noise
+// buffer (built synchronously), this is a real sample decoded async: a
+// start() immediately followed by a stop() (e.g. combo breaking right as
+// it crosses the threshold) must not let the buffer resolve afterwards
+// and start playing anyway.
+let lightningNodes = null;
+let lightningWantsSound = false;
+
+export function startLightningSound() {
+  if (lightningWantsSound) return;
+  lightningWantsSound = true;
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  loadBuffer(lightningLoopUrl).then(buffer => {
+    if (!buffer || !lightningWantsSound || lightningNodes) return;
+    const now = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.5, now + 0.15);
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(now);
+    lightningNodes = { src, gain };
+  });
+}
+
+export function stopLightningSound() {
+  lightningWantsSound = false;
+  if (!lightningNodes) return;
+  const { src, gain } = lightningNodes;
+  lightningNodes = null;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(gain.gain.value, now);
+  gain.gain.linearRampToValueAtTime(0.0001, now + 0.3);
+  src.stop(now + 0.35);
 }
 
 // Soft, short blip for keyboard input - a bit of randomized detune per

@@ -1,30 +1,17 @@
 import React, { Component, PureComponent } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
-import { findRomajisAtKanaKey, arrayContains, shuffle } from '../../data/helperFuncs';
+import { findRomajisAtKanaKey, arrayContains, shuffle, getSelectedKanaKeys } from '../../data/helperFuncs';
 import { playWrongSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
 import { pickCompliment } from '../../data/compliments';
+import { playComplimentVoice } from '../../data/complimentVoice';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
 import FlameEffect from './FlameEffect';
+import LightningEffect from './LightningEffect';
 import ComplimentPopup, { buildCompliment } from './ComplimentPopup';
 import { getEffectSettings } from '../../data/effectSettings';
 import './TableExercise.scss';
-
-// Kana keys drawn from the character groups the user selected on the menu
-// screen - the same selection used to start Stage 1-4 / the full quiz. A
-// character can end up here via more than one selected group (e.g. its base
-// group and a "look-alike" group both selected); the object-keyed cells
-// dedupe that naturally.
-function getSelectedKanaKeys(kanaType, decidedGroups) {
-  const keys = [];
-  Object.keys(kanaDictionary[kanaType]).forEach(groupName => {
-    if(arrayContains(groupName, decidedGroups)) {
-      keys.push(...Object.keys(kanaDictionary[kanaType][groupName].characters));
-    }
-  });
-  return keys;
-}
 
 class TableExercise extends Component {
   constructor(props) {
@@ -86,7 +73,9 @@ class TableExercise extends Component {
   showCompliment = (isFast, combo) => {
     clearTimeout(this.complimentTimeout);
     this.complimentSeq++;
-    this.setState({ compliment: buildCompliment(pickCompliment(isFast), combo) });
+    const compliment = buildCompliment(pickCompliment(isFast), combo);
+    this.setState({ compliment });
+    playComplimentVoice(compliment.text);
     this.complimentTimeout = setTimeout(() => {
       this.setState({ compliment: null });
     }, 1500);
@@ -137,7 +126,7 @@ class TableExercise extends Component {
     else playWrongSound();
 
     if(isCorrect) {
-      this.showCompliment(elapsedMs < 1500, newCombo);
+      this.showCompliment(elapsedMs < 1000, newCombo);
     }
 
     this.setState(prevState => ({
@@ -258,6 +247,7 @@ class TableExercise extends Component {
       <div className="table-exercise text-center">
         {effects.combo && <ComboIndicator combo={this.state.combo} key={'combo'+this.state.combo} />}
         {effects.glitch && <GlitchEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
+        {effects.lightning && <LightningEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
         {effects.flames && <FlameEffect combo={this.state.combo} safeZoneRef={this.trembleRef} />}
         {effects.compliments && <ComplimentPopup compliment={this.state.compliment} key={'compliment'+this.complimentSeq} />}
         <div className={trembleClass} style={trembleStyle} ref={this.trembleRef}>

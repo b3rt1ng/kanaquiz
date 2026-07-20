@@ -5,10 +5,11 @@ export const EFFECT_LIST = [
   { key: 'compliments', label: 'Compliment popups' },
   { key: 'tremble', label: 'Screen shake' },
   { key: 'glitch', label: 'Glitch bursts' },
+  { key: 'lightning', label: 'Lightning arcs (combo 5+)' },
   { key: 'flames', label: 'Flames (combo 15+)' }
 ];
 
-const DEFAULTS = { combo: true, compliments: true, tremble: true, glitch: true, flames: true };
+const DEFAULTS = { combo: true, compliments: true, tremble: true, glitch: true, lightning: true, flames: true };
 
 // Read once, then served from memory: this is called on every Question /
 // TableExercise render (every answer), so it must not hit

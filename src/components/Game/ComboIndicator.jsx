@@ -37,7 +37,7 @@ function ComboIndicator({ combo }) {
   if (!combo || combo < 1) return null;
 
   const tier = getTier(combo);
-  const scale = Math.min(1 + (combo - 1) * 0.05, 2.4);
+  const scale = Math.min(1 + (combo - 1) * 0.09, 3.2);
   const isMilestone = combo % 5 === 0;
   const style = { '--combo-scale': scale };
 
