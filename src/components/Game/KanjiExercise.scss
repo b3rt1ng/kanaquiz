@@ -1,0 +1,208 @@
+/* --- Theme picker --- */
+/* The panel/row/checkbox look is inherited from .choose-characters
+   (reused wholesale, see renderPicker) - just the loose elements below
+   the panel (Correct Later toggle, start button) need their own spacing. */
+.kanji-picker {
+  margin: 40px auto 60px;
+  text-align: center;
+
+  .panel {
+    margin-bottom: 24px;
+    text-align: left;
+  }
+}
+
+.kanji-correctlater-toggle {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0 0 20px;
+  text-align: left;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    margin: 0 4px 0 0;
+    accent-color: var(--accent-pink);
+    cursor: pointer;
+  }
+}
+
+.kanji-correctlater-label {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.kanji-correctlater-hint {
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.kanji-start-button {
+  margin-bottom: 14px;
+}
+
+/* --- Quiz --- */
+.kanji-exercise {
+  .kanji-tremble.tremble-active {
+    animation-name: kq-tremble;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .kanji-progress {
+    color: var(--text-muted);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    margin-top: 40px;
+  }
+
+  .kanji-flip-scene {
+    width: 260px;
+    height: 220px;
+    margin: 20px auto;
+    perspective: 1200px;
+  }
+
+  .kanji-flip-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(.3, .1, .3, 1);
+    transform-style: preserve-3d;
+    /* Pre-promotes the card to its own compositor layer before the flip
+       starts, instead of the browser deciding to promote it (with a
+       possible first-frame stall) right as the transition begins. Cheap
+       here since it's a single, always-small element. */
+    will-change: transform;
+
+    &.flipped {
+      transform: rotateY(180deg);
+    }
+  }
+
+  .kanji-flip-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    backface-visibility: hidden;
+    background-color: var(--bg-panel-raised);
+    border: 2px solid var(--accent-coral);
+    box-shadow: var(--glow-coral);
+  }
+
+  .kanji-flip-front {
+    .kanji-flip-kanji {
+      font-size: 4.2em;
+      font-weight: 900;
+      color: var(--text);
+      text-shadow: 0 0 14px rgba(255, 77, 109, 0.55), 0 0 34px rgba(255, 46, 136, 0.3);
+    }
+  }
+
+  .kanji-flip-back {
+    transform: rotateY(180deg);
+    padding: 16px;
+    gap: 4px;
+
+    .kanji-flip-kana {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: var(--accent-orange);
+      text-shadow: var(--glow-orange);
+    }
+    .kanji-flip-romaji {
+      color: var(--text-muted);
+      font-size: 0.95em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kanji-flip-meaning {
+      margin-top: 8px;
+      color: var(--text);
+      font-style: italic;
+    }
+  }
+
+  .kanji-flip-card.correct .kanji-flip-face {
+    border-color: var(--success);
+    box-shadow: var(--glow-success);
+  }
+  .kanji-flip-card.wrong .kanji-flip-face {
+    border-color: var(--error);
+    box-shadow: var(--glow-error);
+  }
+
+  .kanji-kana-preview {
+    min-height: 1.6em;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    margin-bottom: 18px;
+  }
+
+  .kanji-kana-placeholder {
+    color: var(--text-muted);
+    opacity: 0.4;
+  }
+
+  .kanji-leftover {
+    color: var(--error);
+    opacity: 0.7;
+    margin-left: 4px;
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+
+  .kanji-input {
+    width: 100%;
+    max-width: 340px;
+    padding: 10px 14px;
+    font-size: 1.3em;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid var(--accent-coral);
+    background-color: var(--bg-panel-raised);
+    color: var(--text);
+
+    &:focus {
+      outline: none;
+      box-shadow: var(--glow-coral);
+    }
+
+    &.wrong {
+      border-color: var(--error);
+      color: var(--error);
+      box-shadow: var(--glow-error);
+    }
+
+    &.correct {
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: var(--glow-success);
+    }
+  }
+
+  .kanji-hint {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    margin-top: 10px;
+    margin-bottom: 40px;
+  }
+
+  .kanji-results {
+    max-width: 700px;
+    margin: 40px auto 60px;
+  }
+  .kanji-score {
+    font-size: 1.3em;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    font-weight: bold;
+  }
+}

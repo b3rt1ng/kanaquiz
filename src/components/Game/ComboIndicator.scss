@@ -41,80 +41,9 @@
   }
 }
 
-/* Depth extrusion in the style of jonaszpotoniec's 404 pen: a stack of
-   text-shadows whose offset grows 1px per layer, colors stepping through
-   the palette's pink -> red -> orange range. Each keyframe holds the full
-   list pointing at a different diagonal, and since every list has the same
-   length the browser interpolates them - the slab sweeps around smoothly.
-   (The pen builds these lists with a Sass loop; precss has none, so they
-   are written out by hand.) */
-@keyframes combo-404-shadow {
-  0% {
-    text-shadow:
-      hsl(330, 90%, 58%) 0 0,
-      hsl(330, 90%, 58%) 0 0,
-      hsl(339, 90%, 58%) 1px 1px,
-      hsl(348, 90%, 58%) 2px 2px,
-      hsl(357, 90%, 58%) 3px 3px,
-      hsl(6, 90%, 58%) 4px 4px,
-      hsl(15, 90%, 58%) 5px 5px,
-      hsl(24, 90%, 58%) 6px 6px,
-      hsl(33, 90%, 58%) 7px 7px,
-      hsl(42, 90%, 58%) 8px 8px;
-  }
-  25% {
-    text-shadow:
-      hsl(330, 90%, 58%) 0 0,
-      hsl(330, 90%, 58%) 0 0,
-      hsl(339, 90%, 58%) 1px -1px,
-      hsl(348, 90%, 58%) 2px -2px,
-      hsl(357, 90%, 58%) 3px -3px,
-      hsl(6, 90%, 58%) 4px -4px,
-      hsl(15, 90%, 58%) 5px -5px,
-      hsl(24, 90%, 58%) 6px -6px,
-      hsl(33, 90%, 58%) 7px -7px,
-      hsl(42, 90%, 58%) 8px -8px;
-  }
-  50% {
-    text-shadow:
-      hsl(330, 90%, 58%) 0 0,
-      hsl(330, 90%, 58%) 0 0,
-      hsl(339, 90%, 58%) -1px -1px,
-      hsl(348, 90%, 58%) -2px -2px,
-      hsl(357, 90%, 58%) -3px -3px,
-      hsl(6, 90%, 58%) -4px -4px,
-      hsl(15, 90%, 58%) -5px -5px,
-      hsl(24, 90%, 58%) -6px -6px,
-      hsl(33, 90%, 58%) -7px -7px,
-      hsl(42, 90%, 58%) -8px -8px;
-  }
-  75% {
-    text-shadow:
-      hsl(330, 90%, 58%) 0 0,
-      hsl(330, 90%, 58%) 0 0,
-      hsl(339, 90%, 58%) -1px 1px,
-      hsl(348, 90%, 58%) -2px 2px,
-      hsl(357, 90%, 58%) -3px 3px,
-      hsl(6, 90%, 58%) -4px 4px,
-      hsl(15, 90%, 58%) -5px 5px,
-      hsl(24, 90%, 58%) -6px 6px,
-      hsl(33, 90%, 58%) -7px 7px,
-      hsl(42, 90%, 58%) -8px 8px;
-  }
-  100% {
-    text-shadow:
-      hsl(330, 90%, 58%) 0 0,
-      hsl(330, 90%, 58%) 0 0,
-      hsl(339, 90%, 58%) 1px 1px,
-      hsl(348, 90%, 58%) 2px 2px,
-      hsl(357, 90%, 58%) 3px 3px,
-      hsl(6, 90%, 58%) 4px 4px,
-      hsl(15, 90%, 58%) 5px 5px,
-      hsl(24, 90%, 58%) 6px 6px,
-      hsl(33, 90%, 58%) 7px 7px,
-      hsl(42, 90%, 58%) 8px 8px;
-  }
-}
+/* combo-404-shadow (the 404-pen style rainbow depth-extrusion sweep) now
+   lives in App.scss as a shared keyframe - LearnKanjiCta in ChooseCharacters
+   reuses it too, see App.scss. */
 
 .combo-indicator.ca-unstable {
   animation: combo-pop 0.35s cubic-bezier(.34,1.56,.64,1) both, ca-jitter 0.12s infinite;

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { getEdgeMargins } from './edgeMargins';
 import { startFireSound, stopFireSound } from '../../data/soundEffects';
 import './FlameEffect.scss';
@@ -7,7 +7,14 @@ const MIN_BAND = 60;
 const MAX_REACH = 240;
 const ACTIVE_COMBO = 15;
 
-class FlameEffect extends Component {
+// PureComponent matters more here than for the other effects: render()
+// calls getEdgeMargins(), which forces a synchronous layout read
+// (getBoundingClientRect). Without this, that read fired on every parent
+// re-render - e.g. every keystroke while typing during a 15+ combo streak,
+// even though combo/safeZoneRef never changed. A shallow-prop-equal
+// re-render now bails out before render() runs at all, so the layout read
+// only happens when something that actually affects the output changed.
+class FlameEffect extends PureComponent {
   componentDidMount() {
     if (!this.props.silentSound && (this.props.combo || 0) >= ACTIVE_COMBO) startFireSound();
   }

@@ -33,7 +33,7 @@ function toKanjiNumeral(num) {
   return result;
 }
 
-function ComboIndicator({ combo }) {
+const ComboIndicator = React.memo(function ComboIndicator({ combo }) {
   if (!combo || combo < 1) return null;
 
   const tier = getTier(combo);
@@ -50,6 +50,6 @@ function ComboIndicator({ combo }) {
       {isMilestone && <div className="combo-flash"></div>}
     </div>
   );
-}
+});
 
 export default ComboIndicator;

@@ -7,25 +7,68 @@
   contain: layout style paint;
 }
 
-/* Hidden (opacity 0) until its delayed animation kicks in, then falls past
-   the bottom edge where the overlay's overflow clips it. */
+/* Hidden (opacity 0) until its delayed animation kicks in. Spawns just
+   below the viewport (bottom edge) and launches upward from there - see
+   kq-confetti-launch below. */
 .confetti-piece {
   position: absolute;
-  top: -20px;
+  bottom: -20px;
   border-radius: 2px;
   opacity: 0;
-  animation-name: kq-confetti-fall;
-  animation-timing-function: ease-in;
+  animation-name: kq-confetti-launch;
+  animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 
-@keyframes kq-confetti-fall {
+/* y(t) = -4 * peak * t * (1-t) + drift * t : rises (negative = up) to a
+   peak around the midpoint, then gravity brings it back down past its
+   start (drift keeps growing after the peak term returns to 0 at t=1).
+   Sampled every 10% of t and interpolated linearly in between - "linear"
+   animation-timing-function above is what makes the browser connect these
+   points straight rather than re-easing an already-eased curve. */
+@keyframes kq-confetti-launch {
   0% {
     transform: translate3d(0, 0, 0) rotateZ(0deg);
     opacity: 1;
   }
+  10% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.1), calc(var(--confetti-peak, 0px) * -0.36 + var(--confetti-drift, 0px) * 0.1), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.1));
+    opacity: 1;
+  }
+  20% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.2), calc(var(--confetti-peak, 0px) * -0.64 + var(--confetti-drift, 0px) * 0.2), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.2));
+    opacity: 1;
+  }
+  30% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.3), calc(var(--confetti-peak, 0px) * -0.84 + var(--confetti-drift, 0px) * 0.3), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.3));
+    opacity: 1;
+  }
+  40% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.4), calc(var(--confetti-peak, 0px) * -0.96 + var(--confetti-drift, 0px) * 0.4), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.4));
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.5), calc(var(--confetti-peak, 0px) * -1.0 + var(--confetti-drift, 0px) * 0.5), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.5));
+    opacity: 1;
+  }
+  60% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.6), calc(var(--confetti-peak, 0px) * -0.96 + var(--confetti-drift, 0px) * 0.6), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.6));
+    opacity: 1;
+  }
+  70% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.7), calc(var(--confetti-peak, 0px) * -0.84 + var(--confetti-drift, 0px) * 0.7), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.7));
+    opacity: 1;
+  }
+  80% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.8), calc(var(--confetti-peak, 0px) * -0.64 + var(--confetti-drift, 0px) * 0.8), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.8));
+    opacity: 1;
+  }
+  90% {
+    transform: translate3d(calc(var(--confetti-sway, 0px) * 0.9), calc(var(--confetti-peak, 0px) * -0.36 + var(--confetti-drift, 0px) * 0.9), 0) rotateZ(calc(var(--confetti-spin, 540deg) * 0.9));
+    opacity: 1;
+  }
   100% {
-    transform: translate3d(var(--confetti-sway, 0px), 105vh, 0) rotateZ(var(--confetti-spin, 540deg));
+    transform: translate3d(var(--confetti-sway, 0px), var(--confetti-drift, 0px), 0) rotateZ(var(--confetti-spin, 540deg));
     opacity: 1;
   }
 }

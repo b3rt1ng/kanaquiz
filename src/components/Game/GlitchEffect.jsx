@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { getEdgeMargins } from './edgeMargins';
 import './GlitchEffect.scss';
 
@@ -33,7 +33,12 @@ function randomGlitchRect(margins) {
   return { edge, style };
 }
 
-class GlitchEffect extends Component {
+// PureComponent: combo/safeZoneRef are a primitive and a stable ref across
+// re-renders (see the exercise components' JSX - never inline literals), so
+// a shallow-prop-equal parent re-render (e.g. every keystroke while typing)
+// can bail out here instead of doing a full reconciliation pass for no
+// visible change.
+class GlitchEffect extends PureComponent {
   state = { rects: [] };
   seq = 0;
   // Set, not array: each timer removes itself once fired, so pending timers

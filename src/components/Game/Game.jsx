@@ -6,6 +6,7 @@ import Question from './Question';
 import TableExercise from './TableExercise';
 import ListeningExercise from './ListeningExercise';
 import CountingExercise from './CountingExercise';
+import KanjiExercise from './KanjiExercise';
 import Confetti from './Confetti';
 
 class Game extends Component {
@@ -19,13 +20,16 @@ class Game extends Component {
   componentDidMount() {
     // The table and listening exercises have no intro/question screen split -
     // they're one continuous screen, so start the timer as soon as shown.
+    // Kanji is the odd one out: it has its own picker/menu screen before the
+    // quiz starts, so it's excluded here - KanjiExercise starts/stops the
+    // timer itself once the user actually leaves that picker.
     if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting') {
       this.props.startTimer();
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting') return;
+    if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting' || this.props.stage === 'kanji') return;
     if(prevState.showScreen !== this.state.showScreen) {
       if(this.state.showScreen === 'question') {
         this.props.startTimer();
@@ -86,6 +90,16 @@ class Game extends Component {
         <CountingExercise
           handleEndGame={this.props.handleEndGame}
           setHelpContent={this.props.setHelpContent}
+        />
+      );
+    }
+
+    if(this.props.stage === 'kanji') {
+      return (
+        <KanjiExercise
+          handleEndGame={this.props.handleEndGame}
+          startTimer={this.props.startTimer}
+          stopTimer={this.props.stopTimer}
         />
       );
     }

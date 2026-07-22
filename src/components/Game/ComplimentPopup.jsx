@@ -26,7 +26,7 @@ function randomZonePosition() {
   return { zone, horizontal: 3 + Math.random() * 8, vertical: 14 + Math.random() * 58 };
 }
 
-function ComplimentPopup({ compliment }) {
+const ComplimentPopup = React.memo(function ComplimentPopup({ compliment }) {
   if (!compliment) return null;
 
   const { text, romaji, color, zone, horizontal, vertical, combo } = compliment;
@@ -48,7 +48,7 @@ function ComplimentPopup({ compliment }) {
       </div>
     </div>
   );
-}
+});
 
 export function buildCompliment({ text, romaji }, combo) {
   return {

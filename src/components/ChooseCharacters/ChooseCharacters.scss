@@ -72,6 +72,61 @@
     color: var(--text-muted);
   }
 }
+/* Fixed to the right edge like ComboIndicator's .combo-root, reusing its
+   combo-404-shadow text treatment (see App.scss) so it reads as the same
+   "big flashy combo lettering" the user asked for - stacked vertically
+   instead of on one line so it stays narrow at that font size. */
+.learn-kanji-cta {
+  position: fixed;
+  top: 50%;
+  right: 3vw;
+  transform: translateY(-50%);
+  z-index: 500;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease-out;
+
+  &:hover {
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  @media (max-width: 768px) {
+    /* Extra clearance vs. the combo indicator's usual 3vw - the
+       combo-404-shadow trail reaches ~8px past the glyph edge, and on a
+       narrow viewport that trail was getting hard-clipped by the screen
+       edge itself instead of having room to breathe. */
+    right: 5vw;
+    top: 12%;
+    transform: none;
+
+    &:hover {
+      transform: scale(1.08);
+    }
+  }
+}
+
+.learn-kanji-line {
+  display: block;
+  font-weight: 900;
+  font-size: 1.5em;
+  line-height: 1.15;
+  color: #fff3e0;
+  animation: combo-404-shadow 10s infinite linear;
+
+  @media (max-width: 768px) {
+    font-size: 1em;
+  }
+}
+
+.learn-kanji-kanji {
+  font-size: 2em;
+
+  @media (max-width: 768px) {
+    font-size: 1.4em;
+  }
+}
+
 .error-message {
   color: var(--error);
   text-shadow: var(--glow-error);

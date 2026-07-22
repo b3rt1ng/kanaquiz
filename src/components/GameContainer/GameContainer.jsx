@@ -97,6 +97,16 @@ class GameContainer extends PureComponent {
     this.props.handleStartGame();
   }
 
+  // Kanji exercise: self-contained too - it manages its own theme picker
+  // internally rather than using the kana-group checkboxes.
+  startKanjiExercise = () => {
+    this.setState({
+      stage: 'kanji',
+      isLocked: true
+    });
+    this.props.handleStartGame();
+  }
+
   updateStageStats = (stage, isCorrect) => {
     this.setState(prevState => {
       const newStats = { ...prevState.stageStats };
@@ -167,6 +177,7 @@ class GameContainer extends PureComponent {
               startTableExercise={this.startTableExercise}
               startListeningExercise={this.startListeningExercise}
               startCountingExercise={this.startCountingExercise}
+              startKanjiExercise={this.startKanjiExercise}
             />
           }
           { this.props.gameState==='game' &&

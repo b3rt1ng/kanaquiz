@@ -244,9 +244,20 @@ class ChooseCharacters extends Component {
     this.props.startCountingExercise();
   }
 
+  startKanji() {
+    // Not kana-group dependent either - it picks its own kanji themes.
+    this.setState({ errMsg: '' });
+    this.props.startKanjiExercise();
+  }
+
   render() {
     return (
       <div className="choose-characters">
+        <div className="learn-kanji-cta" onClick={() => this.startKanji()}>
+          <span className="learn-kanji-line">LEARN</span>
+          <span className="learn-kanji-line learn-kanji-kanji">漢字</span>
+          <span className="learn-kanji-line">HERE</span>
+        </div>
         <div className="row">
           <div className="col-xs-12">
             <div className="panel panel-default">
@@ -308,6 +319,7 @@ class ChooseCharacters extends Component {
                       <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
                       <button className="btn btn-info practice-btn" onClick={() => this.startListening()}>Listening</button>
                       <button className="btn btn-info practice-btn" onClick={() => this.startCounting()}>Counting</button>
+                      <button className="btn btn-info practice-btn" onClick={() => this.startKanji()}>Kanji</button>
                     </div>
                     {
                       this.state.stage4PickerOpen &&

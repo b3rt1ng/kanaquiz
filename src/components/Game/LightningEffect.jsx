@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { getEdgeMargins } from './edgeMargins';
 import { startLightningSound, stopLightningSound } from '../../data/soundEffects';
 import './LightningEffect.scss';
@@ -86,7 +86,10 @@ function buildBolts(edge, spanLength, reach, count, seq) {
   return bolts;
 }
 
-class LightningEffect extends Component {
+// PureComponent - see GlitchEffect's note. Bolts still update fine: they
+// live in this.state (setState from tick()), which a shallow state compare
+// always picks up since it's a fresh array each time.
+class LightningEffect extends PureComponent {
   state = { leftBolts: [], rightBolts: [] };
   seq = 0;
 
