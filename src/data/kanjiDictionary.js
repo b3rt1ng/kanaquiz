@@ -107,14 +107,17 @@ export const kanjiDictionary = {
       // like this one are classified.
       { kanji: '茶色', readings: ['chairo'], meaning: 'brown', readingType: 'on' },
       { kanji: '水色', readings: ['mizuiro'], meaning: 'light blue', readingType: 'kun' },
-      // "kin'iro" (not "kiniro"): without the apostrophe, the greedy
-      // tokenizer reads ...n+i... as the mora に (ni) instead of ん (n)
-      // followed by い (i) - the same ambiguity the apostrophe convention
-      // exists for elsewhere (see kanaTransliteration.js). This is the
-      // only entry in the dictionary that needs it so far.
+      // "kin'iro" is the properly disambiguated spelling (without the
+      // apostrophe, the greedy tokenizer reads ...n+i... as the mora に
+      // (ni) instead of ん (n) followed by い (i) - see
+      // kanaTransliteration.js). readings[0] stays "kin'iro" so the
+      // display/badges show the correct きんいろ, but plain "kiniro" is
+      // also accepted: isReadingCorrect compares both sides' PARSED kana,
+      // so registering the literal string "kiniro" here just means it
+      // matches whatever a typed "kiniro" also (consistently) parses to.
       // 金 here reads "kin" (on'yomi), unlike its kun'yomi "kane" in the
       // elements theme - see readingType note up top.
-      { kanji: '金色', readings: ["kin'iro"], meaning: 'golden (color)', readingType: 'on' }
+      { kanji: '金色', readings: ["kin'iro", "kiniro"], meaning: 'golden (color)', readingType: 'on' }
     ]
   }
 };
