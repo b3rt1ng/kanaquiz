@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { kanjiDictionary, isReadingCorrect, primaryReadingKana } from '../../data/kanjiDictionary';
-import { parseRomajiToKana } from '../../data/kanaTransliteration';
-import { playWrongSound, playComboSound, playComboBreakSound, playApplauseSound } from '../../data/soundEffects';
+import { parseRomajiToKana, hiraganaToKatakana } from '../../data/kanaTransliteration';
+import { playCorrectSound, playWrongSound, playApplauseSound } from '../../data/soundEffects';
 import { playKanjiPronunciation, stopKanjiPronunciation, hasKanjiAudio } from '../../data/kanjiVoice';
 import { pickCompliment } from '../../data/compliments';
 import { getEffectSettings } from '../../data/effectSettings';
@@ -181,11 +181,13 @@ class KanjiExercise extends Component {
     const isCorrect = isReadingCorrect(entry, this.state.input);
     const elapsedMs = this.questionShownAt ? Math.min(Date.now() - this.questionShownAt, 30000) : 0;
 
-    const hadActiveCombo = this.state.combo > 0;
     const newCombo = isCorrect ? this.state.combo + 1 : 0;
 
-    if (isCorrect) playComboSound(newCombo);
-    else if (hadActiveCombo) playComboBreakSound(this.state.combo);
+    // Plain correct/wrong feedback only - no combo tick/break sounds here
+    // (unlike the other exercises). The kanji's own reading is already
+    // played shortly after on a correct answer (see pronounceAfterAnswer),
+    // so stacking an escalating combo stinger on top was too much.
+    if (isCorrect) playCorrectSound();
     else playWrongSound();
 
     this.pronounceAfterAnswer(entry);
@@ -344,6 +346,10 @@ class KanjiExercise extends Component {
 
     const entry = this.cards[this.state.index]; // front face (kanji) + submit() target
     const revealEntry = this.cards[this.state.revealIndex]; // back face (answer) - see advance()
+    // Always derived straight from the romaji reading (not primaryReadingKana's
+    // kanaOverride) - the corner badges need the plain hiragana form
+    // specifically, so the katakana one can be mechanically derived from it.
+    const revealHiragana = parseRomajiToKana(revealEntry.readings[0]).kana;
     const preview = parseRomajiToKana(this.state.input);
 
     return (
@@ -365,6 +371,14 @@ class KanjiExercise extends Component {
                 <div className="kanji-flip-kanji">{entry.kanji}</div>
               </div>
               <div className="kanji-flip-face kanji-flip-back">
+                <span
+                  className={'kanji-reading-badge kanji-reading-badge-kun' + (revealEntry.readingType === 'kun' ? ' active' : '')}
+                  title="Kun'yomi - native Japanese reading"
+                >{revealHiragana}</span>
+                <span
+                  className={'kanji-reading-badge kanji-reading-badge-on' + (revealEntry.readingType === 'on' ? ' active' : '')}
+                  title="On'yomi - Sino-Japanese reading"
+                >{hiraganaToKatakana(revealHiragana)}</span>
                 <div className="kanji-flip-kana">{primaryReadingKana(revealEntry)}</div>
                 <div className="kanji-flip-romaji">{revealEntry.readings[0]}</div>
                 <div className="kanji-flip-meaning">{revealEntry.meaning}</div>

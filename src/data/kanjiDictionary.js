@@ -9,76 +9,112 @@
 // convention: onyomi in katakana, kunyomi in hiragana). It only affects
 // what's displayed - typing still goes through the same hiragana-only
 // live preview/checking as everything else.
+//
+// `readingType` classifies readings[0] (the primary/displayed reading) as
+// 'kun' (kun'yomi, the native Japanese reading) or 'on' (on'yomi, the
+// Chinese-derived reading) - shown on the card back as two corner badges
+// with whichever applies circled. A few entries are genuinely mixed
+// (e.g. 茶色 chairo = on'yomi 茶 "cha" + kun'yomi 色 "iro", 金 accepts both
+// kun'yomi "kane" and on'yomi "kin" as separate readings) - for those,
+// readingType reflects readings[0] specifically, same as primaryReadingKana
+// below, rather than adding a third "mixed" category.
 import { parseRomajiToKana } from './kanaTransliteration';
 
 export const kanjiDictionary = {
   people: {
     label: 'People',
     kanji: [
-      { kanji: '人', readings: ['hito'], meaning: 'person' },
-      { kanji: '男', readings: ['otoko'], meaning: 'man' },
-      { kanji: '女', readings: ['onna'], meaning: 'woman' },
-      { kanji: '子', readings: ['ko'], meaning: 'child' },
-      { kanji: '私', readings: ['watashi'], meaning: 'I, myself' }
+      { kanji: '人', readings: ['hito'], meaning: 'person', readingType: 'kun' },
+      { kanji: '男', readings: ['otoko'], meaning: 'man', readingType: 'kun' },
+      { kanji: '女', readings: ['onna'], meaning: 'woman', readingType: 'kun' },
+      { kanji: '子', readings: ['ko'], meaning: 'child', readingType: 'kun' },
+      { kanji: '私', readings: ['watashi'], meaning: 'I, myself', readingType: 'kun' }
     ]
   },
   sky: {
     label: 'Sky & Spirit',
     kanji: [
-      { kanji: '日', readings: ['hi'], meaning: 'sun' },
-      { kanji: '月', readings: ['tsuki'], meaning: 'moon' },
-      { kanji: '空', readings: ['sora'], meaning: 'sky' },
-      { kanji: '天', readings: ['ten'], meaning: 'the heavens (spiritual sky)', kanaOverride: 'テン' },
-      { kanji: '光', readings: ['hikari'], meaning: 'light' },
-      { kanji: '神', readings: ['kami'], meaning: 'god' }
+      { kanji: '日', readings: ['hi'], meaning: 'sun', readingType: 'kun' },
+      { kanji: '月', readings: ['tsuki'], meaning: 'moon', readingType: 'kun' },
+      { kanji: '空', readings: ['sora'], meaning: 'sky', readingType: 'kun' },
+      { kanji: '天', readings: ['ten'], meaning: 'the heavens (spiritual sky)', kanaOverride: 'テン', readingType: 'on' },
+      { kanji: '光', readings: ['hikari'], meaning: 'light', readingType: 'kun' },
+      { kanji: '神', readings: ['kami'], meaning: 'god', readingType: 'kun' }
     ]
   },
   elements: {
     label: 'Elements',
     kanji: [
-      { kanji: '火', readings: ['hi'], meaning: 'fire' },
-      { kanji: '水', readings: ['mizu'], meaning: 'water' },
-      { kanji: '木', readings: ['ki'], meaning: 'tree' },
-      { kanji: '金', readings: ['kane'], meaning: 'metal' },
-      { kanji: '土', readings: ['tsuchi'], meaning: 'earth, dirt' }
+      { kanji: '火', readings: ['hi'], meaning: 'fire', readingType: 'kun' },
+      { kanji: '水', readings: ['mizu'], meaning: 'water', readingType: 'kun' },
+      { kanji: '木', readings: ['ki'], meaning: 'tree', readingType: 'kun' },
+      { kanji: '金', readings: ['kane', 'kin'], meaning: 'metal, gold', readingType: 'kun' },
+      { kanji: '土', readings: ['tsuchi'], meaning: 'earth, dirt', readingType: 'kun' }
     ]
   },
   nature: {
     label: 'Nature',
     kanji: [
-      { kanji: '風', readings: ['kaze'], meaning: 'wind' },
-      { kanji: '雨', readings: ['ame'], meaning: 'rain' },
-      { kanji: '雪', readings: ['yuki'], meaning: 'snow' },
-      { kanji: '山', readings: ['yama'], meaning: 'mountain' },
-      { kanji: '川', readings: ['kawa'], meaning: 'river' },
-      { kanji: '田', readings: ['ta'], meaning: 'rice field' },
-      { kanji: '島', readings: ['shima'], meaning: 'island' },
-      { kanji: '花', readings: ['hana'], meaning: 'flower' },
-      { kanji: '石', readings: ['ishi'], meaning: 'rock' }
+      { kanji: '風', readings: ['kaze'], meaning: 'wind', readingType: 'kun' },
+      { kanji: '雨', readings: ['ame'], meaning: 'rain', readingType: 'kun' },
+      { kanji: '雪', readings: ['yuki'], meaning: 'snow', readingType: 'kun' },
+      { kanji: '山', readings: ['yama'], meaning: 'mountain', readingType: 'kun' },
+      { kanji: '川', readings: ['kawa'], meaning: 'river', readingType: 'kun' },
+      { kanji: '田', readings: ['ta'], meaning: 'rice field', readingType: 'kun' },
+      { kanji: '島', readings: ['shima'], meaning: 'island', readingType: 'kun' },
+      { kanji: '花', readings: ['hana'], meaning: 'flower', readingType: 'kun' },
+      { kanji: '石', readings: ['ishi'], meaning: 'rock', readingType: 'kun' }
     ]
   },
   culture: {
     label: 'Culture',
     kanji: [
-      { kanji: '刀', readings: ['katana'], meaning: 'sword' }
+      { kanji: '刀', readings: ['katana'], meaning: 'sword', readingType: 'kun' }
     ]
   },
   numbers: {
     label: 'Numbers',
     kanji: [
-      { kanji: '一', readings: ['ichi'], meaning: 'one' },
-      { kanji: '二', readings: ['ni'], meaning: 'two' },
-      { kanji: '三', readings: ['san'], meaning: 'three' },
-      { kanji: '四', readings: ['yon', 'shi'], meaning: 'four' },
-      { kanji: '五', readings: ['go'], meaning: 'five' },
-      { kanji: '六', readings: ['roku'], meaning: 'six' },
-      { kanji: '七', readings: ['nana', 'shichi'], meaning: 'seven' },
-      { kanji: '八', readings: ['hachi'], meaning: 'eight' },
-      { kanji: '九', readings: ['kyuu', 'ku'], meaning: 'nine' },
-      { kanji: '十', readings: ['juu'], meaning: 'ten' },
-      { kanji: '百', readings: ['hyaku'], meaning: 'hundred' },
-      { kanji: '千', readings: ['sen'], meaning: 'thousand' },
-      { kanji: '万', readings: ['man'], meaning: 'ten thousand' }
+      { kanji: '一', readings: ['ichi'], meaning: 'one', readingType: 'on' },
+      { kanji: '二', readings: ['ni'], meaning: 'two', readingType: 'on' },
+      { kanji: '三', readings: ['san'], meaning: 'three', readingType: 'on' },
+      { kanji: '四', readings: ['yon', 'shi'], meaning: 'four', readingType: 'kun' },
+      { kanji: '五', readings: ['go'], meaning: 'five', readingType: 'on' },
+      { kanji: '六', readings: ['roku'], meaning: 'six', readingType: 'on' },
+      { kanji: '七', readings: ['nana', 'shichi'], meaning: 'seven', readingType: 'kun' },
+      { kanji: '八', readings: ['hachi'], meaning: 'eight', readingType: 'on' },
+      { kanji: '九', readings: ['kyuu', 'ku'], meaning: 'nine', readingType: 'on' },
+      { kanji: '十', readings: ['juu'], meaning: 'ten', readingType: 'on' },
+      { kanji: '百', readings: ['hyaku'], meaning: 'hundred', readingType: 'on' },
+      { kanji: '千', readings: ['sen'], meaning: 'thousand', readingType: 'on' },
+      { kanji: '万', readings: ['man'], meaning: 'ten thousand', readingType: 'on' }
+    ]
+  },
+  colors: {
+    label: 'Colors',
+    kanji: [
+      { kanji: '色', readings: ['iro'], meaning: 'color', readingType: 'kun' },
+      { kanji: '赤', readings: ['aka'], meaning: 'red', readingType: 'kun' },
+      { kanji: '青', readings: ['ao'], meaning: 'blue', readingType: 'kun' },
+      { kanji: '黄色', readings: ['kiiro'], meaning: 'yellow', readingType: 'kun' },
+      { kanji: '紫', readings: ['murasaki'], meaning: 'purple', readingType: 'kun' },
+      { kanji: '緑', readings: ['midori'], meaning: 'green', readingType: 'kun' },
+      { kanji: '白', readings: ['shiro'], meaning: 'white', readingType: 'kun' },
+      { kanji: '黒', readings: ['kuro'], meaning: 'black', readingType: 'kun' },
+      { kanji: '灰色', readings: ['haiiro'], meaning: 'grey', readingType: 'kun' },
+      // 茶's own reading here ("cha") is on'yomi, even though 色 ("iro") is
+      // kun'yomi - see the readingType note up top for how mixed compounds
+      // like this one are classified.
+      { kanji: '茶色', readings: ['chairo'], meaning: 'brown', readingType: 'on' },
+      { kanji: '水色', readings: ['mizuiro'], meaning: 'light blue', readingType: 'kun' },
+      // "kin'iro" (not "kiniro"): without the apostrophe, the greedy
+      // tokenizer reads ...n+i... as the mora に (ni) instead of ん (n)
+      // followed by い (i) - the same ambiguity the apostrophe convention
+      // exists for elsewhere (see kanaTransliteration.js). This is the
+      // only entry in the dictionary that needs it so far.
+      // 金 here reads "kin" (on'yomi), unlike its kun'yomi "kane" in the
+      // elements theme - see readingType note up top.
+      { kanji: '金色', readings: ["kin'iro"], meaning: 'golden (color)', readingType: 'on' }
     ]
   }
 };

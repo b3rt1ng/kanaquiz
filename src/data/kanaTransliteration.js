@@ -70,3 +70,12 @@ export function parseRomajiToKana(rawInput) {
     leftover: input.slice(pos)
   };
 }
+
+// Hiragana and katakana occupy parallel Unicode blocks (U+3041-3096 and
+// U+30A1-30F6) at a fixed +0x60 offset, so converting is just a codepoint
+// shift - used to show a kanji's reading written both ways (see
+// KanjiExercise's reading-script corner badges). Anything outside that
+// range (ー, punctuation, ...) is left untouched.
+export function hiraganaToKatakana(hiragana) {
+  return hiragana.replace(/[ぁ-ゖ]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+}

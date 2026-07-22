@@ -109,6 +109,44 @@
     padding: 16px;
     gap: 4px;
 
+    /* The reading written both ways - hiragana (native Japanese) in one
+       corner, katakana (the dictionary convention for Sino-Japanese/on'yomi
+       readings, see kanjiDictionary.js) in the other - whichever is the one
+       actually used for this entry gets "circled" (a solid pill outline +
+       glow), the other stays a faint outline. Pill-shaped and auto-width
+       rather than a fixed circle: unlike a single-glyph label, the reading
+       itself can run to 4+ kana. */
+    .kanji-reading-badge {
+      position: absolute;
+      top: 10px;
+      max-width: 40%;
+      padding: 3px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      font-size: 0.7em;
+      font-weight: bold;
+      color: var(--text-muted);
+      opacity: 0.4;
+      border: 2px solid var(--text-muted);
+      white-space: nowrap;
+      transition: opacity 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+
+      &.active {
+        opacity: 1;
+        color: var(--accent-orange);
+        border-color: var(--accent-orange);
+        box-shadow: var(--glow-orange);
+      }
+    }
+    .kanji-reading-badge-kun {
+      left: 10px;
+    }
+    .kanji-reading-badge-on {
+      right: 10px;
+    }
+
     .kanji-flip-kana {
       font-size: 1.8em;
       font-weight: bold;
