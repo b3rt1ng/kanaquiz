@@ -146,14 +146,18 @@ export function primaryReadingKana(entry) {
 
 // Corner-badge displays: kun'yomi in hiragana, on'yomi in katakana (the
 // same dictionary convention kanaOverride follows), multiple readings of
-// the same type joined with "・". "—" when the kanji has no common reading
-// of that type (e.g. 百 has no everyday kun'yomi).
+// the same type joined with "・". "n/a" (deliberately Latin, not a dash -
+// a bare "—" in a small badge reads too easily as the kanji 一) when the
+// kanji has no common reading of that type (e.g. 百 has no everyday
+// kun'yomi).
+const NO_READING = 'n/a';
+
 export function kunyomiDisplay(entry) {
-  if (!entry.kunyomi || !entry.kunyomi.length) return '—';
+  if (!entry.kunyomi || !entry.kunyomi.length) return NO_READING;
   return entry.kunyomi.map(r => parseRomajiToKana(r).kana).join('・');
 }
 
 export function onyomiDisplay(entry) {
-  if (!entry.onyomi || !entry.onyomi.length) return '—';
+  if (!entry.onyomi || !entry.onyomi.length) return NO_READING;
   return entry.onyomi.map(r => hiraganaToKatakana(parseRomajiToKana(r).kana)).join('・');
 }

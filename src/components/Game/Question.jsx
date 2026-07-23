@@ -31,11 +31,6 @@ class Question extends Component {
   complimentSeq = 0
   // Read by GlitchEffect to keep its rectangles off the readable area.
   trembleRef = React.createRef()
-    // this.setNewQuestion = this.setNewQuestion.bind(this);
-    // this.handleAnswer = this.handleAnswer.bind(this);
-    // this.handleAnswerChange = this.handleAnswerChange.bind(this);
-    // this.handleSubmit = this.handleSubmit.bind(this);
-  // }
 
   getRandomKanas(amount, include, exclude) {
     let randomizedKanas = this.askableKanaKeys.slice();
@@ -103,17 +98,14 @@ class Question extends Component {
     this.setAnswerOptions();
     this.setAllowedAnswers();
     this.questionShownAt = Date.now(); // start timing the response
-    // console.log(this.currentQuestion);
   }
 
   setAnswerOptions() {
     this.answerOptions = this.getRandomKanas(3, this.currentQuestion[0], false);
     this.setState({answerOptions: this.answerOptions});
-    // console.log(this.answerOptions);
   }
 
   setAllowedAnswers() {
-    // console.log(this.currentQuestion);
     this.allowedAnswers = [];
     if(this.props.stage==1 || this.props.stage==3)
       this.allowedAnswers = findRomajisAtKanaKey(this.currentQuestion, kanaDictionary);
@@ -130,7 +122,6 @@ class Question extends Component {
         this.allowedAnswers.push(answer.join(''));
       });
     }
-    // console.log(this.allowedAnswers);
   }
 
   handleAnswer = answer => {
@@ -242,9 +233,7 @@ class Question extends Component {
     this.previousAnswer = '';
     this.stageProgress = 0;
     Object.keys(kanaDictionary).forEach(whichKana => {
-      // console.log(whichKana); // 'hiragana' or 'katakana'
       Object.keys(kanaDictionary[whichKana]).forEach(groupName => {
-        // console.log(groupName); // 'h_group1', ...
         // do we want to include this group?
         if(arrayContains(groupName, this.props.decidedGroups)) {
           // let's merge the group to our askableKanas
@@ -257,7 +246,6 @@ class Question extends Component {
         }
       });
     });
-    // console.log(this.askableKanas);
   }
 
   getAnswerType() {
@@ -273,7 +261,6 @@ class Question extends Component {
 
   getPreviousResult() {
     let resultString='';
-    // console.log(this.previousAnswer);
     if(this.previousQuestion=='')
       resultString = <div className="previous-result none">Let's go! Which character is this?</div>
     else {
@@ -300,8 +287,6 @@ class Question extends Component {
   }
 
   isInAllowedAnswers(previousAnswer) {
-    // console.log(previousAnswer);
-    // console.log(this.allowedAnswers);
     if(arrayContains(previousAnswer, this.previousAllowedAnswers))
       return true;
     else return false;

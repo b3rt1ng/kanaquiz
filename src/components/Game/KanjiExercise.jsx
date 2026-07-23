@@ -257,6 +257,7 @@ class KanjiExercise extends Component {
     if (nextIndex >= this.cards.length) {
       this.setState({ flipped: false });
       this.waitForFlipTransition(() => {
+        this.props.stopTimer();
         this.celebrateSeq++;
         playApplauseSound();
         this.setState({ phase: 'results', celebrate: true });

@@ -1,28 +1,33 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
-class CharacterGroup extends Component {
-  state = { shownChars: '' }
-
-  changeShownChars(newString) {
-    this.setState({shownChars: newString})
-  }
-
-  getShowableCharacters(whichKana) {
-    let strRomajiCharacters = '';
-    let strKanaCharacters = '';
-    Object.keys(this.props.characters).map(character => {
-      strRomajiCharacters+=this.props.characters[character][0]+' · ';
-      strKanaCharacters+=character+' · ';
+// PureComponent: groupName/selected/characters/handleToggleSelect are all
+// either primitives or stable references from the parent (see
+// ChooseCharacters.jsx - characters comes straight from the static
+// kanaDictionary, handleToggleSelect is a class-field arrow function), so
+// an unrelated re-render of the ~150-row picker (toggling one other
+// checkbox, opening a side panel, ...) can skip every row except the one
+// that actually changed.
+class CharacterGroup extends PureComponent {
+  // Built once from props.characters (which never changes for a mounted
+  // group) instead of rejoining both strings on every mouseover/mouseout/
+  // touch event - with ~150+ of these rows in the character picker, a mouse
+  // sweep across the panel used to redo this string-building work on every
+  // row it crossed for no reason, since the characters themselves are fixed.
+  constructor(props) {
+    super(props);
+    const romaji = [];
+    const kana = [];
+    Object.keys(props.characters).forEach(character => {
+      romaji.push(props.characters[character][0]);
+      kana.push(character);
     });
-    strRomajiCharacters = strRomajiCharacters.slice(0, -2);
-    strKanaCharacters = strKanaCharacters.slice(0, -2);
-    if(whichKana=='romaji') return strRomajiCharacters;
-    else return strKanaCharacters;
+    this.romajiChars = romaji.join(' · ');
+    this.kanaChars = kana.join(' · ');
+    this.state = { shownChars: this.romajiChars };
   }
 
-  componentWillMount() {
-    this.changeShownChars(this.getShowableCharacters('romaji'));
-  }
+  showRomaji = () => this.setState({ shownChars: this.romajiChars })
+  showKana = () => this.setState({ shownChars: this.kanaChars })
 
   render() {
     return (
@@ -34,12 +39,12 @@ class CharacterGroup extends Component {
       }
       onClick={() => {
         this.props.handleToggleSelect(this.props.groupName);
-        this.changeShownChars(this.getShowableCharacters('romaji'));
+        this.showRomaji();
       }}
-      onMouseDown={()=>this.changeShownChars(this.getShowableCharacters('kana'))}
-      onMouseOut={()=>this.changeShownChars(this.getShowableCharacters('romaji'))}
-      onTouchStart={()=>this.changeShownChars(this.getShowableCharacters('kana'))}
-      onTouchEnd={()=>this.changeShownChars(this.getShowableCharacters('romaji'))}
+      onMouseDown={this.showKana}
+      onMouseOut={this.showRomaji}
+      onTouchStart={this.showKana}
+      onTouchEnd={this.showRomaji}
     >
       <span className={this.props.selected ?
           'glyphicon glyphicon-small glyphicon-check' :

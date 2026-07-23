@@ -29,37 +29,41 @@ export function removeFromArray(needle, haystack) {
     return haystack;
 }
 
-export function findRomajisAtKanaKey(needle, kanaDictionary) {
-    let romaji = [];
-    Object.keys(kanaDictionary).map(function(whichKana) {
-    // console.log(whichKana); // 'hiragana' or 'katakana'
-        Object.keys(kanaDictionary[whichKana]).map(function(groupName) {
-            // console.log(groupName); // 'h_group1', ...
-            Object.keys(kanaDictionary[whichKana][groupName]['characters']).map(function(key) {
-                if(key==needle) {
-                    // console.log(kanaDictionary[whichKana][groupName]['characters'][key]);
-                    romaji = kanaDictionary[whichKana][groupName]['characters'][key];
-                }
-            }, this);
-        }, this);
-    }, this);
-    // console.log(romaji);
-    return romaji;
+// Flattened kana-key -> romaji-list index, built once per distinct
+// dictionary object (in practice always the same imported singleton) and
+// reused after that. Replaces a full triple-nested scan of the whole
+// dictionary on every single lookup - this function is called in loops
+// (once per table cell, several times per new question), so that scan was
+// redone hundreds of times per render on a full-size table/question.
+let romajiIndex = null;
+let romajiIndexSource = null;
+
+function buildRomajiIndex(kanaDictionary) {
+    const index = {};
+    Object.keys(kanaDictionary).forEach(whichKana => {
+        Object.keys(kanaDictionary[whichKana]).forEach(groupName => {
+            const characters = kanaDictionary[whichKana][groupName].characters;
+            Object.keys(characters).forEach(key => {
+                index[key] = characters[key];
+            });
+        });
+    });
+    return index;
 }
 
-    // whichKanaTypeIsThis(character, kanaDictionary) { // in case if needed later
-    //     let type = null;
-    //     Object.keys(kanaDictionary).map(function(whichKana) {
-    //         Object.keys(kanaDictionary[whichKana]).map(function(groupName) {
-    //             Object.keys(kanaDictionary[whichKana][groupName]['characters']).map(function(key) {
-    //                 if(key==character) {
-    //                     type = whichKana;
-    //                 }
-    //             }, this);
-    //         }, this);
-    //     }, this);
-    //     return type;       
-    // }
+export function findRomajisAtKanaKey(needle, kanaDictionary) {
+    if (romajiIndexSource !== kanaDictionary) {
+        romajiIndex = buildRomajiIndex(kanaDictionary);
+        romajiIndexSource = kanaDictionary;
+    }
+    // Mirrors the loose `key == needle` the linear scan used to do: a
+    // single-element array (how a one-character "question" is passed
+    // around in Question.jsx) coerces to its own element via String(),
+    // same as `==` would; anything else that isn't already a string
+    // coerces the same way `==` did, so this can never falsely match.
+    const key = Array.isArray(needle) ? String(needle) : needle;
+    return romajiIndex[key] || [];
+}
 
 // Aligns a typed romaji string to a sequence of kana (each described by its
 // list of acceptable romaji) and returns a per-kana breakdown:
