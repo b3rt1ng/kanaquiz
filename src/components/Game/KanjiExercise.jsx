@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { kanjiDictionary, isReadingCorrect, primaryReadingKana } from '../../data/kanjiDictionary';
-import { parseRomajiToKana, hiraganaToKatakana } from '../../data/kanaTransliteration';
+import { kanjiDictionary, isReadingCorrect, primaryReadingKana, kunyomiDisplay, onyomiDisplay } from '../../data/kanjiDictionary';
+import { parseRomajiToKana } from '../../data/kanaTransliteration';
 import { playCorrectSound, playWrongSound, playApplauseSound } from '../../data/soundEffects';
 import { playKanjiPronunciation, stopKanjiPronunciation, hasKanjiAudio } from '../../data/kanjiVoice';
 import { pickCompliment } from '../../data/compliments';
@@ -132,14 +132,31 @@ class KanjiExercise extends Component {
     this.setState({ input: e.target.value });
   }
 
-  // Enter presses are ignored entirely while the card is mid-flip (either
+  // Enter presses (and, see handleContainerClick, taps anywhere on the
+  // card) are ignored entirely while the card is mid-flip (either
   // direction) - besides being generally sane, this is what guarantees the
   // unflip in advance() always starts from a fully-settled 180deg card, so
   // its own transitionend timing stays predictable (see advance()).
-  handleKeyDown = (e) => {
-    if (e.key !== 'Enter' || this.transitioning) return;
+  confirmOrAdvance = () => {
+    if (this.transitioning) return;
     if (this.state.flipped) this.advance();
     else this.submit();
+  }
+
+  handleKeyDown = (e) => {
+    if (e.key !== 'Enter') return;
+    this.confirmOrAdvance();
+  }
+
+  // Tapping anywhere acts like pressing Enter - much easier than hunting
+  // for a keyboard's actual Enter/Go key on mobile. The input itself is
+  // excluded while still composing an answer, so tapping into it to type
+  // just focuses it as normal instead of immediately submitting whatever
+  // (usually nothing) is in it yet; once flipped the input is read-only
+  // anyway, so there's nothing to protect and the whole card advances.
+  handleContainerClick = (e) => {
+    if (!this.state.flipped && e.target === this.inputRef.current) return;
+    this.confirmOrAdvance();
   }
 
   waitForFlipTransition = (onDone) => {
@@ -346,10 +363,6 @@ class KanjiExercise extends Component {
 
     const entry = this.cards[this.state.index]; // front face (kanji) + submit() target
     const revealEntry = this.cards[this.state.revealIndex]; // back face (answer) - see advance()
-    // Always derived straight from the romaji reading (not primaryReadingKana's
-    // kanaOverride) - the corner badges need the plain hiragana form
-    // specifically, so the katakana one can be mechanically derived from it.
-    const revealHiragana = parseRomajiToKana(revealEntry.readings[0]).kana;
     const preview = parseRomajiToKana(this.state.input);
 
     return (
@@ -359,7 +372,7 @@ class KanjiExercise extends Component {
         {effects.lightning && <LightningEffect combo={this.state.combo} safeZoneRef={this.trembleRef} silentSound />}
         {effects.flames && <FlameEffect combo={this.state.combo} safeZoneRef={this.trembleRef} silentSound />}
         {effects.compliments && <ComplimentPopup compliment={this.state.compliment} key={'compliment' + this.complimentSeq} />}
-        <div className={trembleClass} style={trembleStyle} ref={this.trembleRef}>
+        <div className={trembleClass} style={trembleStyle} ref={this.trembleRef} onClick={this.handleContainerClick}>
           <p className="kanji-progress">{this.state.results.filter(r => r.isCorrect).length} / {this.totalCards}</p>
 
           <div className="kanji-flip-scene">
@@ -374,11 +387,11 @@ class KanjiExercise extends Component {
                 <span
                   className={'kanji-reading-badge kanji-reading-badge-kun' + (revealEntry.readingType === 'kun' ? ' active' : '')}
                   title="Kun'yomi - native Japanese reading"
-                >{revealHiragana}</span>
+                >{kunyomiDisplay(revealEntry)}</span>
                 <span
                   className={'kanji-reading-badge kanji-reading-badge-on' + (revealEntry.readingType === 'on' ? ' active' : '')}
                   title="On'yomi - Sino-Japanese reading"
-                >{hiraganaToKatakana(revealHiragana)}</span>
+                >{onyomiDisplay(revealEntry)}</span>
                 <div className="kanji-flip-kana">{primaryReadingKana(revealEntry)}</div>
                 <div className="kanji-flip-romaji">{revealEntry.readings[0]}</div>
                 <div className="kanji-flip-meaning">{revealEntry.meaning}</div>
