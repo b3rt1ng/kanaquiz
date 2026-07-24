@@ -6,6 +6,7 @@ import { playKanjiPronunciation, stopKanjiPronunciation, hasKanjiAudio } from '.
 import { pickCompliment } from '../../data/compliments';
 import { getEffectSettings } from '../../data/effectSettings';
 import { shuffle } from '../../data/helperFuncs';
+import { GrindHelper, requeueAfter } from '../../data/grindHelper';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -16,10 +17,6 @@ import Confetti from './Confetti';
 import './KanjiExercise.scss';
 
 const THEME_KEYS = Object.keys(kanjiDictionary);
-
-// "Grind them" requires this many correct answers per card (not just one)
-// before it's considered mastered and stops coming back - see submit().
-const GRIND_MASTERY_NEEDED = 2;
 
 function buildCards(selectedThemes) {
   const cards = [];
@@ -46,9 +43,9 @@ class KanjiExercise extends Component {
       compliment: null,
       celebrate: false,
       // Every correct answer counts here (not just ones that fully master a
-      // card) - see submit()/GRIND_MASTERY_NEEDED and this.progressTarget.
-      // In normal mode a card only ever needs 1 correct answer, so this
-      // still just counts distinct cards answered correctly, same as before.
+      // card) - see submit()/this.progressTarget. In normal mode a card
+      // only ever needs 1 correct answer, so this still just counts
+      // distinct cards answered correctly, same as before.
       progressCount: 0
     };
     this.complimentSeq = 0;
@@ -57,10 +54,7 @@ class KanjiExercise extends Component {
     this.inputRef = React.createRef();
     this.cardRef = React.createRef();
     this.cards = [];
-    // Correct-answer counts per kanji character, reset at the start of each
-    // session (startQuiz/grind) - see submit().
-    this.masteryCount = {};
-    this.grindMode = false;
+    this.grinder = new GrindHelper();
   }
 
   componentWillUnmount() {
@@ -107,15 +101,14 @@ class KanjiExercise extends Component {
     // The picker is treated like any other menu screen (no timer running) -
     // it only starts once the user actually leaves it for the quiz itself.
     this.props.startTimer();
-    this.grindMode = false;
-    this.masteryCount = {};
+    this.grinder.reset();
     this.cards = buildCards(this.state.selectedThemes);
     // Captured once, before any "Correct Later" retries can grow
     // this.cards - the progress display's denominator should stay put at
     // the deck's real size (e.g. 35/50), not creep up to 36/51 just
     // because a miss requeued a card. One correct answer needed per card.
     this.totalCards = this.cards.length;
-    this.progressTarget = this.totalCards;
+    this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.setState({
       phase: 'quiz',
       index: 0,
@@ -134,24 +127,20 @@ class KanjiExercise extends Component {
 
   // "Grind them" (passed to ResultsCharts as onGrind): rebuilds the deck
   // from a plain list of kanji characters - the confusion pairs' own keys -
-  // instead of a picked theme, and requires GRIND_MASTERY_NEEDED correct
-  // answers per card (not just one) before it's done, see submit(). Reused
-  // for both the initial launch from a results screen and for retry().
+  // instead of a picked theme, and requires more than one correct answer
+  // per card before it's done, see submit()/grindHelper.js. Reused for
+  // both the initial launch from a results screen and for retry().
   grind = (kanjiChars) => {
     const entries = kanjiChars.map(findKanjiEntry).filter(Boolean);
     if (!entries.length) return;
-    shuffle(entries);
 
     this.props.startTimer();
-    this.grindMode = true;
-    this.grindKanjiChars = kanjiChars;
-    this.masteryCount = {};
-    this.cards = entries;
+    this.cards = this.grinder.start(entries, kanjiChars);
     this.totalCards = this.cards.length;
-    // GRIND_MASTERY_NEEDED correct answers needed per card, so the
-    // denominator is the full count of correct answers required to finish -
-    // e.g. 6 confused cards -> 12 - not just the card count.
-    this.progressTarget = this.totalCards * GRIND_MASTERY_NEEDED;
+    // The denominator is the full count of correct answers required to
+    // finish - e.g. 6 confused cards needing 2 each -> 12 - not just the
+    // card count.
+    this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.setState({
       phase: 'quiz',
       // Grinding is about drilling missed cards, so this always behaves as
@@ -269,34 +258,23 @@ class KanjiExercise extends Component {
 
     if (isCorrect) this.showCompliment(elapsedMs < 1000, newCombo);
 
-    // Grind mode needs GRIND_MASTERY_NEEDED correct answers on THIS card
-    // (not just one) before it counts as mastered - tracked separately from
-    // `results`, since a card can now legitimately have more than one
-    // correct result in it.
-    let justMastered = false;
-    if (isCorrect) {
-      const needed = this.grindMode ? GRIND_MASTERY_NEEDED : 1;
-      const count = (this.masteryCount[entry.kanji] || 0) + 1;
-      this.masteryCount[entry.kanji] = count;
-      justMastered = count >= needed;
-    }
+    // Grind mode needs more than one correct answer on THIS card before it
+    // counts as mastered - tracked separately from `results`, since a card
+    // can now legitimately have more than one correct result in it.
+    const { justMastered, shouldRequeue: shouldRequeueForGrind } = this.grinder.recordAnswer(entry.kanji, isCorrect);
 
     // "Correct Later": a missed card isn't removed from the deck - a
     // second copy gets slotted in at a random spot somewhere later in the
     // still-unseen part of `this.cards` (never immediately next, so it
     // doesn't just test short-term memory), extending the session until
-    // every card has been gotten right at least once. The same splice also
+    // every card has been gotten right at least once. The same requeue also
     // carries a still-under-mastered CORRECT answer back into the deck
     // during a grind session, so it comes up again for its next required
     // correct. `this.cards` is a plain mutable array (not React state - see
-    // buildCards), so this splice is picked up naturally next time index
-    // advances into it.
-    const shouldRequeue = (!isCorrect && this.state.correctLaterEnabled) || (isCorrect && this.grindMode && !justMastered);
-    if (shouldRequeue) {
-      const from = this.state.index + 1;
-      const insertAt = from + Math.floor(Math.random() * (this.cards.length - from + 1));
-      this.cards.splice(insertAt, 0, entry);
-    }
+    // buildCards), so this is picked up naturally next time index advances
+    // into it.
+    const shouldRequeue = (!isCorrect && this.state.correctLaterEnabled) || shouldRequeueForGrind;
+    if (shouldRequeue) requeueAfter(this.cards, this.state.index, entry);
 
     this.waitForFlipTransition(() => {});
 
@@ -355,7 +333,7 @@ class KanjiExercise extends Component {
 
   retry = () => {
     stopKanjiPronunciation();
-    if (this.grindMode) this.grind(this.grindKanjiChars);
+    if (this.grinder.active) this.grind(this.grinder.keys);
     else this.startQuiz();
     window.scrollTo(0, 0);
   }

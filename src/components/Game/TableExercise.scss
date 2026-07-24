@@ -99,6 +99,23 @@
         font-weight: 600;
       }
     }
+
+    /* Grinding only: correct, but not yet mastered - deliberately NOT the
+       same green as .correct, so it reads as "close, not done" rather than
+       "finished". Clears back to empty on refocus, see handleFocus. */
+    &.partial {
+      background-color: rgba(255, 183, 3, 0.12);
+      border-color: var(--accent-orange);
+      box-shadow: var(--glow-orange);
+      animation: kq-pulse-success 0.5s ease-out;
+      .kana-input {
+        border-color: var(--accent-orange);
+      }
+      .kana-answer {
+        color: var(--accent-orange);
+        font-weight: 600;
+      }
+    }
   }
 
   .table-results {

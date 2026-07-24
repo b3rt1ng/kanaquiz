@@ -7,6 +7,7 @@ import TableExercise from './TableExercise';
 import ListeningExercise from './ListeningExercise';
 import CountingExercise from './CountingExercise';
 import KanjiExercise from './KanjiExercise';
+import KanaGrindExercise from './KanaGrindExercise';
 import Confetti from './Confetti';
 import { getEffectSettings } from '../../data/effectSettings';
 
@@ -30,7 +31,7 @@ class Game extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting' || this.props.stage === 'kanji') return;
+    if(this.props.stage === 'table' || this.props.stage === 'listening' || this.props.stage === 'counting' || this.props.stage === 'kanji' || this.props.stage === 'kanaGrind') return;
     if(prevState.showScreen !== this.state.showScreen) {
       if(this.state.showScreen === 'question') {
         this.props.startTimer();
@@ -105,6 +106,17 @@ class Game extends Component {
       );
     }
 
+    if(this.props.stage === 'kanaGrind') {
+      return (
+        <KanaGrindExercise
+          kanaKeys={this.props.grindKanaKeys}
+          handleEndGame={this.props.handleEndGame}
+          startTimer={this.props.startTimer}
+          stopTimer={this.props.stopTimer}
+        />
+      );
+    }
+
     return (
       <div>
         {this.state.celebrate && getEffectSettings().confetti !== false && <Confetti key={'confetti'+this.celebrateSeq} />}
@@ -121,6 +133,7 @@ class Game extends Component {
               stage4Difficulty={this.props.stage4Difficulty}
               setStage4Difficulty={this.props.setStage4Difficulty}
               isLocked={this.props.isLocked}
+              onGrindKana={this.props.startKanaGrind}
             />
         }
         {

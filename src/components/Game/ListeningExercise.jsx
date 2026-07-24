@@ -4,17 +4,13 @@ import { findRomajisAtKanaKey, arrayContains, shuffle, getSelectedKanaKeys } fro
 import { playWrongSound, playComboSound, playComboBreakSound } from '../../data/soundEffects';
 import { playKana, stopKana, hasKanaAudio } from '../../data/kanaVoice';
 import { getEffectSettings } from '../../data/effectSettings';
+import { GrindHelper, requeueAfter } from '../../data/grindHelper';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
 import FlameEffect from './FlameEffect';
 import LightningEffect from './LightningEffect';
 import './ListeningExercise.scss';
-
-// "Grind them" requires this many correct answers per character (not just
-// one) before it's considered mastered and stops coming back - see
-// handleAnswer().
-const GRIND_MASTERY_NEEDED = 2;
 
 function buildQuestionList(decidedGroups) {
   const keys = [];
@@ -66,9 +62,7 @@ class ListeningExercise extends Component {
       progressCount: 0
     };
     this.trembleRef = React.createRef();
-    this.grindMode = false;
-    // Correct-answer counts per kana, reset at the start of each session.
-    this.masteryCount = {};
+    this.grinder = new GrindHelper();
   }
 
   componentDidMount() {
@@ -106,24 +100,13 @@ class ListeningExercise extends Component {
     else if(hadActiveCombo) playComboBreakSound(this.state.combo);
     else playWrongSound();
 
-    // Grind mode needs GRIND_MASTERY_NEEDED correct answers on THIS
-    // character (not just one) before it counts as mastered. Normal mode
-    // is untouched: the requeue below only ever fires when grindMode is
-    // on, so a plain session behaves exactly as before (a wrong pick just
-    // shows the correct answer and moves on, no retry).
-    let justMastered = false;
-    if (isCorrect) {
-      const needed = this.grindMode ? GRIND_MASTERY_NEEDED : 1;
-      const count = (this.masteryCount[kana] || 0) + 1;
-      this.masteryCount[kana] = count;
-      justMastered = count >= needed;
-    }
-
-    if (this.grindMode && (!isCorrect || !justMastered)) {
-      const from = this.state.index + 1;
-      const insertAt = from + Math.floor(Math.random() * (this.questions.length - from + 1));
-      this.questions.splice(insertAt, 0, kana);
-    }
+    // Grind mode needs more than one correct answer on THIS character
+    // before it counts as mastered. Normal mode is untouched: the requeue
+    // only ever fires when grinding, so a plain session behaves exactly as
+    // before (a wrong pick just shows the correct answer and moves on, no
+    // retry).
+    const { shouldRequeue } = this.grinder.recordAnswer(kana, isCorrect);
+    if (shouldRequeue) requeueAfter(this.questions, this.state.index, kana);
 
     this.setState(prev => ({
       selected: given,
@@ -150,8 +133,8 @@ class ListeningExercise extends Component {
   }
 
   retry = () => {
-    if (this.grindMode) {
-      this.grind(this.grindKanaKeys);
+    if (this.grinder.active) {
+      this.grind(this.grinder.keys);
       return;
     }
     this.fullPool = buildQuestionList(this.props.decidedGroups);
@@ -167,23 +150,18 @@ class ListeningExercise extends Component {
 
   // "Grind them" (passed to ResultsCharts as onGrind): rebuilds the
   // question sequence from the confusion pairs' own kana keys instead of
-  // the selected groups, and requires GRIND_MASTERY_NEEDED correct answers
-  // per character before it's done, see handleAnswer(). fullPool is left
-  // alone so multiple-choice distractors stay varied even with a small
-  // grind set. Reused for both the initial launch from a results screen
-  // and for retry().
+  // the selected groups, and requires more than one correct answer per
+  // character before it's done, see handleAnswer()/grindHelper.js.
+  // fullPool is left alone so multiple-choice distractors stay varied even
+  // with a small grind set. Reused for both the initial launch from a
+  // results screen and for retry().
   grind = (kanaKeys) => {
     const valid = kanaKeys.filter(k => findRomajisAtKanaKey(k, kanaDictionary).length > 0);
     if (!valid.length) return;
-    const questions = valid.slice();
-    shuffle(questions);
 
-    this.grindMode = true;
-    this.grindKanaKeys = kanaKeys;
-    this.masteryCount = {};
-    this.questions = questions;
+    this.questions = this.grinder.start(valid.slice(), kanaKeys);
     this.totalCards = this.questions.length;
-    this.progressTarget = this.totalCards * GRIND_MASTERY_NEEDED;
+    this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.setState({ index: 0, results: [], selected: null, combo: 0, progressCount: 0 }, () => {
       this.setOptions();
       this.playCurrent();
@@ -239,7 +217,7 @@ class ListeningExercise extends Component {
             !complete ? (
               <div className="listening-question">
                 <p className="listening-progress">
-                  {this.grindMode ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.questions.length}`}
+                  {this.grinder.active ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.questions.length}`}
                 </p>
                 {
                   currentKana && !hasKanaAudio(currentKana) && (

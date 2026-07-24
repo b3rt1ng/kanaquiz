@@ -4,6 +4,7 @@ import { findRomajisAtKanaKey, arrayContains, shuffle, getSelectedKanaKeys } fro
 import { playWrongSound, playComboSound, playKeySound, playComboBreakSound } from '../../data/soundEffects';
 import { pickCompliment } from '../../data/compliments';
 import { playComplimentVoice } from '../../data/complimentVoice';
+import { GrindHelper } from '../../data/grindHelper';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -12,6 +13,17 @@ import LightningEffect from './LightningEffect';
 import ComplimentPopup, { buildCompliment } from './ComplimentPopup';
 import { getEffectSettings } from '../../data/effectSettings';
 import './TableExercise.scss';
+
+// Which script (hiragana/katakana) a kana key belongs to - used by grind()
+// to re-partition an arbitrary list of confused characters back into the
+// same two-table layout the grid normally uses, since confusion pairs can
+// span both scripts even when the original selection only used groups
+// from within a single kanaType at a time.
+function kanaTypeOf(kana) {
+  return Object.keys(kanaDictionary).find(type =>
+    Object.values(kanaDictionary[type]).some(group => kana in group.characters)
+  );
+}
 
 class TableExercise extends Component {
   constructor(props) {
@@ -45,6 +57,7 @@ class TableExercise extends Component {
     this.complimentSeq = 0;
     // Read by GlitchEffect to keep its rectangles off the grid.
     this.trembleRef = React.createRef();
+    this.grinder = new GrindHelper();
   }
 
   componentDidMount() {
@@ -89,7 +102,12 @@ class TableExercise extends Component {
   updateHeaderInfo = () => {
     if(!this.props.setTableHeaderInfo) return;
     const totalCells = Object.keys(this.state.cells).length;
-    const attemptedCells = Object.values(this.state.cells).filter(c => c.status !== 'empty').length;
+    // Grinding: "filled" means fully mastered (2 correct), not just
+    // attempted - a cell can cycle back through empty/wrong/partial
+    // several times before that, see handleBlur/handleFocus.
+    const attemptedCells = this.grinder.active
+      ? Object.keys(this.state.cells).filter(kana => (this.grinder.masteryCount[kana] || 0) >= this.grinder.masteryNeeded()).length
+      : Object.values(this.state.cells).filter(c => c.status !== 'empty').length;
     this.props.setTableHeaderInfo({
       title: 'Table Exercise',
       subtitle: `${this.getKanaTypeLabel()} - ${attemptedCells}/${totalCells} filled`
@@ -98,6 +116,14 @@ class TableExercise extends Component {
 
   handleFocus = (kana) => {
     this.focusStart[kana] = Date.now();
+    // Grinding: clicking back into a cell that hasn't reached full mastery
+    // yet clears it, so you retype the whole reading fresh instead of
+    // editing the previous (already-scored) attempt.
+    if (this.grinder.active && this.state.cells[kana].status !== 'correct') {
+      this.setState(prevState => ({
+        cells: { ...prevState.cells, [kana]: { ...prevState.cells[kana], value: '' } }
+      }));
+    }
   }
 
   handleChange = (kana, value) => {
@@ -129,12 +155,19 @@ class TableExercise extends Component {
       this.showCompliment(elapsedMs < 1000, newCombo);
     }
 
+    const { justMastered } = this.grinder.recordAnswer(kana, isCorrect);
+    // Grinding: a correct answer that hasn't reached full mastery yet gets
+    // its own "partial" status (styled distinctly from a truly done cell,
+    // see TableExercise.scss) - handleFocus clears it back to empty once
+    // you click back in, so it's tested again for its next required correct.
+    const status = isCorrect ? (this.grinder.active && !justMastered ? 'partial' : 'correct') : 'wrong';
+
     this.setState(prevState => ({
       cells: {
         ...prevState.cells,
         [kana]: {
           ...prevState.cells[kana],
-          status: isCorrect ? 'correct' : 'wrong',
+          status,
           timeMs: elapsedMs
         }
       },
@@ -167,6 +200,9 @@ class TableExercise extends Component {
   }
 
   isComplete() {
+    if (this.grinder.active) {
+      return Object.keys(this.state.cells).every(kana => (this.grinder.masteryCount[kana] || 0) >= this.grinder.masteryNeeded());
+    }
     return Object.values(this.state.cells).every(c => c.status !== 'empty');
   }
 
@@ -192,6 +228,10 @@ class TableExercise extends Component {
   }
 
   resetTable = () => {
+    if (this.grinder.active) {
+      this.grind(this.grinder.keys);
+      return;
+    }
     const cells = {};
     this.flatOrder = [];
     this.kanaTypes.forEach(type => {
@@ -211,6 +251,39 @@ class TableExercise extends Component {
     window.scrollTo(0, 0);
   }
 
+  // "Grind them" (passed to ResultsCharts as onGrind): rebuilds the grid
+  // from the confusion pairs' own kana keys instead of the selected
+  // groups, re-partitioned back into hiragana/katakana tables (see
+  // kanaTypeOf), and requires more than one correct fill per cell before
+  // it's done - see handleBlur/handleFocus/grindHelper.js. Reused for both
+  // the initial launch from a results screen and for retry() (resetTable).
+  grind = (kanaKeys) => {
+    const valid = kanaKeys.filter(k => findRomajisAtKanaKey(k, kanaDictionary).length > 0);
+    if (!valid.length) return;
+
+    const shuffled = this.grinder.start(valid.slice(), kanaKeys);
+    const cells = {};
+    const orderedKana = {};
+    const kanaTypes = [];
+    shuffled.forEach(kana => {
+      cells[kana] = { value: '', status: 'empty', timeMs: 0 };
+      const type = kanaTypeOf(kana);
+      if (!type) return;
+      if (!orderedKana[type]) { orderedKana[type] = []; kanaTypes.push(type); }
+      orderedKana[type].push(kana);
+    });
+
+    this.orderedKana = orderedKana;
+    this.kanaTypes = kanaTypes;
+    this.flatOrder = shuffled;
+    this.focusStart = {};
+    this.setState({ cells, combo: 0 }, () => {
+      this.updateHeaderInfo();
+      this.focusFirstCell();
+    });
+    window.scrollTo(0, 0);
+  }
+
   renderTable(kanaType) {
     return (
       <div className="kana-table" key={kanaType}>
@@ -221,6 +294,9 @@ class TableExercise extends Component {
               kana={kana}
               cell={this.state.cells[kana]}
               correctRomaji={findRomajisAtKanaKey(kana, kanaDictionary)[0]}
+              // Once a grind cell reaches full mastery it's locked - there's
+              // nothing left to retype, so further edits would be pointless.
+              locked={this.grinder.active && this.state.cells[kana].status === 'correct'}
               {...this.getCellHandlers(kana)}
             />
           ))}
@@ -261,7 +337,7 @@ class TableExercise extends Component {
                 <div className="table-results">
                   <h2>Results</h2>
                   <p className="table-score">{correctCells}/{totalCells} correct ({percentage}%)</p>
-                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} />
+                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} onGrind={this.grind} />
                   <p>
                     <button className="btn btn-primary try-again" onClick={this.resetTable}>Try Again</button>
                   </p>
@@ -282,7 +358,7 @@ class TableExercise extends Component {
 // only re-renders this cell, not the whole grid.
 class TableCell extends PureComponent {
   render() {
-    const { kana, cell, correctRomaji, inputRef, onFocus, onChange, onBlur, onKeyDown } = this.props;
+    const { kana, cell, correctRomaji, locked, inputRef, onFocus, onChange, onBlur, onKeyDown } = this.props;
     return (
       <div className={`kana-cell ${cell.status}`}>
         <div className="kana-glyph">{kana}</div>
@@ -292,6 +368,7 @@ class TableCell extends PureComponent {
           autoComplete="off"
           value={cell.value}
           ref={inputRef}
+          readOnly={locked}
           onFocus={onFocus}
           onChange={onChange}
           onBlur={onBlur}

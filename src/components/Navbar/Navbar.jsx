@@ -34,7 +34,7 @@ class Navbar extends Component {
                 this.props.gameState == 'chooseCharacters' ? (
                   <li id="nav-kanaquiz">
                     <p className="nav navbar-text">
-                      Kana Pro
+                      Antoine's japanese learning app
                       <button
                         className="effect-settings-toggle"
                         title="Settings"

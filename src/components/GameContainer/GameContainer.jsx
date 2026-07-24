@@ -107,6 +107,19 @@ class GameContainer extends PureComponent {
     this.props.handleStartGame();
   }
 
+  // "Grind them" for the kana stages (Question 1-4) and the Table exercise -
+  // unlike startTableExercise/startKanjiExercise/etc, this is only ever
+  // reached FROM within an already-running game (a results screen's "Grind
+  // them" button), never from the main menu, so there's no
+  // handleStartGame() call here.
+  startKanaGrind = (kanaKeys) => {
+    this.setState({
+      stage: 'kanaGrind',
+      isLocked: true,
+      grindKanaKeys: kanaKeys
+    });
+  }
+
   updateStageStats = (stage, isCorrect) => {
     this.setState(prevState => {
       const newStats = { ...prevState.stageStats };
@@ -194,6 +207,8 @@ class GameContainer extends PureComponent {
                 confusionPairs={this.state.confusionPairs}
                 stage4Difficulty={this.state.stage4Difficulty}
                 setStage4Difficulty={this.setStage4Difficulty}
+                startKanaGrind={this.startKanaGrind}
+                grindKanaKeys={this.state.grindKanaKeys}
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}
                 setTableHeaderInfo={this.props.setTableHeaderInfo}

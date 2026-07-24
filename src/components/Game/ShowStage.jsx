@@ -124,6 +124,7 @@ class ShowStage extends Component {
           <ResultsCharts
             characterStats={this.props.characterStats}
             confusionPairs={this.props.confusionPairs}
+            onGrind={this.props.onGrindKana}
           />
           <h4 className="continue-prompt">What do you want to do?</h4>
           <p><button className="btn btn-danger keep-playing" onClick={()=>this.props.lockStage(4)}>Continue Playing</button></p>
@@ -157,6 +158,7 @@ class ShowStage extends Component {
             <ResultsCharts
               characterStats={this.props.characterStats}
               confusionPairs={this.props.confusionPairs}
+              onGrind={this.props.onGrindKana}
             />
             <button className="btn btn-primary continue-btn" onClick={this.removeStage}>
               Continue →

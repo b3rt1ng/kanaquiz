@@ -3,7 +3,7 @@ import { randomCountingNumber, numberToKanji, numberToRomaji, parseCountingInput
 import { playWrongSound, playComboSound, playComboBreakSound, playSpellingNoteSound } from '../../data/soundEffects';
 import { playNumberPronunciation, stopNumberPronunciation, hasNumberAudio } from '../../data/numberVoice';
 import { getEffectSettings } from '../../data/effectSettings';
-import { shuffle } from '../../data/helperFuncs';
+import { GrindHelper, requeueAfter } from '../../data/grindHelper';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -12,10 +12,6 @@ import LightningEffect from './LightningEffect';
 import './CountingExercise.scss';
 
 const QUESTION_COUNT = 15;
-
-// "Grind them" requires this many correct answers per number (not just
-// one) before it's considered mastered and stops coming back - see submit().
-const GRIND_MASTERY_NEEDED = 2;
 
 function buildQuestionList() {
   const list = [];
@@ -84,9 +80,7 @@ class CountingExercise extends Component {
     };
     this.trembleRef = React.createRef();
     this.inputRef = React.createRef();
-    this.grindMode = false;
-    // Correct-answer counts per number, reset at the start of each session.
-    this.masteryCount = {};
+    this.grinder = new GrindHelper();
     // Populated as numbers are answered - "Grind them" hands back the kanji
     // strings from confusionPairs (the generic results-screen key), so this
     // is what maps them back to the actual numeric values to requiz.
@@ -149,24 +143,13 @@ class CountingExercise extends Component {
 
     this.pronounceAfterAnswer(target);
 
-    // Grind mode needs GRIND_MASTERY_NEEDED correct answers on THIS number
-    // (not just one) before it counts as mastered. Normal mode is
-    // untouched: `shouldRequeue` only ever fires when grindMode is on, so
-    // a plain session behaves exactly as before (wrong answers just show
-    // the correction message and move on, no retry).
-    let justMastered = false;
-    if (isCorrect) {
-      const needed = this.grindMode ? GRIND_MASTERY_NEEDED : 1;
-      const count = (this.masteryCount[target] || 0) + 1;
-      this.masteryCount[target] = count;
-      justMastered = count >= needed;
-    }
-
-    if (this.grindMode && (!isCorrect || !justMastered)) {
-      const from = this.state.index + 1;
-      const insertAt = from + Math.floor(Math.random() * (this.numbers.length - from + 1));
-      this.numbers.splice(insertAt, 0, target);
-    }
+    // Grind mode needs more than one correct answer on THIS number before
+    // it counts as mastered. Normal mode is untouched: shouldRequeue only
+    // ever fires when grinding, so a plain session behaves exactly as
+    // before (wrong answers just show the correction message and move on,
+    // no retry).
+    const { shouldRequeue } = this.grinder.recordAnswer(target, isCorrect);
+    if (shouldRequeue) requeueAfter(this.numbers, this.state.index, target);
 
     this.setState(prev => ({
       combo: newCombo,
@@ -215,8 +198,8 @@ class CountingExercise extends Component {
 
   retry = () => {
     stopNumberPronunciation();
-    if (this.grindMode) {
-      this.grind(this.grindKanjiStrings);
+    if (this.grinder.active) {
+      this.grind(this.grinder.keys);
       return;
     }
     this.numbers = buildQuestionList();
@@ -230,24 +213,20 @@ class CountingExercise extends Component {
   // "Grind them" (passed to ResultsCharts as onGrind): rebuilds the number
   // list from the confusion pairs' own kanji-string keys (mapped back to
   // actual values via numberByKanji) instead of a fresh random draw, and
-  // requires GRIND_MASTERY_NEEDED correct answers per number before it's
-  // done, see submit(). Reused for both the initial launch from a results
-  // screen and for retry().
+  // requires more than one correct answer per number before it's done, see
+  // submit()/grindHelper.js. Reused for both the initial launch from a
+  // results screen and for retry().
   grind = (kanjiStrings) => {
     const numbers = kanjiStrings.map(k => this.numberByKanji[k]).filter(n => n !== undefined);
     if (!numbers.length) return;
-    shuffle(numbers);
 
     stopNumberPronunciation();
-    this.grindMode = true;
-    this.grindKanjiStrings = kanjiStrings;
-    this.masteryCount = {};
-    this.numbers = numbers;
+    this.numbers = this.grinder.start(numbers, kanjiStrings);
     this.totalCards = this.numbers.length;
-    // GRIND_MASTERY_NEEDED correct answers needed per number, so the
-    // denominator is the full count of correct answers required to finish -
-    // e.g. 6 confused numbers -> 12 - not just the number count.
-    this.progressTarget = this.totalCards * GRIND_MASTERY_NEEDED;
+    // The denominator is the full count of correct answers required to
+    // finish - e.g. 6 confused numbers needing 2 each -> 12 - not just the
+    // number count.
+    this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.setState({
       index: 0, input: '', results: [], combo: 0, correction: null, note: null, previousNumber: null,
       progressCount: 0
@@ -306,7 +285,7 @@ class CountingExercise extends Component {
             !complete ? (
               <div className="counting-question">
                 <p className="counting-progress">
-                  {this.grindMode ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.numbers.length}`}
+                  {this.grinder.active ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.numbers.length}`}
                 </p>
                 <div className="counting-number">{currentNumber}</div>
                 <div className="counting-kanji-preview">

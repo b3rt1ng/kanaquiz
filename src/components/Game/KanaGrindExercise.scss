@@ -1,0 +1,84 @@
+.kana-grind-exercise {
+  .kana-grind-tremble.tremble-active {
+    animation-name: kq-tremble;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .kana-grind-question {
+    max-width: 420px;
+    margin: 40px auto 0;
+  }
+
+  .kana-grind-progress {
+    color: var(--text-muted);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+
+  .kana-grind-glyph {
+    font-size: 4.5em;
+    font-weight: 900;
+    color: var(--text);
+    text-shadow: 0 0 14px rgba(255, 77, 109, 0.55), 0 0 34px rgba(255, 46, 136, 0.3);
+    animation: kq-pop-in 0.25s ease-out;
+    margin-bottom: 18px;
+  }
+
+  .kana-grind-input {
+    width: 100%;
+    max-width: 340px;
+    padding: 10px 14px;
+    font-size: 1.3em;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid var(--accent-coral);
+    background-color: var(--bg-panel-raised);
+    color: var(--text);
+
+    &:focus {
+      outline: none;
+      box-shadow: var(--glow-coral);
+    }
+
+    &.wrong {
+      border-color: var(--error);
+      color: var(--error);
+      box-shadow: var(--glow-error);
+    }
+
+    &.correct {
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: var(--glow-success);
+    }
+  }
+
+  .kana-grind-hint {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    margin-top: 10px;
+  }
+
+  .kana-grind-correction {
+    color: var(--error);
+    font-size: 0.95em;
+    margin-top: 10px;
+    strong {
+      color: var(--accent-orange);
+      text-shadow: var(--glow-orange);
+      font-size: 1.2em;
+    }
+  }
+
+  .kana-grind-results {
+    max-width: 700px;
+    margin: 40px auto 60px;
+  }
+  .kana-grind-score {
+    font-size: 1.3em;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    font-weight: bold;
+  }
+}
