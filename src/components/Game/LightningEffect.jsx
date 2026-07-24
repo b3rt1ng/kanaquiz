@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { getEdgeMargins } from './edgeMargins';
 import { startLightningSound, stopLightningSound } from '../../data/soundEffects';
+import { getEffectSettings } from '../../data/effectSettings';
 import './LightningEffect.scss';
 
 // The reach is already clamped to whatever margin is actually available
@@ -93,9 +94,14 @@ class LightningEffect extends PureComponent {
   state = { leftBolts: [], rightBolts: [] };
   seq = 0;
 
+  // Muted either by the exercise itself (silentSound - e.g. Kanji/Listening,
+  // which already have their own reading audio to not talk over) or by the
+  // user's own "Effect sounds" setting - either one is enough to keep it quiet.
+  soundAllowed = () => !this.props.silentSound && getEffectSettings().effectSounds !== false
+
   componentDidMount() {
     this.tick();
-    if (!this.props.silentSound && (this.props.combo || 0) >= ACTIVE_COMBO) startLightningSound();
+    if (this.soundAllowed() && (this.props.combo || 0) >= ACTIVE_COMBO) startLightningSound();
   }
 
   componentDidUpdate(prevProps) {
@@ -103,11 +109,11 @@ class LightningEffect extends PureComponent {
     const isActive = (this.props.combo || 0) >= ACTIVE_COMBO;
     if (isActive && !wasActive) {
       this.tick();
-      if (!this.props.silentSound) startLightningSound();
+      if (this.soundAllowed()) startLightningSound();
     } else if (!isActive && wasActive) {
       clearTimeout(this.regenTimer);
       this.setState({ leftBolts: [], rightBolts: [] });
-      if (!this.props.silentSound) stopLightningSound();
+      if (this.soundAllowed()) stopLightningSound();
     }
   }
 

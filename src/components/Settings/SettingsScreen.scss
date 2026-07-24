@@ -1,0 +1,127 @@
+.settings-screen {
+  margin: 40px auto 60px;
+
+  .panel-heading {
+    font-weight: bold;
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+  }
+}
+
+.settings-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 18px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 77, 109, 0.25);
+}
+
+.settings-preset-btn {
+  padding: 6px 14px;
+  font-size: 0.9em;
+
+  &.active {
+    color: var(--bg);
+    background-color: var(--success);
+    border-color: var(--success);
+    box-shadow: var(--glow-success);
+  }
+}
+
+.settings-group {
+  &:not(:first-child) {
+    margin-top: 8px;
+  }
+}
+
+.settings-group-title {
+  margin: 20px 0 8px;
+  color: var(--accent-orange);
+  text-shadow: var(--glow-orange);
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  .settings-group:first-child & {
+    margin-top: 0;
+  }
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 2px;
+  cursor: pointer;
+  font-weight: normal;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 77, 109, 0.15);
+  }
+
+  &:hover .settings-row-label {
+    color: var(--accent-orange);
+  }
+}
+
+.settings-row-label {
+  color: var(--text);
+  transition: color 0.15s;
+}
+
+/* Standard hidden-checkbox-styled-as-switch: the input stays interactive
+   (and keyboard/screen-reader friendly) but visually invisible, stacked
+   over the track/knob pair which do the actual drawing. */
+.kq-switch {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 44px;
+  height: 24px;
+
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .kq-switch-track {
+    position: absolute;
+    inset: 0;
+    background-color: var(--bg-input);
+    border: 2px solid var(--text-muted);
+    border-radius: 999px;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+
+  .kq-switch-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    transition: transform 0.15s ease-out, background-color 0.15s, box-shadow 0.15s;
+  }
+
+  input:checked ~ .kq-switch-track {
+    background-color: rgba(166, 255, 60, 0.15);
+    border-color: var(--success);
+  }
+  input:checked ~ .kq-switch-track .kq-switch-knob {
+    transform: translateX(20px);
+    background-color: var(--success);
+    box-shadow: var(--glow-success);
+  }
+
+  input:focus-visible ~ .kq-switch-track {
+    outline: 2px solid var(--accent-orange);
+    outline-offset: 2px;
+  }
+}

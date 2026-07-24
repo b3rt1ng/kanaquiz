@@ -11,6 +11,11 @@ import FlameEffect from './FlameEffect';
 import LightningEffect from './LightningEffect';
 import './ListeningExercise.scss';
 
+// "Grind them" requires this many correct answers per character (not just
+// one) before it's considered mastered and stops coming back - see
+// handleAnswer().
+const GRIND_MASTERY_NEEDED = 2;
+
 function buildQuestionList(decidedGroups) {
   const keys = [];
   Object.keys(kanaDictionary).forEach(type => {
@@ -43,15 +48,27 @@ function buildOptions(kana, pool) {
 class ListeningExercise extends Component {
   constructor(props) {
     super(props);
-    this.questions = buildQuestionList(props.decidedGroups);
+    // Kept around even during a grind session (see grind()) - restricting
+    // `this.questions` to just a handful of confused characters would
+    // otherwise starve buildOptions of enough distinct-romaji distractors.
+    this.fullPool = buildQuestionList(props.decidedGroups);
+    this.questions = this.fullPool;
+    this.totalCards = this.questions.length;
+    this.progressTarget = this.totalCards;
     this.state = {
       index: 0,
       options: [],
       selected: null,
       results: [],
-      combo: 0
+      combo: 0,
+      // Every correct answer counts here (not just ones that fully master a
+      // character) - only shown in grind mode, see progressTarget.
+      progressCount: 0
     };
     this.trembleRef = React.createRef();
+    this.grindMode = false;
+    // Correct-answer counts per kana, reset at the start of each session.
+    this.masteryCount = {};
   }
 
   componentDidMount() {
@@ -66,7 +83,7 @@ class ListeningExercise extends Component {
 
   setOptions = () => {
     const kana = this.questions[this.state.index];
-    this.setState({ options: buildOptions(kana, this.questions) });
+    this.setState({ options: buildOptions(kana, this.fullPool) });
     this.questionShownAt = Date.now();
   }
 
@@ -89,9 +106,31 @@ class ListeningExercise extends Component {
     else if(hadActiveCombo) playComboBreakSound(this.state.combo);
     else playWrongSound();
 
+    // Grind mode needs GRIND_MASTERY_NEEDED correct answers on THIS
+    // character (not just one) before it counts as mastered. Normal mode
+    // is untouched: the requeue below only ever fires when grindMode is
+    // on, so a plain session behaves exactly as before (a wrong pick just
+    // shows the correct answer and moves on, no retry).
+    let justMastered = false;
+    if (isCorrect) {
+      const needed = this.grindMode ? GRIND_MASTERY_NEEDED : 1;
+      const count = (this.masteryCount[kana] || 0) + 1;
+      this.masteryCount[kana] = count;
+      justMastered = count >= needed;
+    }
+
+    if (this.grindMode && (!isCorrect || !justMastered)) {
+      const from = this.state.index + 1;
+      const insertAt = from + Math.floor(Math.random() * (this.questions.length - from + 1));
+      this.questions.splice(insertAt, 0, kana);
+    }
+
     this.setState(prev => ({
       selected: given,
       combo: newCombo,
+      // Every correct answer moves the counter, whether it's a character's
+      // 1st or 2nd (grind mode) success - see this.progressTarget.
+      progressCount: prev.progressCount + (isCorrect ? 1 : 0),
       results: [...prev.results, { kana, romaji: acceptable[0], given: isCorrect ? '' : given, isCorrect, elapsedMs }]
     }));
 
@@ -111,8 +150,41 @@ class ListeningExercise extends Component {
   }
 
   retry = () => {
-    this.questions = buildQuestionList(this.props.decidedGroups);
-    this.setState({ index: 0, results: [], selected: null, combo: 0 }, () => {
+    if (this.grindMode) {
+      this.grind(this.grindKanaKeys);
+      return;
+    }
+    this.fullPool = buildQuestionList(this.props.decidedGroups);
+    this.questions = this.fullPool;
+    this.totalCards = this.questions.length;
+    this.progressTarget = this.totalCards;
+    this.setState({ index: 0, results: [], selected: null, combo: 0, progressCount: 0 }, () => {
+      this.setOptions();
+      this.playCurrent();
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // "Grind them" (passed to ResultsCharts as onGrind): rebuilds the
+  // question sequence from the confusion pairs' own kana keys instead of
+  // the selected groups, and requires GRIND_MASTERY_NEEDED correct answers
+  // per character before it's done, see handleAnswer(). fullPool is left
+  // alone so multiple-choice distractors stay varied even with a small
+  // grind set. Reused for both the initial launch from a results screen
+  // and for retry().
+  grind = (kanaKeys) => {
+    const valid = kanaKeys.filter(k => findRomajisAtKanaKey(k, kanaDictionary).length > 0);
+    if (!valid.length) return;
+    const questions = valid.slice();
+    shuffle(questions);
+
+    this.grindMode = true;
+    this.grindKanaKeys = kanaKeys;
+    this.masteryCount = {};
+    this.questions = questions;
+    this.totalCards = this.questions.length;
+    this.progressTarget = this.totalCards * GRIND_MASTERY_NEEDED;
+    this.setState({ index: 0, results: [], selected: null, combo: 0, progressCount: 0 }, () => {
       this.setOptions();
       this.playCurrent();
     });
@@ -166,7 +238,9 @@ class ListeningExercise extends Component {
           {
             !complete ? (
               <div className="listening-question">
-                <p className="listening-progress">{this.state.index + 1} / {this.questions.length}</p>
+                <p className="listening-progress">
+                  {this.grindMode ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.questions.length}`}
+                </p>
                 {
                   currentKana && !hasKanaAudio(currentKana) && (
                     <React.Fragment>
@@ -202,7 +276,7 @@ class ListeningExercise extends Component {
                 <div className="listening-results">
                   <h2>Results</h2>
                   <p className="listening-score">{correctCount}/{total} correct ({percentage}%)</p>
-                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} />
+                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} onGrind={this.grind} />
                   <p>
                     <button className="btn btn-primary try-again" onClick={this.retry}>Try Again</button>
                   </p>

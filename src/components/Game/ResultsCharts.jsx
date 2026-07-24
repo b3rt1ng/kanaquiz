@@ -6,7 +6,7 @@ import './ResultsCharts.scss';
 // typo one time, a totally different guess another - shows every one of
 // them under that character instead of only the single most common one
 // surviving a global top-N cut.
-function ConfusionPairs({ groups }) {
+function ConfusionPairs({ groups, onGrind }) {
   if (groups.length === 0) {
     return (
       <div className="chart-card">
@@ -42,11 +42,23 @@ function ConfusionPairs({ groups }) {
           </div>
         ))}
       </div>
+      {
+        onGrind && (
+          <button
+            className="btn btn-warning grind-button"
+            // The FULL group list, not `top` - grinding must cover every
+            // confused character, not just the ones the display capped at.
+            onClick={() => onGrind(groups.map(g => g.kana))}
+          >
+            Grind them ({groups.length})
+          </button>
+        )
+      }
     </div>
   );
 }
 
-function ResultsCharts({ characterStats, confusionPairs }) {
+function ResultsCharts({ characterStats, confusionPairs, onGrind }) {
   if (Object.keys(characterStats || {}).length === 0) return null;
 
   const groups = Object.keys(confusionPairs || {}).map(kana => {
@@ -60,7 +72,7 @@ function ResultsCharts({ characterStats, confusionPairs }) {
 
   return (
     <div className="results-charts">
-      <ConfusionPairs groups={groups} />
+      <ConfusionPairs groups={groups} onGrind={onGrind} />
     </div>
   );
 }

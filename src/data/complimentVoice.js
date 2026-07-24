@@ -3,6 +3,7 @@
 // the 75 entries in compliments.js's main pool have audio; the 3
 // speed-only compliments are visual-only, no voice line generated for them.
 import manifest from './complimentAudioManifest.json';
+import { getEffectSettings } from './effectSettings';
 
 const audioContext = require.context('../assets/sounds/compliments', false, /\.mp3$/);
 const urlByFilename = {};
@@ -21,6 +22,7 @@ function getAudioEl() {
 }
 
 export function playComplimentVoice(text) {
+  if (getEffectSettings().complimentVoice === false) return false;
   const filename = manifest[text];
   if (!filename || !urlByFilename[filename]) return false;
 

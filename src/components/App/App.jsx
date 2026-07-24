@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './App.scss';
 import Navbar from '../Navbar/Navbar';
 import GameContainer from '../GameContainer/GameContainer';
+import SettingsScreen from '../Settings/SettingsScreen';
 import { removeHash } from '../../data/helperFuncs';
 import { playHoverSound } from '../../data/soundEffects';
 
@@ -27,6 +28,14 @@ class App extends Component {
   endGame = () => {
     this.setState({gameState: 'chooseCharacters', tableHeaderInfo: null, helpContent: null});
     this.stopTimer();
+  }
+
+  openSettings = () => {
+    this.setState({gameState: 'settings'});
+  }
+
+  closeSettings = () => {
+    this.setState({gameState: 'chooseCharacters'});
   }
 
   setTableHeaderInfo = (tableHeaderInfo) => {
@@ -57,7 +66,7 @@ class App extends Component {
   componentWillUpdate(nextProps, nextState) {
     // This is primarily for demo site purposes. Hides #footer when game is on.
     if(document.getElementById('footer')) {
-      if(nextState.gameState=='chooseCharacters')
+      if(nextState.gameState=='chooseCharacters' || nextState.gameState=='settings')
         document.getElementById('footer').style.display = "block";
       else
         document.getElementById('footer').style.display = "none";
@@ -122,21 +131,29 @@ class App extends Component {
         <Navbar
           gameState={this.state.gameState}
           handleEndGame={this.endGame}
+          onOpenSettings={this.openSettings}
+          onCloseSettings={this.closeSettings}
           totalTimeMs={this.state.totalTimeMs}
           tableHeaderInfo={this.state.tableHeaderInfo}
           helpContent={this.state.helpContent}
         />
         <div className="outercontainer">
           <div className="container game">
-            <GameContainer
-              gameState={this.state.gameState}
-              handleStartGame={this.startGame}
-              handleEndGame={this.endGame}
-              startTimer={this.startTimer}
-              stopTimer={this.stopTimer}
-              setTableHeaderInfo={this.setTableHeaderInfo}
-              setHelpContent={this.setHelpContent}
-            />
+            {
+              this.state.gameState === 'settings' ? (
+                <SettingsScreen onBack={this.closeSettings} />
+              ) : (
+                <GameContainer
+                  gameState={this.state.gameState}
+                  handleStartGame={this.startGame}
+                  handleEndGame={this.endGame}
+                  startTimer={this.startTimer}
+                  stopTimer={this.stopTimer}
+                  setTableHeaderInfo={this.setTableHeaderInfo}
+                  setHelpContent={this.setHelpContent}
+                />
+              )
+            }
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import ListeningExercise from './ListeningExercise';
 import CountingExercise from './CountingExercise';
 import KanjiExercise from './KanjiExercise';
 import Confetti from './Confetti';
+import { getEffectSettings } from '../../data/effectSettings';
 
 class Game extends Component {
   state = { showScreen: '', celebrate: false }
@@ -106,7 +107,7 @@ class Game extends Component {
 
     return (
       <div>
-        {this.state.celebrate && <Confetti key={'confetti'+this.celebrateSeq} />}
+        {this.state.celebrate && getEffectSettings().confetti !== false && <Confetti key={'confetti'+this.celebrateSeq} />}
         {
           this.state.showScreen==='stage' &&
             <ShowStage

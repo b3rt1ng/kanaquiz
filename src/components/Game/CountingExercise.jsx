@@ -3,6 +3,7 @@ import { randomCountingNumber, numberToKanji, numberToRomaji, parseCountingInput
 import { playWrongSound, playComboSound, playComboBreakSound, playSpellingNoteSound } from '../../data/soundEffects';
 import { playNumberPronunciation, stopNumberPronunciation, hasNumberAudio } from '../../data/numberVoice';
 import { getEffectSettings } from '../../data/effectSettings';
+import { shuffle } from '../../data/helperFuncs';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -11,6 +12,10 @@ import LightningEffect from './LightningEffect';
 import './CountingExercise.scss';
 
 const QUESTION_COUNT = 15;
+
+// "Grind them" requires this many correct answers per number (not just
+// one) before it's considered mastered and stops coming back - see submit().
+const GRIND_MASTERY_NEEDED = 2;
 
 function buildQuestionList() {
   const list = [];
@@ -72,10 +77,20 @@ class CountingExercise extends Component {
       combo: 0,
       correction: null,
       note: null,
-      previousNumber: null
+      previousNumber: null,
+      // Every correct answer counts here (not just ones that fully master a
+      // number) - only shown in grind mode, see submit()/this.progressTarget.
+      progressCount: 0
     };
     this.trembleRef = React.createRef();
     this.inputRef = React.createRef();
+    this.grindMode = false;
+    // Correct-answer counts per number, reset at the start of each session.
+    this.masteryCount = {};
+    // Populated as numbers are answered - "Grind them" hands back the kanji
+    // strings from confusionPairs (the generic results-screen key), so this
+    // is what maps them back to the actual numeric values to requiz.
+    this.numberByKanji = {};
   }
 
   componentDidMount() {
@@ -121,6 +136,8 @@ class CountingExercise extends Component {
     const parsed = parseCountingInput(this.state.input);
     const isCorrect = parsed.complete && parsed.value === target;
     const elapsedMs = this.questionShownAt ? Math.min(Date.now() - this.questionShownAt, 30000) : 0;
+    const targetKanji = numberToKanji(target);
+    this.numberByKanji[targetKanji] = target;
 
     const hadActiveCombo = this.state.combo > 0;
     const newCombo = isCorrect ? this.state.combo + 1 : 0;
@@ -132,10 +149,32 @@ class CountingExercise extends Component {
 
     this.pronounceAfterAnswer(target);
 
+    // Grind mode needs GRIND_MASTERY_NEEDED correct answers on THIS number
+    // (not just one) before it counts as mastered. Normal mode is
+    // untouched: `shouldRequeue` only ever fires when grindMode is on, so
+    // a plain session behaves exactly as before (wrong answers just show
+    // the correction message and move on, no retry).
+    let justMastered = false;
+    if (isCorrect) {
+      const needed = this.grindMode ? GRIND_MASTERY_NEEDED : 1;
+      const count = (this.masteryCount[target] || 0) + 1;
+      this.masteryCount[target] = count;
+      justMastered = count >= needed;
+    }
+
+    if (this.grindMode && (!isCorrect || !justMastered)) {
+      const from = this.state.index + 1;
+      const insertAt = from + Math.floor(Math.random() * (this.numbers.length - from + 1));
+      this.numbers.splice(insertAt, 0, target);
+    }
+
     this.setState(prev => ({
       combo: newCombo,
+      // Every correct answer moves the counter, whether it's a number's 1st
+      // or 2nd success - see this.progressTarget.
+      progressCount: prev.progressCount + (isCorrect ? 1 : 0),
       results: [...prev.results, {
-        kana: numberToKanji(target),
+        kana: targetKanji,
         romaji: numberToRomaji(target),
         given: isCorrect ? '' : (this.state.input.trim() || '(empty)'),
         isCorrect,
@@ -176,8 +215,43 @@ class CountingExercise extends Component {
 
   retry = () => {
     stopNumberPronunciation();
+    if (this.grindMode) {
+      this.grind(this.grindKanjiStrings);
+      return;
+    }
     this.numbers = buildQuestionList();
-    this.setState({ index: 0, input: '', results: [], combo: 0, correction: null, note: null, previousNumber: null }, () => {
+    this.setState({ index: 0, input: '', results: [], combo: 0, correction: null, note: null, previousNumber: null, progressCount: 0 }, () => {
+      this.questionShownAt = Date.now();
+      this.focusInput();
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // "Grind them" (passed to ResultsCharts as onGrind): rebuilds the number
+  // list from the confusion pairs' own kanji-string keys (mapped back to
+  // actual values via numberByKanji) instead of a fresh random draw, and
+  // requires GRIND_MASTERY_NEEDED correct answers per number before it's
+  // done, see submit(). Reused for both the initial launch from a results
+  // screen and for retry().
+  grind = (kanjiStrings) => {
+    const numbers = kanjiStrings.map(k => this.numberByKanji[k]).filter(n => n !== undefined);
+    if (!numbers.length) return;
+    shuffle(numbers);
+
+    stopNumberPronunciation();
+    this.grindMode = true;
+    this.grindKanjiStrings = kanjiStrings;
+    this.masteryCount = {};
+    this.numbers = numbers;
+    this.totalCards = this.numbers.length;
+    // GRIND_MASTERY_NEEDED correct answers needed per number, so the
+    // denominator is the full count of correct answers required to finish -
+    // e.g. 6 confused numbers -> 12 - not just the number count.
+    this.progressTarget = this.totalCards * GRIND_MASTERY_NEEDED;
+    this.setState({
+      index: 0, input: '', results: [], combo: 0, correction: null, note: null, previousNumber: null,
+      progressCount: 0
+    }, () => {
       this.questionShownAt = Date.now();
       this.focusInput();
     });
@@ -231,7 +305,9 @@ class CountingExercise extends Component {
           {
             !complete ? (
               <div className="counting-question">
-                <p className="counting-progress">{this.state.index + 1} / {this.numbers.length}</p>
+                <p className="counting-progress">
+                  {this.grindMode ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.numbers.length}`}
+                </p>
                 <div className="counting-number">{currentNumber}</div>
                 <div className="counting-kanji-preview">
                   {preview.kanji || <span className="counting-kanji-placeholder">?</span>}
@@ -285,7 +361,7 @@ class CountingExercise extends Component {
                 <div className="counting-results">
                   <h2>Results</h2>
                   <p className="counting-score">{correctCount}/{total} correct ({percentage}%)</p>
-                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} />
+                  <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} onGrind={this.grind} />
                   <p>
                     <button className="btn btn-primary try-again" onClick={this.retry}>Try Again</button>
                   </p>

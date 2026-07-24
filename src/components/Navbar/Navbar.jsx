@@ -1,13 +1,8 @@
 import React, { Component } from 'react';
-import { EFFECT_LIST, getEffectSettings, setEffectSetting } from '../../data/effectSettings';
 import './Navbar.scss';
 
 class Navbar extends Component {
-  state = { settingsOpen: false, helpOpen: false, effects: getEffectSettings() };
-
-  toggleSettings = () => {
-    this.setState(prev => ({ settingsOpen: !prev.settingsOpen }));
-  }
+  state = { helpOpen: false };
 
   toggleHelp = () => {
     this.setState(prev => ({ helpOpen: !prev.helpOpen }));
@@ -18,10 +13,6 @@ class Navbar extends Component {
     if (prevProps.helpContent && !this.props.helpContent && this.state.helpOpen) {
       this.setState({ helpOpen: false });
     }
-  }
-
-  handleEffectToggle = (key) => {
-    this.setState(prev => ({ effects: setEffectSetting(key, !prev.effects[key]) }));
   }
 
   formatTime = (ms) => {
@@ -40,41 +31,27 @@ class Navbar extends Component {
           <div id="navbar">
             <ul className="nav navbar-nav">
               {
-                this.props.gameState == 'game' ? (
-                  <li id="nav-choosecharacters">
-                    <a href="javascript:;" onClick={this.props.handleEndGame}>
-                      <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
-                    </a>
-                  </li>
-                ) : (
+                this.props.gameState == 'chooseCharacters' ? (
                   <li id="nav-kanaquiz">
                     <p className="nav navbar-text">
                       Kana Pro
                       <button
                         className="effect-settings-toggle"
-                        title="Effect settings"
-                        onClick={this.toggleSettings}
+                        title="Settings"
+                        onClick={this.props.onOpenSettings}
                       >
                         <span className="glyphicon glyphicon-cog"></span>
                       </button>
                     </p>
-                    {
-                      this.state.settingsOpen && (
-                        <div className="effect-settings-panel">
-                          <p className="effect-settings-title">Effects</p>
-                          {EFFECT_LIST.map(({ key, label }) => (
-                            <label className="effect-settings-row" key={key}>
-                              <input
-                                type="checkbox"
-                                checked={this.state.effects[key] !== false}
-                                onChange={() => this.handleEffectToggle(key)}
-                              />
-                              <span>{label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )
-                    }
+                  </li>
+                ) : (
+                  <li id="nav-choosecharacters">
+                    <a
+                      href="javascript:;"
+                      onClick={this.props.gameState == 'settings' ? this.props.onCloseSettings : this.props.handleEndGame}
+                    >
+                      <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Back to menu
+                    </a>
                   </li>
                 )
               }

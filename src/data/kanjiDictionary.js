@@ -161,3 +161,20 @@ export function onyomiDisplay(entry) {
   if (!entry.onyomi || !entry.onyomi.length) return NO_READING;
   return entry.onyomi.map(r => hiraganaToKatakana(parseRomajiToKana(r).kana)).join('・');
 }
+
+// kanji character -> its entry, flattened across every theme. Built once
+// and reused - see helperFuncs.js's findRomajisAtKanaKey for the same
+// "index instead of re-scanning" pattern. Used by "Grind them" to rebuild
+// a deck from a plain list of kanji characters (the confusion pairs'
+// keys), independent of which theme(s) they originally came from.
+let entryIndex = null;
+
+export function findKanjiEntry(kanjiChar) {
+  if (!entryIndex) {
+    entryIndex = {};
+    Object.keys(kanjiDictionary).forEach(theme => {
+      kanjiDictionary[theme].kanji.forEach(entry => { entryIndex[entry.kanji] = entry; });
+    });
+  }
+  return entryIndex[kanjiChar];
+}

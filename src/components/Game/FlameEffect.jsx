@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { getEdgeMargins } from './edgeMargins';
 import { startFireSound, stopFireSound } from '../../data/soundEffects';
+import { getEffectSettings } from '../../data/effectSettings';
 import './FlameEffect.scss';
 
 const MIN_BAND = 60;
@@ -15,13 +16,19 @@ const ACTIVE_COMBO = 15;
 // re-render now bails out before render() runs at all, so the layout read
 // only happens when something that actually affects the output changed.
 class FlameEffect extends PureComponent {
+  // Muted either by the exercise itself (silentSound - e.g. Kanji/Listening,
+  // which already have their own reading audio to not talk over) or by the
+  // user's own "Effect sounds" setting - either one is enough to keep it quiet.
+  soundAllowed = () => !this.props.silentSound && getEffectSettings().effectSounds !== false
+
   componentDidMount() {
-    if (!this.props.silentSound && (this.props.combo || 0) >= ACTIVE_COMBO) startFireSound();
+    if (this.soundAllowed() && (this.props.combo || 0) >= ACTIVE_COMBO) startFireSound();
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.silentSound) {
-      if (!prevProps.silentSound) stopFireSound();
+    if (!this.soundAllowed()) {
+      const wasAllowed = !prevProps.silentSound && getEffectSettings().effectSounds !== false;
+      if (wasAllowed) stopFireSound();
       return;
     }
 

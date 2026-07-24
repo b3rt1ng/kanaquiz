@@ -78,6 +78,11 @@
         }
     }
 
+    .grind-button {
+        display: block;
+        margin: 18px auto 0;
+    }
+
     @media (max-width: 768px) {
         margin-left: 12px;
         margin-right: 12px;
