@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import { findRomajisAtKanaKey, arrayContains } from '../../data/helperFuncs';
-import { playCorrectSound, playWrongSound, playApplauseSound } from '../../data/soundEffects';
+import { playComboSound, playComboBreakSound, playWrongSound, playApplauseSound } from '../../data/soundEffects';
 import { pickCompliment } from '../../data/compliments';
+import { playComplimentVoice } from '../../data/complimentVoice';
 import { getEffectSettings } from '../../data/effectSettings';
 import { GrindHelper, requeueAfter } from '../../data/grindHelper';
 import ResultsCharts from './ResultsCharts';
@@ -77,6 +78,7 @@ class KanaGrindExercise extends Component {
     this.complimentSeq++;
     const compliment = buildCompliment(pickCompliment(isFast), combo);
     this.setState({ compliment });
+    playComplimentVoice(compliment.text);
     this.complimentTimeout = setTimeout(() => {
       this.setState({ compliment: null });
     }, 1500);
@@ -88,9 +90,11 @@ class KanaGrindExercise extends Component {
     const isCorrect = arrayContains(this.state.input.trim().toLowerCase(), acceptable);
     const elapsedMs = this.questionShownAt ? Math.min(Date.now() - this.questionShownAt, 30000) : 0;
 
+    const hadActiveCombo = this.state.combo > 0;
     const newCombo = isCorrect ? this.state.combo + 1 : 0;
 
-    if (isCorrect) playCorrectSound();
+    if (isCorrect) playComboSound(newCombo);
+    else if (hadActiveCombo) playComboBreakSound(this.state.combo);
     else playWrongSound();
 
     if (isCorrect) this.showCompliment(elapsedMs < 1000, newCombo);
@@ -236,6 +240,9 @@ class KanaGrindExercise extends Component {
                   <h2>Results</h2>
                   <p className="kana-grind-score">{correctCount}/{total} correct ({percentage}%)</p>
                   <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} onGrind={this.grind} />
+                  <p>
+                    <button className="btn btn-success continue-grind" onClick={this.props.onFinishGrind}>Continue →</button>
+                  </p>
                   <p>
                     <button className="btn btn-primary try-again" onClick={this.retry}>Try Again</button>
                   </p>

@@ -13,8 +13,10 @@ class ShowStage extends Component {
   componentDidMount() {
     this.setState({show: true});
     if(this.props.stage <= 4) {
-      // For stage 4, show difficulty selection first (unless locked from menu)
-      if(this.props.stage === 4 && !this.props.isLocked) {
+      // For stage 4, show difficulty selection first (unless locked from menu,
+      // or we're resuming from a grind session - reaching the grind button on
+      // stage 4 in the first place means a difficulty was already chosen)
+      if(this.props.stage === 4 && !this.props.isLocked && !this.props.skipDifficultySelect) {
         this.setState({showDifficultySelect: true});
       } else if(!this.hasStats()) {
         // No data yet (first stage) — keep the quick auto-advance.

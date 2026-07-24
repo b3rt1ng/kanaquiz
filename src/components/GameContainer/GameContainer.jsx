@@ -13,6 +13,8 @@ class GameContainer extends PureComponent {
     isLocked: false,
     decidedGroups: JSON.parse(localStorage.getItem('decidedGroups') || null) || [],
     stage4Difficulty: 1, // 1=3 chars, 2=5 chars, 3=8 chars
+    grindOrigin: null,
+    resumingFromGrind: false,
     stageStats: {
       1: { correct: 0, total: 0 },
       2: { correct: 0, total: 0 },
@@ -38,7 +40,9 @@ class GameContainer extends PureComponent {
         4: { correct: 0, total: 0 }
       },
       characterStats: {},
-      confusionPairs: {}
+      confusionPairs: {},
+      grindOrigin: null,
+      resumingFromGrind: false
     });
     localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
     this.props.handleStartGame();
@@ -58,6 +62,8 @@ class GameContainer extends PureComponent {
       },
       characterStats: {},
       confusionPairs: {},
+      grindOrigin: null,
+      resumingFromGrind: false,
       ...(difficulty ? { stage4Difficulty: difficulty } : {})
     });
     localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
@@ -113,10 +119,30 @@ class GameContainer extends PureComponent {
   // them" button), never from the main menu, so there's no
   // handleStartGame() call here.
   startKanaGrind = (kanaKeys) => {
-    this.setState({
+    this.setState(prevState => ({
       stage: 'kanaGrind',
       isLocked: true,
-      grindKanaKeys: kanaKeys
+      grindKanaKeys: kanaKeys,
+      // Remember where we came from so finishing the grind can drop the
+      // user back into their normal progression instead of dead-ending.
+      grindOrigin: { stage: prevState.stage, isLocked: prevState.isLocked }
+    }));
+  }
+
+  // "Continue" from the KanaGrindExercise results screen: restore the
+  // stage (and lock state) that was in effect right before "Grind them"
+  // was pressed. ShowStage remounts fresh on the way back, so
+  // resumingFromGrind tells it to skip stage 4's difficulty picker -
+  // reaching the grind button on stage 4 in the first place means a
+  // difficulty was already chosen.
+  endKanaGrind = () => {
+    const origin = this.state.grindOrigin;
+    this.setState({
+      stage: origin ? origin.stage : 1,
+      isLocked: origin ? origin.isLocked : false,
+      grindKanaKeys: null,
+      grindOrigin: null,
+      resumingFromGrind: true
     });
   }
 
@@ -208,7 +234,9 @@ class GameContainer extends PureComponent {
                 stage4Difficulty={this.state.stage4Difficulty}
                 setStage4Difficulty={this.setStage4Difficulty}
                 startKanaGrind={this.startKanaGrind}
+                endKanaGrind={this.endKanaGrind}
                 grindKanaKeys={this.state.grindKanaKeys}
+                resumingFromGrind={this.state.resumingFromGrind}
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}
                 setTableHeaderInfo={this.props.setTableHeaderInfo}

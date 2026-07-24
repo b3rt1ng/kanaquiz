@@ -111,6 +111,7 @@ class Game extends Component {
         <KanaGrindExercise
           kanaKeys={this.props.grindKanaKeys}
           handleEndGame={this.props.handleEndGame}
+          onFinishGrind={this.props.endKanaGrind}
           startTimer={this.props.startTimer}
           stopTimer={this.props.stopTimer}
         />
@@ -134,6 +135,7 @@ class Game extends Component {
               setStage4Difficulty={this.props.setStage4Difficulty}
               isLocked={this.props.isLocked}
               onGrindKana={this.props.startKanaGrind}
+              skipDifficultySelect={this.props.resumingFromGrind}
             />
         }
         {
