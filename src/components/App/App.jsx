@@ -15,11 +15,16 @@ const HOVER_SELECTOR = 'button, .choose-row, .panel-footer a, .navbar a, .down-a
 class App extends Component {
   state = { gameState: 'chooseCharacters', totalTimeMs: 0, tableHeaderInfo: null, helpContent: null };
   timerInterval = null;
-  // Authoritative elapsed time, accumulated outside of state: the interval
-  // ticks every 100ms (so pause/resume stays accurate) but the display only
-  // shows whole seconds, so re-rendering on every tick would waste 9 out of
-  // 10 renders of the whole App + Navbar tree.
+  // Elapsed time banked from completed running segments (i.e. up to the
+  // last stopTimer()), kept outside of state. Combined with timerStartedAt
+  // below, the current total is always derived from real timestamps
+  // (Date.now() deltas) rather than counting ticks - a background/throttled
+  // tab can delay or batch the interval's firings, but whenever it does
+  // fire the computed total is still exactly right, instead of drifting
+  // ahead by however many 100ms increments were "missed".
   elapsedMs = 0;
+  timerStartedAt = null;
+  lastDisplayedSeconds = 0;
 
   startGame = () => {
     this.setState({gameState: 'game'});
@@ -48,16 +53,21 @@ class App extends Component {
 
   startTimer = () => {
     if(this.timerInterval) return;
+    this.timerStartedAt = Date.now();
     this.timerInterval = setInterval(() => {
-      this.elapsedMs += 100;
-      if(this.elapsedMs % 1000 === 0) {
-        this.setState({ totalTimeMs: this.elapsedMs });
+      const totalMs = this.elapsedMs + (Date.now() - this.timerStartedAt);
+      const seconds = Math.floor(totalMs / 1000);
+      if(seconds !== this.lastDisplayedSeconds) {
+        this.lastDisplayedSeconds = seconds;
+        this.setState({ totalTimeMs: totalMs });
       }
     }, 100);
   }
 
   stopTimer = () => {
     if(this.timerInterval) {
+      this.elapsedMs += Date.now() - this.timerStartedAt;
+      this.timerStartedAt = null;
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
@@ -81,6 +91,7 @@ class App extends Component {
   componentDidMount() {
     window.addEventListener('blur', this.handleWindowBlur);
     window.addEventListener('focus', this.handleWindowFocus);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
     document.addEventListener('mouseover', this.handleGlobalMouseOver);
     document.addEventListener('mouseout', this.handleGlobalMouseOut);
   }
@@ -89,6 +100,7 @@ class App extends Component {
     this.stopTimer();
     window.removeEventListener('blur', this.handleWindowBlur);
     window.removeEventListener('focus', this.handleWindowFocus);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     document.removeEventListener('mouseover', this.handleGlobalMouseOver);
     document.removeEventListener('mouseout', this.handleGlobalMouseOut);
   }
@@ -99,6 +111,19 @@ class App extends Component {
 
   handleWindowFocus = () => {
     if(this.state.gameState === 'game') {
+      this.startTimer();
+    }
+  }
+
+  // Page Visibility fires reliably on tab-switch/minimize/lock-screen and,
+  // unlike window blur/focus, also on virtual-desktop switches on Linux -
+  // most WMs never blur the browser window when you just switch workspaces
+  // away from it, which let the timer keep running the whole time you were
+  // gone.
+  handleVisibilityChange = () => {
+    if(document.hidden) {
+      this.stopTimer();
+    } else if(this.state.gameState === 'game') {
       this.startTimer();
     }
   }

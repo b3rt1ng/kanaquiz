@@ -125,6 +125,55 @@ export const kanjiDictionary = {
       // elements theme - see readingType note up top.
       { kanji: '金色', readings: ["kin'iro", "kiniro"], meaning: 'golden (color)', readingType: 'on', kunyomi: ['kane'], onyomi: ['kin'] }
     ]
+  },
+  body: {
+    label: 'Body',
+    kanji: [
+      { kanji: '体', readings: ['karada'], meaning: 'body', readingType: 'kun', kunyomi: ['karada'], onyomi: ['tai'] },
+      { kanji: '頭', readings: ['atama'], meaning: 'head', readingType: 'kun', kunyomi: ['atama'], onyomi: ['tou', 'zu'] },
+      { kanji: '髪', readings: ['kami'], meaning: 'hair (on the head)', readingType: 'kun', kunyomi: ['kami'], onyomi: ['hatsu'] },
+      { kanji: '顔', readings: ['kao'], meaning: 'face', readingType: 'kun', kunyomi: ['kao'], onyomi: ['gan'] },
+      { kanji: '目', readings: ['me'], meaning: 'eye', readingType: 'kun', kunyomi: ['me'], onyomi: ['moku', 'boku'] },
+      { kanji: '耳', readings: ['mimi'], meaning: 'ear', readingType: 'kun', kunyomi: ['mimi'], onyomi: ['ji'] },
+      { kanji: '鼻', readings: ['hana'], meaning: 'nose', readingType: 'kun', kunyomi: ['hana'], onyomi: ['bi'] },
+      { kanji: '口', readings: ['kuchi'], meaning: 'mouth', readingType: 'kun', kunyomi: ['kuchi'], onyomi: ['kou', 'ku'] },
+      { kanji: '声', readings: ['koe'], meaning: 'voice', readingType: 'kun', kunyomi: ['koe'], onyomi: ['sei'] },
+      { kanji: '歯', readings: ['ha'], meaning: 'tooth', readingType: 'kun', kunyomi: ['ha'], onyomi: ['shi'] },
+      { kanji: '舌', readings: ['shita'], meaning: 'tongue', readingType: 'kun', kunyomi: ['shita'], onyomi: ['zetsu'] },
+      { kanji: '髭', readings: ['hige'], meaning: 'beard, mustache', readingType: 'kun', kunyomi: ['hige'] },
+      { kanji: '首', readings: ['kubi'], meaning: 'neck', readingType: 'kun', kunyomi: ['kubi'], onyomi: ['shu'] },
+      { kanji: '肩', readings: ['kata'], meaning: 'shoulder', readingType: 'kun', kunyomi: ['kata'], onyomi: ['ken'] },
+      { kanji: '腕', readings: ['ude'], meaning: 'arm', readingType: 'kun', kunyomi: ['ude'], onyomi: ['wan'] },
+      { kanji: '手', readings: ['te'], meaning: 'hand', readingType: 'kun', kunyomi: ['te'], onyomi: ['shu'] },
+      { kanji: '指', readings: ['yubi'], meaning: 'finger', readingType: 'kun', kunyomi: ['yubi'], onyomi: ['shi'] },
+      { kanji: '爪', readings: ['tsume'], meaning: 'nail (finger/toe)', readingType: 'kun', kunyomi: ['tsume'], onyomi: ['sou'] },
+      { kanji: '胸', readings: ['mune'], meaning: 'chest', readingType: 'kun', kunyomi: ['mune'], onyomi: ['kyou'] },
+      { kanji: '腹', readings: ['hara'], meaning: 'belly, stomach', readingType: 'kun', kunyomi: ['hara'], onyomi: ['fuku'] },
+      // Compound (背 + 中): like the colors theme's compounds, kunyomi/onyomi
+      // here describe the LEAD kanji (背, "se") specifically, not the whole
+      // word - see the readingType note up top.
+      { kanji: '背中', readings: ['senaka'], meaning: 'back (of the body)', readingType: 'kun', kunyomi: ['se'], onyomi: ['hai'] },
+      // Both anatomical terms below are Sino-Japanese on'yomi compounds
+      // (like 天/テン), so per the dictionary's onyomi-in-katakana convention
+      // they're displayed in katakana via kanaOverride.
+      { kanji: '陰茎', readings: ['inkei'], meaning: 'penis (anatomical)', kanaOverride: 'インケイ', readingType: 'on', kunyomi: ['kage'], onyomi: ['in'] },
+      { kanji: '膣', readings: ['chitsu'], meaning: 'vagina (anatomical)', kanaOverride: 'チツ', readingType: 'on', onyomi: ['chitsu'] },
+      { kanji: '尻', readings: ['shiri'], meaning: 'buttocks', readingType: 'kun', kunyomi: ['shiri'], onyomi: ['kou'] },
+      { kanji: '足', readings: ['ashi'], meaning: 'foot, leg', readingType: 'kun', kunyomi: ['ashi'], onyomi: ['soku'] },
+      { kanji: '肌', readings: ['hada'], meaning: 'skin', readingType: 'kun', kunyomi: ['hada'] },
+      { kanji: '毛', readings: ['ke'], meaning: 'hair, fur (body)', readingType: 'kun', kunyomi: ['ke'], onyomi: ['mou'] },
+      // Compound (尻 + 尾): lead kanji 尻 ("shiri", same as the "buttocks"
+      // entry above) - the whole word's "shippo" comes from a sound change
+      // (shiri + o -> shippo), same mechanism as other kun'yomi compounds.
+      { kanji: '尻尾', readings: ['shippo'], meaning: 'tail (animal)', readingType: 'kun', kunyomi: ['shiri'], onyomi: ['kou'] },
+      { kanji: '翼', readings: ['tsubasa'], meaning: 'wing', readingType: 'kun', kunyomi: ['tsubasa'], onyomi: ['yoku'] },
+      { kanji: '羽', readings: ['hane'], meaning: 'feather', readingType: 'kun', kunyomi: ['hane'], onyomi: ['u'] },
+      { kanji: '牙', readings: ['kiba'], meaning: 'fang', readingType: 'kun', kunyomi: ['kiba'], onyomi: ['ga'] },
+      { kanji: '角', readings: ['tsuno'], meaning: 'horn', readingType: 'kun', kunyomi: ['tsuno'], onyomi: ['kaku'] },
+      { kanji: '骨', readings: ['hone'], meaning: 'bone', readingType: 'kun', kunyomi: ['hone'], onyomi: ['kotsu'] },
+      { kanji: '血', readings: ['chi'], meaning: 'blood', readingType: 'kun', kunyomi: ['chi'], onyomi: ['ketsu'] },
+      { kanji: '影', readings: ['kage'], meaning: 'shadow', readingType: 'kun', kunyomi: ['kage'], onyomi: ['ei'] }
+    ]
   }
 };
 
