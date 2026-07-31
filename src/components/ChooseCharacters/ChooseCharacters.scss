@@ -1,3 +1,10 @@
+/* Wraps whichever phase (mode-select / kanji sub-select / kana picker) is
+   currently shown - keyed by phase in ChooseCharacters.jsx so React remounts
+   it (and replays the animation) on every menu switch, not just the first. */
+.phase-transition {
+  animation: kq-pop-in 0.3s ease-out both;
+}
+
 .welcome {
   p:last-child {
     margin-bottom: 0;
@@ -72,58 +79,99 @@
     color: var(--text-muted);
   }
 }
-/* Fixed to the right edge like ComboIndicator's .combo-root, reusing its
-   combo-404-shadow text treatment (see App.scss) so it reads as the same
-   "big flashy combo lettering" the user asked for - stacked vertically
-   instead of on one line so it stays narrow at that font size. */
-.learn-kanji-cta {
-  position: fixed;
-  top: 50%;
-  right: 3vw;
-  transform: translateY(-50%);
-  z-index: 500;
+/* --- Mode select / Kanji sub-select (landing screens) --- */
+.mode-select {
+  margin: 20px auto 60px;
+  max-width: 900px;
   text-align: center;
+}
+
+.mode-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+/* Every card shares the same coral identity - it's the app's default
+   accent everywhere else (Start button, kana panels, ...), so the menu
+   reads as one consistent surface rather than color-coding each mode. */
+.mode-card {
+  position: relative;
+  overflow: hidden;
+  flex: 1 1 220px;
+  max-width: 260px;
+  min-height: 220px;
+  padding: 28px 20px 24px;
+  border-radius: 16px;
+  background-color: var(--bg-panel-raised);
+  border: 2px solid var(--accent-coral);
+  box-shadow: var(--glow-coral);
   cursor: pointer;
   user-select: none;
-  transition: transform 0.15s ease-out;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+
+  &:hover, &:focus {
+    transform: translateY(-4px);
+    box-shadow: 0 0 14px rgba(255, 77, 109, 0.9), 0 0 34px rgba(255, 77, 109, 0.5);
+  }
+}
+
+/* Giant translucent watermark glyph, cropped off the top-right corner -
+   the card's signature: each mode is instantly recognizable by its own
+   script before you've even read the label. */
+.mode-card-glyph {
+  position: absolute;
+  top: -14px;
+  right: -8px;
+  font-size: 5.5em;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.14;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.mode-card-title {
+  position: relative;
+  font-size: 1.4em;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  color: var(--accent-coral);
+  text-shadow: var(--glow-coral);
+}
+
+.mode-card-desc {
+  position: relative;
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .mode-grid {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .mode-card {
+    max-width: none;
+  }
+}
+
+/* --- Kana picker (reached via the Kana mode card) --- */
+.back-to-modes {
+  display: inline-block;
+  margin: 6px 0 16px;
+  color: var(--accent-orange);
+  font-weight: bold;
+  text-decoration: none;
 
   &:hover {
-    transform: translateY(-50%) scale(1.08);
-  }
-
-  @media (max-width: 768px) {
-    /* Extra clearance vs. the combo indicator's usual 3vw - the
-       combo-404-shadow trail reaches ~8px past the glyph edge, and on a
-       narrow viewport that trail was getting hard-clipped by the screen
-       edge itself instead of having room to breathe. */
-    right: 5vw;
-    top: 12%;
-    transform: none;
-
-    &:hover {
-      transform: scale(1.08);
-    }
-  }
-}
-
-.learn-kanji-line {
-  display: block;
-  font-weight: 900;
-  font-size: 1.5em;
-  line-height: 1.15;
-  color: #fff3e0;
-  animation: combo-404-shadow 10s infinite linear;
-
-  @media (max-width: 768px) {
-    font-size: 1em;
-  }
-}
-
-.learn-kanji-kanji {
-  font-size: 2em;
-
-  @media (max-width: 768px) {
-    font-size: 1.4em;
+    color: var(--accent-pink);
+    text-shadow: var(--glow-pink);
   }
 }
 
@@ -133,16 +181,14 @@
   padding-bottom: 10px;
   font-weight: bold;
 }
-.direct-practice {
-  clear: both;
-  text-align: right;
-  position: relative;
+.kana-other-practice {
+  text-align: center;
+  margin: 24px 0 10px;
 
-  .direct-practice-buttons {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 6px;
+  .kana-other-practice-label {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    margin-bottom: 8px;
   }
 
   .practice-btn {
@@ -150,27 +196,9 @@
     font-size: 13px;
   }
 
-  /* Floats above the toggle button like the header's effect-settings panel,
-     just anchored to the bottom instead of the top - this button sits low
-     on the page, so opening downward would usually go off-screen. */
-  .other-exercises-panel {
-    position: absolute;
-    bottom: 100%;
-    right: 0;
-    margin-bottom: 8px;
-    z-index: 1100;
-    min-width: 280px;
-    padding: 14px 16px;
-    background-color: var(--bg-panel-raised);
-    border: 1px solid var(--accent-coral);
-    border-radius: 6px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), var(--glow-coral);
-    animation: kq-pop-in 0.2s ease-out;
-  }
-
   .practice-subpicker {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 6px;
 
@@ -184,17 +212,6 @@
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid var(--border);
-  }
-
-  @media (max-width: 768px) {
-    text-align: center;
-    .direct-practice-buttons, .practice-subpicker {
-      justify-content: center;
-    }
-    .other-exercises-panel {
-      left: 0;
-      right: 0;
-    }
   }
 }
 

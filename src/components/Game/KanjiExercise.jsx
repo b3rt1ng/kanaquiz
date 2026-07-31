@@ -32,6 +32,12 @@ class KanjiExercise extends Component {
       phase: 'picker', // 'picker' | 'quiz' | 'results'
       selectedThemes: [],
       correctLaterEnabled: true,
+      // "First Timer": cards are shown fully revealed (kanji + reading)
+      // from the start instead of testing recall first - meant for a
+      // theme's very first pass, where the goal is just to copy the
+      // reading and register it, not guess it. See submit()/advance() and
+      // renderQuiz() for how this bypasses the usual flip mechanic.
+      firstTimerEnabled: false,
       index: 0, // which card is being tested - also drives the front face (kanji)
       revealIndex: 0, // which card's answer drives the back face - lags behind
                        // `index` during the unflip transition, see advance()
@@ -96,6 +102,10 @@ class KanjiExercise extends Component {
     this.setState(prev => ({ correctLaterEnabled: !prev.correctLaterEnabled }));
   }
 
+  toggleFirstTimer = () => {
+    this.setState(prev => ({ firstTimerEnabled: !prev.firstTimerEnabled }));
+  }
+
   startQuiz = () => {
     if (this.state.selectedThemes.length === 0) return;
     // The picker is treated like any other menu screen (no timer running) -
@@ -144,9 +154,12 @@ class KanjiExercise extends Component {
     this.setState({
       phase: 'quiz',
       // Grinding is about drilling missed cards, so this always behaves as
-      // if Correct Later is on regardless of what was picked earlier -
-      // there's no picker screen in this flow to show/change that toggle.
+      // if Correct Later is on and First Timer is off regardless of what
+      // was picked earlier - there's no picker screen in this flow to
+      // show/change either toggle, and drilling confused cards should
+      // always test recall, never just let you copy the answer.
       correctLaterEnabled: true,
+      firstTimerEnabled: false,
       index: 0,
       revealIndex: 0,
       input: '',
@@ -184,9 +197,14 @@ class KanjiExercise extends Component {
   // direction) - besides being generally sane, this is what guarantees the
   // unflip in advance() always starts from a fully-settled 180deg card, so
   // its own transitionend timing stays predictable (see advance()).
+  //
+  // Keyed off isCorrect (not flipped): in normal mode the two always change
+  // together (see submit()/advance()), so this is no different there - but
+  // First Timer mode never flips at all (see renderQuiz()), so isCorrect is
+  // the only thing that actually tracks "has this card been answered yet".
   confirmOrAdvance = () => {
     if (this.transitioning) return;
-    if (this.state.flipped) this.advance();
+    if (this.state.isCorrect !== null) this.advance();
     else this.submit();
   }
 
@@ -202,7 +220,7 @@ class KanjiExercise extends Component {
   // (usually nothing) is in it yet; once flipped the input is read-only
   // anyway, so there's nothing to protect and the whole card advances.
   handleContainerClick = (e) => {
-    if (!this.state.flipped && e.target === this.inputRef.current) return;
+    if (this.state.isCorrect === null && e.target === this.inputRef.current) return;
     this.confirmOrAdvance();
   }
 
@@ -276,7 +294,10 @@ class KanjiExercise extends Component {
     const shouldRequeue = (!isCorrect && this.state.correctLaterEnabled) || shouldRequeueForGrind;
     if (shouldRequeue) requeueAfter(this.cards, this.state.index, entry);
 
-    this.waitForFlipTransition(() => {});
+    // First Timer's card is always shown revealed (see renderQuiz()) - the
+    // `flipped` class never actually changes, so there's no transform
+    // transition for waitForFlipTransition to wait on.
+    if (!this.state.firstTimerEnabled) this.waitForFlipTransition(() => {});
 
     this.setState(prev => ({
       combo: newCombo,
@@ -307,18 +328,35 @@ class KanjiExercise extends Component {
   //   looking at the front, so updating the (now hidden) back face is
   //   invisible too. Otherwise the answer for the new card would already
   //   be sitting there before we've even seen its kanji.
+  finishQuiz = () => {
+    this.props.stopTimer();
+    this.celebrateSeq++;
+    playApplauseSound();
+    this.setState({ phase: 'results', celebrate: true });
+    clearTimeout(this.celebrateTimeout);
+    this.celebrateTimeout = setTimeout(() => this.setState({ celebrate: false }), 4000);
+  }
+
   advance = () => {
     const nextIndex = this.state.index + 1;
+
+    // First Timer's card never flips (see renderQuiz()) - just swap
+    // straight to the next card/end of deck, no flip-out wait needed.
+    if (this.state.firstTimerEnabled) {
+      if (nextIndex >= this.cards.length) {
+        this.finishQuiz();
+        return;
+      }
+      this.setState({ index: nextIndex, revealIndex: nextIndex, input: '', isCorrect: null }, () => {
+        this.questionShownAt = Date.now();
+        this.focusInput();
+      });
+      return;
+    }
+
     if (nextIndex >= this.cards.length) {
       this.setState({ flipped: false });
-      this.waitForFlipTransition(() => {
-        this.props.stopTimer();
-        this.celebrateSeq++;
-        playApplauseSound();
-        this.setState({ phase: 'results', celebrate: true });
-        clearTimeout(this.celebrateTimeout);
-        this.celebrateTimeout = setTimeout(() => this.setState({ celebrate: false }), 4000);
-      });
+      this.waitForFlipTransition(() => this.finishQuiz());
       return;
     }
 
@@ -393,10 +431,15 @@ class KanjiExercise extends Component {
             </div>
           </div>
         </div>
-        <label className="kanji-correctlater-toggle">
+        <label className="kanji-toggle">
           <input type="checkbox" checked={this.state.correctLaterEnabled} onChange={this.toggleCorrectLater} />
-          <span className="kanji-correctlater-label">Correct Later</span>
-          <span className="kanji-correctlater-hint">Cards you get wrong come back later, until you get them right.</span>
+          <span className="kanji-toggle-label">Correct Later</span>
+          <span className="kanji-toggle-hint">Cards you get wrong come back later, until you get them right.</span>
+        </label>
+        <label className="kanji-toggle">
+          <input type="checkbox" checked={this.state.firstTimerEnabled} onChange={this.toggleFirstTimer} />
+          <span className="kanji-toggle-label">First Timer</span>
+          <span className="kanji-toggle-hint">Cards start already revealed - just copy the reading down to learn it for the first time.</span>
         </label>
         <button
           className="btn btn-primary kanji-start-button"
@@ -432,29 +475,50 @@ class KanjiExercise extends Component {
         <div className={trembleClass} style={trembleStyle} ref={this.trembleRef} onClick={this.handleContainerClick}>
           <p className="kanji-progress">{this.state.progressCount} / {this.progressTarget}</p>
 
-          <div className="kanji-flip-scene">
-            <div
-              ref={this.cardRef}
-              className={'kanji-flip-card' + (this.state.flipped ? ' flipped' : '') + (this.state.isCorrect === false ? ' wrong' : '') + (this.state.isCorrect === true ? ' correct' : '')}
-            >
-              <div className="kanji-flip-face kanji-flip-front">
-                <div className="kanji-flip-kanji">{entry.kanji}</div>
-              </div>
-              <div className="kanji-flip-face kanji-flip-back">
+          {
+            this.state.firstTimerEnabled ? (
+              <div
+                className={'kanji-firsttimer-card' + (this.state.isCorrect === false ? ' wrong' : '') + (this.state.isCorrect === true ? ' correct' : '')}
+              >
                 <span
-                  className={'kanji-reading-badge kanji-reading-badge-kun' + (revealEntry.readingType === 'kun' ? ' active' : '')}
+                  className={'kanji-reading-badge kanji-reading-badge-kun' + (entry.readingType === 'kun' ? ' active' : '')}
                   title="Kun'yomi - native Japanese reading"
-                >{kunyomiDisplay(revealEntry)}</span>
+                >{kunyomiDisplay(entry)}</span>
                 <span
-                  className={'kanji-reading-badge kanji-reading-badge-on' + (revealEntry.readingType === 'on' ? ' active' : '')}
+                  className={'kanji-reading-badge kanji-reading-badge-on' + (entry.readingType === 'on' ? ' active' : '')}
                   title="On'yomi - Sino-Japanese reading"
-                >{onyomiDisplay(revealEntry)}</span>
-                <div className="kanji-flip-kana">{primaryReadingKana(revealEntry)}</div>
-                <div className="kanji-flip-romaji">{revealEntry.readings[0]}</div>
-                <div className="kanji-flip-meaning">{revealEntry.meaning}</div>
+                >{onyomiDisplay(entry)}</span>
+                <div className="kanji-firsttimer-kanji">{entry.kanji}</div>
+                <div className="kanji-flip-kana">{primaryReadingKana(entry)}</div>
+                <div className="kanji-flip-romaji">{entry.readings[0]}</div>
+                <div className="kanji-flip-meaning">{entry.meaning}</div>
               </div>
-            </div>
-          </div>
+            ) : (
+              <div className="kanji-flip-scene">
+                <div
+                  ref={this.cardRef}
+                  className={'kanji-flip-card' + (this.state.flipped ? ' flipped' : '') + (this.state.isCorrect === false ? ' wrong' : '') + (this.state.isCorrect === true ? ' correct' : '')}
+                >
+                  <div className="kanji-flip-face kanji-flip-front">
+                    <div className="kanji-flip-kanji">{entry.kanji}</div>
+                  </div>
+                  <div className="kanji-flip-face kanji-flip-back">
+                    <span
+                      className={'kanji-reading-badge kanji-reading-badge-kun' + (revealEntry.readingType === 'kun' ? ' active' : '')}
+                      title="Kun'yomi - native Japanese reading"
+                    >{kunyomiDisplay(revealEntry)}</span>
+                    <span
+                      className={'kanji-reading-badge kanji-reading-badge-on' + (revealEntry.readingType === 'on' ? ' active' : '')}
+                      title="On'yomi - Sino-Japanese reading"
+                    >{onyomiDisplay(revealEntry)}</span>
+                    <div className="kanji-flip-kana">{primaryReadingKana(revealEntry)}</div>
+                    <div className="kanji-flip-romaji">{revealEntry.readings[0]}</div>
+                    <div className="kanji-flip-meaning">{revealEntry.meaning}</div>
+                  </div>
+                </div>
+              </div>
+            )
+          }
 
           <div className="kanji-kana-preview">
             {preview.kana || <span className="kanji-kana-placeholder">?</span>}
@@ -468,13 +532,13 @@ class KanjiExercise extends Component {
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck="false"
-            readOnly={this.state.flipped}
+            readOnly={this.state.isCorrect !== null}
             placeholder="type the reading, e.g. taberu"
             value={this.state.input}
             onChange={this.handleChange}
             onKeyDown={this.handleKeyDown}
           />
-          <p className="kanji-hint">{this.state.flipped ? 'Press Enter to continue' : 'Press Enter to check'}</p>
+          <p className="kanji-hint">{this.state.isCorrect !== null ? 'Press Enter to continue' : 'Press Enter to check'}</p>
         </div>
       </div>
     );

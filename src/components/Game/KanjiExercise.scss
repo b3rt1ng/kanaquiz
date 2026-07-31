@@ -12,7 +12,7 @@
   }
 }
 
-.kanji-correctlater-toggle {
+.kanji-toggle {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
@@ -28,12 +28,12 @@
   }
 }
 
-.kanji-correctlater-label {
+.kanji-toggle-label {
   font-weight: bold;
   color: var(--text);
 }
 
-.kanji-correctlater-hint {
+.kanji-toggle-hint {
   color: var(--text-muted);
   font-size: 0.85em;
 }
@@ -173,6 +173,94 @@
   .kanji-flip-card.wrong .kanji-flip-face {
     border-color: var(--error);
     box-shadow: var(--glow-error);
+  }
+
+  /* First Timer: kanji + reading shown together on one flat, non-flipping
+     card - taller than the flip scene since it holds everything at once,
+     so this is its own block rather than trying to force it into the
+     fixed-height flip layout. Badge/kana/romaji/meaning styling is
+     deliberately duplicated from .kanji-flip-back rather than shared,
+     since that block's rules are nested under a parent (.kanji-flip-back)
+     with flip-specific positioning (absolute, rotateY) that doesn't apply
+     here. */
+  .kanji-firsttimer-card {
+    position: relative;
+    width: 280px;
+    margin: 20px auto;
+    padding: 46px 16px 16px;
+    border-radius: 16px;
+    background-color: var(--bg-panel-raised);
+    border: 2px solid var(--accent-coral);
+    box-shadow: var(--glow-coral);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &.correct {
+      border-color: var(--success);
+      box-shadow: var(--glow-success);
+    }
+    &.wrong {
+      border-color: var(--error);
+      box-shadow: var(--glow-error);
+    }
+
+    .kanji-reading-badge {
+      position: absolute;
+      top: 10px;
+      max-width: 44%;
+      padding: 4px 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      font-size: 0.9em;
+      font-weight: bold;
+      color: var(--text-muted);
+      opacity: 0.4;
+      border: 2px solid var(--text-muted);
+      white-space: nowrap;
+      transition: opacity 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+
+      &.active {
+        opacity: 1;
+        color: var(--accent-orange);
+        border-color: var(--accent-orange);
+        box-shadow: var(--glow-orange);
+      }
+    }
+    .kanji-reading-badge-kun {
+      left: 10px;
+    }
+    .kanji-reading-badge-on {
+      right: 10px;
+    }
+
+    .kanji-firsttimer-kanji {
+      font-size: 3.4em;
+      font-weight: 900;
+      color: var(--text);
+      text-shadow: 0 0 14px rgba(255, 77, 109, 0.55), 0 0 34px rgba(255, 46, 136, 0.3);
+    }
+    .kanji-flip-kana {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: var(--accent-orange);
+      text-shadow: var(--glow-orange);
+      margin-top: 6px;
+    }
+    .kanji-flip-romaji {
+      color: var(--text-muted);
+      font-size: 0.95em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kanji-flip-meaning {
+      margin-top: 8px;
+      color: var(--text);
+      font-style: italic;
+      text-align: center;
+    }
   }
 
   .kanji-kana-preview {

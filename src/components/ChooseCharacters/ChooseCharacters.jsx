@@ -11,7 +11,14 @@ class ChooseCharacters extends Component {
     showSimilars: [],
     startIsVisible: true,
     stage4PickerOpen: false,
-    otherExercisesOpen: false
+    // 'modeSelect' (default landing: Kana / Kanji cards), 'kana' (the
+    // hiragana/katakana group picker) or 'kanjiSelect' (Vocabulary /
+    // Counting / future Radicals - numbers are written in kanji too, so
+    // Counting lives under the Kanji umbrella rather than as its own
+    // top-level mode) - local to this component, same pattern
+    // stage4PickerOpen already used, so App.jsx/GameContainer.jsx don't
+    // need to know about it (see the menu redesign plan).
+    phase: 'modeSelect'
   }
 
   componentDidMount() {
@@ -29,7 +36,12 @@ class ChooseCharacters extends Component {
     this.testIsStartVisible();
   }
 
+  // The scroll-to-start down-arrow only makes sense on the kana picker (the
+  // mode-select landing fits on one screen) - this.startRef is only ever
+  // attached in that phase anyway, but the explicit guard keeps intent
+  // clear and avoids acting on a stale ref mid-transition.
   testIsStartVisible = () => {
+    if(this.state.phase !== 'kana') return;
     if(this.startRef) {
       const rect = this.startRef.getBoundingClientRect();
       if(rect.y > window.innerHeight && this.state.startIsVisible)
@@ -46,6 +58,21 @@ class ChooseCharacters extends Component {
       const scrollPos = absTop - window.innerHeight + 50;
       window.scrollTo(0, scrollPos > 0 ? scrollPos : 0);
     }
+  }
+
+  goToKana = () => {
+    this.setState({ phase: 'kana', startIsVisible: true });
+    window.scrollTo(0, 0);
+  }
+
+  goToKanjiSelect = () => {
+    this.setState({ phase: 'kanjiSelect' });
+    window.scrollTo(0, 0);
+  }
+
+  backToModeSelect = () => {
+    this.setState({ phase: 'modeSelect', errMsg: '', stage4PickerOpen: false });
+    window.scrollTo(0, 0);
   }
 
   getIndex(groupName) {
@@ -250,22 +277,69 @@ class ChooseCharacters extends Component {
     this.props.startKanjiExercise();
   }
 
-  render() {
+  renderModeSelect() {
     return (
-      <div className="choose-characters">
-        <div className="learn-kanji-cta" onClick={() => this.startKanji()}>
-          <span className="learn-kanji-line">LEARN</span>
-          <span className="learn-kanji-line learn-kanji-kanji">漢字</span>
-          <span className="learn-kanji-line">HERE</span>
-        </div>
+      <div className="mode-select">
         <div className="row">
           <div className="col-xs-12">
             <div className="panel panel-default">
               <div className="panel-body welcome">
-                <h4>Welcome to Antoine's japanese learning app!</h4>
-                <p>Please choose the groups of characters that you'd like to be studying.</p>
+                <h4>Antoine's japanese learning app</h4>
+                <p>What do you want to practice?</p>
               </div>
             </div>
+          </div>
+        </div>
+        <div className="mode-grid">
+          <div className="mode-card" onClick={this.goToKana}>
+            <div className="mode-card-glyph">あ</div>
+            <div className="mode-card-title">Kana</div>
+            <p className="mode-card-desc">Hiragana &amp; katakana - reading, writing, listening.</p>
+          </div>
+          <div className="mode-card" onClick={this.goToKanjiSelect}>
+            <div className="mode-card-glyph">漢</div>
+            <div className="mode-card-title">Kanji</div>
+            <p className="mode-card-desc">Vocabulary, counting, and more.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderKanjiSelect() {
+    return (
+      <div className="mode-select">
+        <div className="row">
+          <div className="col-xs-12">
+            <a href="javascript:;" className="back-to-modes" onClick={this.backToModeSelect}>
+              <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Choose a different mode
+            </a>
+          </div>
+        </div>
+        <div className="mode-grid">
+          <div className="mode-card" onClick={() => this.startKanji()}>
+            <div className="mode-card-glyph">漢</div>
+            <div className="mode-card-title">Vocabulary</div>
+            <p className="mode-card-desc">Flashcards, grouped by theme.</p>
+          </div>
+          <div className="mode-card" onClick={() => this.startCounting()}>
+            <div className="mode-card-glyph">数</div>
+            <div className="mode-card-title">Counting</div>
+            <p className="mode-card-desc">Say numbers in Japanese, 1 to 9999.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderKanaPicker() {
+    return (
+      <div className="kana-picker">
+        <div className="row">
+          <div className="col-xs-12">
+            <a href="javascript:;" className="back-to-modes" onClick={this.backToModeSelect}>
+              <span className="glyphicon glyphicon-small glyphicon-arrow-left"></span> Choose a different mode
+            </a>
           </div>
         </div>
         <div className="row">
@@ -298,41 +372,33 @@ class ChooseCharacters extends Component {
               </div>
             </div>
           </div>
-          <div className="col-sm-3 col-xs-12 pull-right">
-            <div className="direct-practice">
-              <div className="direct-practice-buttons">
-                <button
-                  className="btn btn-default practice-btn"
-                  onClick={() => this.setState(s => ({ otherExercisesOpen: !s.otherExercisesOpen, stage4PickerOpen: false }))}
-                >Other exercises</button>
+        </div>
+        <div className="row">
+          <div className="col-xs-12">
+            <div className="kana-other-practice">
+              <div className="kana-other-practice-label">Or practice directly:</div>
+              <div className="practice-subpicker">
+                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(1)}>Stage 1</button>
+                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(2)}>Stage 2</button>
+                <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(3)}>Stage 3</button>
+                <button className="btn btn-default practice-btn"
+                  onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen }))}
+                >Stage 4</button>
+                <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
+                <button className="btn btn-info practice-btn" onClick={() => this.startListening()}>Listening</button>
               </div>
               {
-                this.state.otherExercisesOpen &&
-                  <div className="other-exercises-panel">
-                    <div className="practice-subpicker">
-                      <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(1)}>Stage 1</button>
-                      <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(2)}>Stage 2</button>
-                      <button className="btn btn-default practice-btn" onClick={() => this.startAtStage(3)}>Stage 3</button>
-                      <button className="btn btn-default practice-btn"
-                        onClick={() => this.setState(s => ({ stage4PickerOpen: !s.stage4PickerOpen }))}
-                      >Stage 4</button>
-                      <button className="btn btn-info practice-btn" onClick={() => this.startTable()}>Table</button>
-                      <button className="btn btn-info practice-btn" onClick={() => this.startListening()}>Listening</button>
-                      <button className="btn btn-info practice-btn" onClick={() => this.startCounting()}>Counting</button>
-                      <button className="btn btn-info practice-btn" onClick={() => this.startKanji()}>Kanji</button>
-                    </div>
-                    {
-                      this.state.stage4PickerOpen &&
-                        <div className="practice-subpicker stage4-subpicker">
-                          <button className="btn btn-success" onClick={() => this.startStage4(1)}>Level 1 (3 characters)</button>
-                          <button className="btn btn-warning" onClick={() => this.startStage4(2)}>Level 2 (5 characters)</button>
-                          <button className="btn btn-danger" onClick={() => this.startStage4(3)}>Level 3 (8 characters)</button>
-                        </div>
-                    }
+                this.state.stage4PickerOpen &&
+                  <div className="practice-subpicker stage4-subpicker">
+                    <button className="btn btn-success" onClick={() => this.startStage4(1)}>Level 1 (3 characters)</button>
+                    <button className="btn btn-warning" onClick={() => this.startStage4(2)}>Level 2 (5 characters)</button>
+                    <button className="btn btn-danger" onClick={() => this.startStage4(3)}>Level 3 (8 characters)</button>
                   </div>
               }
             </div>
           </div>
+        </div>
+        <div className="row">
           <div className="col-sm-offset-3 col-sm-6 col-xs-12 text-center">
             {
               this.state.errMsg != '' &&
@@ -346,6 +412,21 @@ class ChooseCharacters extends Component {
           >
             Start
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    let content;
+    if(this.state.phase === 'modeSelect') content = this.renderModeSelect();
+    else if(this.state.phase === 'kanjiSelect') content = this.renderKanjiSelect();
+    else content = this.renderKanaPicker();
+
+    return (
+      <div className="choose-characters">
+        <div key={this.state.phase} className="phase-transition">
+          {content}
         </div>
       </div>
     );
