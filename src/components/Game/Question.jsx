@@ -32,13 +32,12 @@ class Question extends Component {
   // Read by GlitchEffect to keep its rectangles off the readable area.
   trembleRef = React.createRef()
 
-  getRandomKanas(amount, include, exclude) {
+  // Decoy answer options for stages 1-2 only - the question itself is drawn
+  // from the bag instead (see drawQuestionKanas). Options deliberately do
+  // NOT touch the bag: they're throwaway, and spending the bag on them
+  // would burn through the cycle without those kana ever being asked.
+  getRandomKanas(amount, include) {
     let randomizedKanas = this.askableKanaKeys.slice();
-
-    if(exclude && exclude.length > 0) {
-      // we're excluding previous question when deciding a new question
-      randomizedKanas = removeFromArray(exclude, randomizedKanas);
-    }
 
     if(include && include.length > 0) {
       // we arrive here when we're deciding answer options (included = currentQuestion)
@@ -81,6 +80,53 @@ class Question extends Component {
     return randomizedKanas;
   }
 
+  // Questions are drawn from a "bag": the whole selection is shuffled, then
+  // handed out one at a time, and only once it runs dry is it reshuffled.
+  // That way a session covers as much of the selection as it can before
+  // anything comes round twice. The previous draw was an independent random
+  // pick per question (minus the one just asked), so over a 20-question
+  // stage on ~50 kana it kept re-rolling the same handful while others
+  // never showed up at all.
+  refillQuestionBag() {
+    this.questionBag = this.askableKanaKeys.slice();
+    shuffle(this.questionBag);
+  }
+
+  // Draws `amount` DISTINCT kana. `avoid` is the previous question, kept out
+  // so the same character can't land twice in a row across a refill (mid-bag
+  // it already can't - it's been popped). Skipped kana are set aside and put
+  // back afterwards rather than dropped, so they keep their turn this cycle.
+  drawQuestionKanas(amount, avoid) {
+    const avoidKey = Array.isArray(avoid) ? avoid[0] : avoid;
+    const wanted = Math.min(amount, this.askableKanaKeys.length);
+    const drawn = [];
+    const deferred = [];
+    // Bounded so a selection too small to ever satisfy `wanted` (e.g. stage
+    // 4's 8 characters over a single 3-kana group) returns a shorter
+    // question instead of spinning - same outcome the old slice() gave.
+    let refills = 0;
+
+    while(drawn.length < wanted && refills <= 1) {
+      if(!this.questionBag.length) {
+        this.refillQuestionBag();
+        refills++;
+        continue;
+      }
+      const next = this.questionBag.pop();
+      if(next === avoidKey || arrayContains(next, drawn)) deferred.push(next);
+      else drawn.push(next);
+    }
+
+    // A refill may already have restored some of what we set aside - only
+    // put back what's missing, so the bag never holds the same kana twice.
+    deferred.forEach(kana => {
+      if(!arrayContains(kana, this.questionBag)) this.questionBag.push(kana);
+    });
+    shuffle(this.questionBag);
+
+    return drawn;
+  }
+
   setNewQuestion() {
     let questionCount = 1;
     if(this.props.stage==4) {
@@ -90,9 +136,9 @@ class Question extends Component {
     }
 
     if(this.props.stage!=4)
-      this.currentQuestion = this.getRandomKanas(1, false, this.previousQuestion);
+      this.currentQuestion = this.drawQuestionKanas(1, this.previousQuestion);
     else
-      this.currentQuestion = this.getRandomKanas(questionCount, false, this.previousQuestion);
+      this.currentQuestion = this.drawQuestionKanas(questionCount, this.previousQuestion);
     this.answerSeq++;
     this.setState({currentQuestion: this.currentQuestion});
     this.setAnswerOptions();
@@ -101,7 +147,7 @@ class Question extends Component {
   }
 
   setAnswerOptions() {
-    this.answerOptions = this.getRandomKanas(3, this.currentQuestion[0], false);
+    this.answerOptions = this.getRandomKanas(3, this.currentQuestion[0]);
     this.setState({answerOptions: this.answerOptions});
   }
 
@@ -229,6 +275,7 @@ class Question extends Component {
     this.askableKanas = {};
     this.askableKanaKeys = [];
     this.askableRomajis = [];
+    this.questionBag = [];
     this.previousQuestion = '';
     this.previousAnswer = '';
     this.stageProgress = 0;
@@ -239,7 +286,12 @@ class Question extends Component {
           // let's merge the group to our askableKanas
           this.askableKanas = Object.assign(this.askableKanas, kanaDictionary[whichKana][groupName]['characters']);
           Object.keys(kanaDictionary[whichKana][groupName]['characters']).forEach(key => {
-            // let's add all askable kana keys to array
+            // let's add all askable kana keys to array - deduped, because the
+            // katakana "look-alike" groups overlap the base ones (シ is in
+            // both k_group3 and k_group11_s, and 11 others like it). Listed
+            // twice, a kana would sit in the bag twice and so be asked twice
+            // per cycle while something else waits.
+            if(arrayContains(key, this.askableKanaKeys)) return;
             this.askableKanaKeys.push(key);
             this.askableRomajis.push(kanaDictionary[whichKana][groupName]['characters'][key][0]);
           });

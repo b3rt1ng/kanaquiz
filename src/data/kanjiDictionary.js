@@ -34,7 +34,9 @@ export const kanjiDictionary = {
       { kanji: '男', readings: ['otoko'], meaning: 'man', readingType: 'kun', kunyomi: ['otoko'], onyomi: ['dan', 'nan'] },
       { kanji: '女', readings: ['onna'], meaning: 'woman', readingType: 'kun', kunyomi: ['onna'], onyomi: ['jo'] },
       { kanji: '子', readings: ['ko'], meaning: 'child', readingType: 'kun', kunyomi: ['ko'], onyomi: ['shi'] },
-      { kanji: '私', readings: ['watashi'], meaning: 'I, myself', readingType: 'kun', kunyomi: ['watashi'], onyomi: ['shi'] }
+      { kanji: '私', readings: ['watashi'], meaning: 'I, myself', readingType: 'kun', kunyomi: ['watashi'], onyomi: ['shi'] },
+      { kanji: '母', readings: ['haha'], meaning: 'mother', readingType: 'kun', kunyomi: ['haha'], onyomi: ['bo'] },
+      { kanji: '父', readings: ['chichi'], meaning: 'father', readingType: 'kun', kunyomi: ['chichi'], onyomi: ['fu'] }
     ]
   },
   sky: {
@@ -69,13 +71,33 @@ export const kanjiDictionary = {
       { kanji: '田', readings: ['ta'], meaning: 'rice field', readingType: 'kun', kunyomi: ['ta'], onyomi: ['den'] },
       { kanji: '島', readings: ['shima'], meaning: 'island', readingType: 'kun', kunyomi: ['shima'], onyomi: ['tou'] },
       { kanji: '花', readings: ['hana'], meaning: 'flower', readingType: 'kun', kunyomi: ['hana'], onyomi: ['ka'] },
-      { kanji: '石', readings: ['ishi'], meaning: 'rock', readingType: 'kun', kunyomi: ['ishi'], onyomi: ['seki'] }
+      { kanji: '石', readings: ['ishi'], meaning: 'rock', readingType: 'kun', kunyomi: ['ishi'], onyomi: ['seki'] },
+      { kanji: '海', readings: ['umi'], meaning: 'sea', readingType: 'kun', kunyomi: ['umi'], onyomi: ['kai'] },
+      { kanji: '森', readings: ['mori'], meaning: 'forest', readingType: 'kun', kunyomi: ['mori'], onyomi: ['shin'] },
+      { kanji: '雷', readings: ['kaminari'], meaning: 'thunder', readingType: 'kun', kunyomi: ['kaminari'], onyomi: ['rai'] },
+      { kanji: '氷', readings: ['koori'], meaning: 'ice', readingType: 'kun', kunyomi: ['koori'], onyomi: ['hyou'] },
+      // 地 is the ground/land SURFACE, as opposed to the elements theme's
+      // 土 (tsuchi, earth as in soil/dirt). No everyday kun'yomi, so the
+      // kun badge shows "n/a" - same as 百 in the numbers theme.
+      { kanji: '地', readings: ['chi'], meaning: 'earth, ground (the surface)', kanaOverride: 'チ', readingType: 'on', onyomi: ['chi', 'ji'] }
+    ]
+  },
+  seasons: {
+    label: 'Seasons',
+    kanji: [
+      { kanji: '春', readings: ['haru'], meaning: 'spring', readingType: 'kun', kunyomi: ['haru'], onyomi: ['shun'] },
+      { kanji: '夏', readings: ['natsu'], meaning: 'summer', readingType: 'kun', kunyomi: ['natsu'], onyomi: ['ka', 'ge'] },
+      { kanji: '秋', readings: ['aki'], meaning: 'autumn', readingType: 'kun', kunyomi: ['aki'], onyomi: ['shuu'] },
+      { kanji: '冬', readings: ['fuyu'], meaning: 'winter', readingType: 'kun', kunyomi: ['fuyu'], onyomi: ['tou'] }
     ]
   },
   culture: {
     label: 'Culture',
     kanji: [
-      { kanji: '刀', readings: ['katana'], meaning: 'sword', readingType: 'kun', kunyomi: ['katana'], onyomi: ['tou'] }
+      { kanji: '刀', readings: ['katana'], meaning: 'sword', readingType: 'kun', kunyomi: ['katana'], onyomi: ['tou'] },
+      { kanji: '本', readings: ['hon'], meaning: 'origin; book', kanaOverride: 'ホン', readingType: 'on', kunyomi: ['moto'], onyomi: ['hon'] },
+      { kanji: '語', readings: ['go'], meaning: 'language; to tell', kanaOverride: 'ゴ', readingType: 'on', kunyomi: ['kataru'], onyomi: ['go'] },
+      { kanji: '音', readings: ['oto'], meaning: 'sound', readingType: 'kun', kunyomi: ['oto'], onyomi: ['on', 'in'] }
     ]
   },
   numbers: {
@@ -94,6 +116,17 @@ export const kanjiDictionary = {
       { kanji: '百', readings: ['hyaku'], meaning: 'hundred', readingType: 'on', onyomi: ['hyaku'] },
       { kanji: '千', readings: ['sen'], meaning: 'thousand', readingType: 'on', kunyomi: ['chi'], onyomi: ['sen'] },
       { kanji: '万', readings: ['man'], meaning: 'ten thousand', readingType: 'on', kunyomi: ['yorozu'], onyomi: ['man', 'ban'] }
+    ]
+  },
+  time: {
+    label: 'Time',
+    kanji: [
+      { kanji: '今', readings: ['ima'], meaning: 'now', readingType: 'kun', kunyomi: ['ima'], onyomi: ['kon', 'kin'] },
+      { kanji: '時', readings: ['ji'], meaning: 'time, hour', kanaOverride: 'ジ', readingType: 'on', kunyomi: ['toki'], onyomi: ['ji'] },
+      // Two unrelated meanings share this kanji: the on'yomi "fun" is the
+      // minute counter, the kun'yomi wakaru/wakeru is "to understand" /
+      // "to divide". The card teaches the on'yomi, hence the katakana.
+      { kanji: '分', readings: ['fun'], meaning: 'minute; to understand', kanaOverride: 'フン', readingType: 'on', kunyomi: ['wakaru', 'wakeru'], onyomi: ['bun', 'fun', 'bu'] }
     ]
   },
   colors: {
@@ -124,6 +157,18 @@ export const kanjiDictionary = {
       // 金 here reads "kin" (on'yomi), unlike its kun'yomi "kane" in the
       // elements theme - see readingType note up top.
       { kanji: '金色', readings: ["kin'iro", "kiniro"], meaning: 'golden (color)', readingType: 'on', kunyomi: ['kane'], onyomi: ['kin'] }
+    ]
+  },
+  qualities: {
+    label: 'Size & Amount',
+    kanji: [
+      // Adjectives are taught with their okurigana reading (ookii, not the
+      // bare "oo"), which is also what the audio says - that's the form
+      // you actually use in a sentence.
+      { kanji: '大', readings: ['ookii'], meaning: 'big', readingType: 'kun', kunyomi: ['ookii'], onyomi: ['dai', 'tai'] },
+      { kanji: '小', readings: ['chiisai'], meaning: 'small', readingType: 'kun', kunyomi: ['chiisai'], onyomi: ['shou'] },
+      { kanji: '中', readings: ['naka'], meaning: 'middle, inside', readingType: 'kun', kunyomi: ['naka'], onyomi: ['chuu'] },
+      { kanji: '全', readings: ['subete'], meaning: 'all, the whole', readingType: 'kun', kunyomi: ['subete'], onyomi: ['zen'] }
     ]
   },
   body: {
