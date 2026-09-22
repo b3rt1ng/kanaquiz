@@ -4,11 +4,19 @@
 // alternate spelling of the same reading) - all count as correct.
 //
 // `kanaOverride` is an optional literal kana string shown on the card
-// back instead of the auto-derived hiragana form - used for 天 (ten),
-// whose onyomi reading is conventionally written in katakana (dictionary
-// convention: onyomi in katakana, kunyomi in hiragana). It only affects
-// what's displayed - typing still goes through the same hiragana-only
-// live preview/checking as everything else.
+// back instead of the auto-derived hiragana form - carried by every card
+// whose reading is an onyomi, which is conventionally written in katakana
+// (dictionary convention: onyomi in katakana, kunyomi in hiragana). That
+// script is also what the answer is expected to be typed in: uppercase
+// romaji produces katakana, lowercase produces hiragana, exactly like an
+// IME (see kanaTransliteration). Typing the right reading in the other
+// script still counts as correct - it just earns a note, see
+// readingScriptNote.
+//
+// The two exceptions are 茶色 and 金色: they're typed 'on' because that
+// describes their LEAD kanji (茶, 金), but the 色 ending them is kun'yomi
+// "iro", so writing the whole word in katakana would misrepresent it.
+// They keep their hiragana form and expect lowercase.
 //
 // `readingType` classifies readings[0] (the primary/displayed reading) as
 // 'kun' (kun'yomi, the native Japanese reading) or 'on' (on'yomi, the
@@ -24,7 +32,7 @@
 // 2-kanji color compounds, these describe the LEAD kanji specifically
 // (黄色's 黄, 茶色's 茶, etc.) - 色 itself is always kun'yomi "iro" and
 // isn't what's being taught by that half of the card.
-import { parseRomajiToKana, hiraganaToKatakana } from './kanaTransliteration';
+import { parseRomajiToKana, hiraganaToKatakana, katakanaToHiragana } from './kanaTransliteration';
 
 export const kanjiDictionary = {
   people: {
@@ -103,19 +111,19 @@ export const kanjiDictionary = {
   numbers: {
     label: 'Numbers',
     kanji: [
-      { kanji: '一', readings: ['ichi'], meaning: 'one', readingType: 'on', kunyomi: ['hitotsu'], onyomi: ['ichi'] },
-      { kanji: '二', readings: ['ni'], meaning: 'two', readingType: 'on', kunyomi: ['futatsu'], onyomi: ['ni'] },
-      { kanji: '三', readings: ['san'], meaning: 'three', readingType: 'on', kunyomi: ['mittsu'], onyomi: ['san'] },
+      { kanji: '一', readings: ['ichi'], meaning: 'one', kanaOverride: 'イチ', readingType: 'on', kunyomi: ['hitotsu'], onyomi: ['ichi'] },
+      { kanji: '二', readings: ['ni'], meaning: 'two', kanaOverride: 'ニ', readingType: 'on', kunyomi: ['futatsu'], onyomi: ['ni'] },
+      { kanji: '三', readings: ['san'], meaning: 'three', kanaOverride: 'サン', readingType: 'on', kunyomi: ['mittsu'], onyomi: ['san'] },
       { kanji: '四', readings: ['yon', 'shi'], meaning: 'four', readingType: 'kun', kunyomi: ['yon'], onyomi: ['shi'] },
-      { kanji: '五', readings: ['go'], meaning: 'five', readingType: 'on', kunyomi: ['itsutsu'], onyomi: ['go'] },
-      { kanji: '六', readings: ['roku'], meaning: 'six', readingType: 'on', kunyomi: ['muttsu'], onyomi: ['roku'] },
+      { kanji: '五', readings: ['go'], meaning: 'five', kanaOverride: 'ゴ', readingType: 'on', kunyomi: ['itsutsu'], onyomi: ['go'] },
+      { kanji: '六', readings: ['roku'], meaning: 'six', kanaOverride: 'ロク', readingType: 'on', kunyomi: ['muttsu'], onyomi: ['roku'] },
       { kanji: '七', readings: ['nana', 'shichi'], meaning: 'seven', readingType: 'kun', kunyomi: ['nana'], onyomi: ['shichi'] },
-      { kanji: '八', readings: ['hachi'], meaning: 'eight', readingType: 'on', kunyomi: ['yattsu'], onyomi: ['hachi'] },
-      { kanji: '九', readings: ['kyuu', 'ku'], meaning: 'nine', readingType: 'on', kunyomi: ['kokonotsu'], onyomi: ['kyuu', 'ku'] },
-      { kanji: '十', readings: ['juu'], meaning: 'ten', readingType: 'on', kunyomi: ['too'], onyomi: ['juu'] },
-      { kanji: '百', readings: ['hyaku'], meaning: 'hundred', readingType: 'on', onyomi: ['hyaku'] },
-      { kanji: '千', readings: ['sen'], meaning: 'thousand', readingType: 'on', kunyomi: ['chi'], onyomi: ['sen'] },
-      { kanji: '万', readings: ['man'], meaning: 'ten thousand', readingType: 'on', kunyomi: ['yorozu'], onyomi: ['man', 'ban'] }
+      { kanji: '八', readings: ['hachi'], meaning: 'eight', kanaOverride: 'ハチ', readingType: 'on', kunyomi: ['yattsu'], onyomi: ['hachi'] },
+      { kanji: '九', readings: ['kyuu', 'ku'], meaning: 'nine', kanaOverride: 'キュウ', readingType: 'on', kunyomi: ['kokonotsu'], onyomi: ['kyuu', 'ku'] },
+      { kanji: '十', readings: ['juu'], meaning: 'ten', kanaOverride: 'ジュウ', readingType: 'on', kunyomi: ['too'], onyomi: ['juu'] },
+      { kanji: '百', readings: ['hyaku'], meaning: 'hundred', kanaOverride: 'ヒャク', readingType: 'on', onyomi: ['hyaku'] },
+      { kanji: '千', readings: ['sen'], meaning: 'thousand', kanaOverride: 'セン', readingType: 'on', kunyomi: ['chi'], onyomi: ['sen'] },
+      { kanji: '万', readings: ['man'], meaning: 'ten thousand', kanaOverride: 'マン', readingType: 'on', kunyomi: ['yorozu'], onyomi: ['man', 'ban'] }
     ]
   },
   time: {
@@ -160,7 +168,7 @@ export const kanjiDictionary = {
     ]
   },
   qualities: {
-    label: 'Size & Amount',
+    label: 'Qualities',
     kanji: [
       // Adjectives are taught with their okurigana reading (ookii, not the
       // bare "oo"), which is also what the audio says - that's the form
@@ -168,7 +176,11 @@ export const kanjiDictionary = {
       { kanji: '大', readings: ['ookii'], meaning: 'big', readingType: 'kun', kunyomi: ['ookii'], onyomi: ['dai', 'tai'] },
       { kanji: '小', readings: ['chiisai'], meaning: 'small', readingType: 'kun', kunyomi: ['chiisai'], onyomi: ['shou'] },
       { kanji: '中', readings: ['naka'], meaning: 'middle, inside', readingType: 'kun', kunyomi: ['naka'], onyomi: ['chuu'] },
-      { kanji: '全', readings: ['subete'], meaning: 'all, the whole', readingType: 'kun', kunyomi: ['subete'], onyomi: ['zen'] }
+      { kanji: '全', readings: ['subete'], meaning: 'all, the whole', readingType: 'kun', kunyomi: ['subete'], onyomi: ['zen'] },
+      // Second -i adjective pair of this theme, alongside 大きい/小さい: the
+      // okurigana reading is what's taught and what the audio says.
+      { kanji: '古', readings: ['furui'], meaning: 'old', readingType: 'kun', kunyomi: ['furui'], onyomi: ['ko'] },
+      { kanji: '新', readings: ['atarashii'], meaning: 'new', readingType: 'kun', kunyomi: ['atarashii'], onyomi: ['shin'] }
     ]
   },
   body: {
@@ -226,10 +238,66 @@ export const kanjiDictionary = {
 // kanji's registered readings - comparing kana (not raw romaji strings)
 // means an equivalent alternate spelling of the same reading also counts,
 // the same principle numbers.js uses for the counting exercise.
+//
+// Script is deliberately ignored here. Typing "ICHI" or "ichi" is the same
+// PRONUNCIATION, and the pronunciation is what's being tested; katakana vs
+// hiragana is a writing convention, so getting it "wrong" costs nothing and
+// is answered with a note instead - see readingScriptNote.
 export function isReadingCorrect(entry, typedInput) {
   const typed = parseRomajiToKana(typedInput);
   if (!typed.complete) return false;
-  return entry.readings.some(r => parseRomajiToKana(r).kana === typed.kana);
+  const spoken = katakanaToHiragana(typed.kana);
+  return entry.readings.some(r => katakanaToHiragana(parseRomajiToKana(r).kana) === spoken);
+}
+
+const KATAKANA = /[ァ-ヶ]/;
+
+// readings[0] cased to match the script the card is written in, so the
+// romaji line under the kana doubles as "how to type this": uppercase for a
+// katakana (on'yomi) card, lowercase for a hiragana one. Before, a blanket
+// CSS text-transform uppercased every card, which now reads as an
+// instruction - and the wrong one on a kun'yomi card.
+export function primaryReadingRomaji(entry) {
+  const romaji = entry.readings[0];
+  return expectsKatakana(entry) ? romaji.toUpperCase() : romaji.toLowerCase();
+}
+
+// Whether a card's reading is conventionally written in katakana - true for
+// an on'yomi carrying a katakana kanaOverride. Read off what the card
+// actually DISPLAYS rather than off readingType, so the two can never
+// disagree: 茶色/金色 are typed 'on' but describe only their lead kanji
+// (their 色 is kun'yomi "iro"), so they stay hiragana and say nothing here.
+function expectsKatakana(entry) {
+  return KATAKANA.test(primaryReadingKana(entry));
+}
+
+// A right-pronunciation-but-other-script answer gets a short teaching note
+// rather than a penalty. Returns null when there's nothing to say; the
+// wording is left to the caller, this only supplies the facts.
+export function readingScriptNote(entry, typedInput) {
+  const typed = parseRomajiToKana(typedInput);
+  if (!typed.complete || !typed.kana) return null;
+
+  const expected = primaryReadingKana(entry);
+  if (typed.kana === expected) return null; // written exactly as the card has it
+
+  // Strictly about SCRIPT: once that's normalized away the two must be the
+  // same reading. An accepted ALTERNATE reading (四 "shi" for "yon", 金
+  // "kin" for "kane") is a different word, not a mis-script - no note.
+  if (katakanaToHiragana(typed.kana) !== katakanaToHiragana(expected)) return null;
+
+  const wantKatakana = expectsKatakana(entry);
+  return {
+    wantKatakana,
+    expected,
+    typed: typed.kana,
+    // How the same answer would be typed to come out in the right script.
+    retype: wantKatakana ? entry.readings[0].toUpperCase() : entry.readings[0].toLowerCase(),
+    // The reading of the OTHER type, for context on why this one is the one
+    // being drilled ("the kun'yomi is ひとつ").
+    otherLabel: wantKatakana ? "kun'yomi" : "on'yomi",
+    other: wantKatakana ? kunyomiDisplay(entry) : onyomiDisplay(entry)
+  };
 }
 
 // Canonical kana form shown on the back of the card / in the results.

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { kanjiDictionary, isReadingCorrect, primaryReadingKana, kunyomiDisplay, onyomiDisplay, findKanjiEntry } from '../../data/kanjiDictionary';
+import { kanjiDictionary, isReadingCorrect, readingScriptNote, primaryReadingKana, primaryReadingRomaji, kunyomiDisplay, onyomiDisplay, findKanjiEntry } from '../../data/kanjiDictionary';
 import { parseRomajiToKana } from '../../data/kanaTransliteration';
 import { playCorrectSound, playWrongSound, playApplauseSound } from '../../data/soundEffects';
 import { playKanjiPronunciation, stopKanjiPronunciation, hasKanjiAudio } from '../../data/kanjiVoice';
@@ -44,6 +44,9 @@ class KanjiExercise extends Component {
       input: '',
       flipped: false,
       isCorrect: null,
+      // Set when the answer was the right reading written in the other
+      // script - see submit(). Never blocks, only teaches.
+      scriptNote: null,
       results: [],
       combo: 0,
       compliment: null,
@@ -126,6 +129,7 @@ class KanjiExercise extends Component {
       input: '',
       flipped: false,
       isCorrect: null,
+      scriptNote: null,
       results: [],
       combo: 0,
       progressCount: 0
@@ -165,6 +169,7 @@ class KanjiExercise extends Component {
       input: '',
       flipped: false,
       isCorrect: null,
+      scriptNote: null,
       results: [],
       combo: 0,
       progressCount: 0
@@ -303,6 +308,10 @@ class KanjiExercise extends Component {
       combo: newCombo,
       flipped: true,
       isCorrect,
+      // Only worth saying when they got it right - after a miss the card
+      // already shows the reading, and a note about how to write it would
+      // just bury that.
+      scriptNote: isCorrect ? readingScriptNote(entry, this.state.input) : null,
       // Every correct answer moves the counter, whether it's a card's 1st
       // or 2nd (grind mode) success - see this.progressTarget.
       progressCount: prev.progressCount + (isCorrect ? 1 : 0),
@@ -347,7 +356,7 @@ class KanjiExercise extends Component {
         this.finishQuiz();
         return;
       }
-      this.setState({ index: nextIndex, revealIndex: nextIndex, input: '', isCorrect: null }, () => {
+      this.setState({ index: nextIndex, revealIndex: nextIndex, input: '', isCorrect: null, scriptNote: null }, () => {
         this.questionShownAt = Date.now();
         this.focusInput();
       });
@@ -360,7 +369,7 @@ class KanjiExercise extends Component {
       return;
     }
 
-    this.setState({ index: nextIndex, input: '', isCorrect: null, flipped: false });
+    this.setState({ index: nextIndex, input: '', isCorrect: null, scriptNote: null, flipped: false });
     this.waitForFlipTransition(() => {
       this.setState({ revealIndex: nextIndex }, () => {
         this.questionShownAt = Date.now();
@@ -451,6 +460,27 @@ class KanjiExercise extends Component {
     );
   }
 
+  // Right reading, other script. Phrased as a fact about the reading rather
+  // than a correction, since nothing was actually wrong - and it names the
+  // other reading so the point of drilling THIS one lands.
+  renderScriptNote() {
+    const note = this.state.scriptNote;
+    const hasOther = note.other && note.other !== 'n/a';
+    return (
+      <p className="kanji-script-note">
+        <span className="kanji-script-note-kana">{note.expected}</span>
+        {' '}is the <strong>{note.wantKatakana ? "on'yomi" : "kun'yomi"}</strong>
+        {note.wantKatakana
+          ? ' - the reading Japanese borrowed from Chinese, which dictionaries write in katakana.'
+          : ' - the native Japanese reading, which is written in hiragana.'}
+        {' '}Type it as <code>{note.retype}</code> to write it that way.
+        {hasOther && <span className="kanji-script-note-other">
+          {' '}(its {note.otherLabel} is {note.other})
+        </span>}
+      </p>
+    );
+  }
+
   renderQuiz() {
     const effects = getEffectSettings();
     const trembleOn = effects.tremble && this.state.combo > 0;
@@ -490,7 +520,7 @@ class KanjiExercise extends Component {
                 >{onyomiDisplay(entry)}</span>
                 <div className="kanji-firsttimer-kanji">{entry.kanji}</div>
                 <div className="kanji-flip-kana">{primaryReadingKana(entry)}</div>
-                <div className="kanji-flip-romaji">{entry.readings[0]}</div>
+                <div className="kanji-flip-romaji">{primaryReadingRomaji(entry)}</div>
                 <div className="kanji-flip-meaning">{entry.meaning}</div>
               </div>
             ) : (
@@ -512,13 +542,15 @@ class KanjiExercise extends Component {
                       title="On'yomi - Sino-Japanese reading"
                     >{onyomiDisplay(revealEntry)}</span>
                     <div className="kanji-flip-kana">{primaryReadingKana(revealEntry)}</div>
-                    <div className="kanji-flip-romaji">{revealEntry.readings[0]}</div>
+                    <div className="kanji-flip-romaji">{primaryReadingRomaji(revealEntry)}</div>
                     <div className="kanji-flip-meaning">{revealEntry.meaning}</div>
                   </div>
                 </div>
               </div>
             )
           }
+
+          {this.state.scriptNote && this.renderScriptNote()}
 
           <div className="kanji-kana-preview">
             {preview.kana || <span className="kanji-kana-placeholder">?</span>}

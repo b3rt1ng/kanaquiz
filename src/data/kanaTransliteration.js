@@ -41,8 +41,17 @@ function sokuonLength(input, pos) {
 // incremental state, so a longer match found later can override an
 // earlier short one - see numbers.js for why that matters (e.g. "shi"
 // resolving to "shichi" once the rest lands).
+//
+// CASE PICKS THE SCRIPT, the way typing on a phone or a PC IME does:
+// lowercase gives hiragana, uppercase gives katakana ("ten" -> てん,
+// "TEN" -> テン). It's decided per mora, from the letter that starts it,
+// so a half-typed "teN" previews exactly what was typed (てン) instead of
+// silently committing to one script. Callers that only care about the
+// PRONUNCIATION (is this the right reading?) normalize with
+// katakanaToHiragana first - see kanjiDictionary's isReadingCorrect.
 export function parseRomajiToKana(rawInput) {
-  const input = rawInput.trim().toLowerCase();
+  const raw = rawInput.trim();
+  const input = raw.toLowerCase();
   if (!input) return { kana: '', complete: false, leftover: '' };
 
   let kana = '';
@@ -51,23 +60,27 @@ export function parseRomajiToKana(rawInput) {
   while (pos < input.length) {
     if (input[pos] === "'") { pos += 1; continue; } // explicit ん disambiguator, e.g. "kin'yuu"
 
+    // Lowercasing changed this character <=> it was uppercase. Non-letters
+    // compare equal, so they never read as katakana.
+    const katakana = raw[pos] !== input[pos];
+
     const sokuon = sokuonLength(input, pos);
     if (sokuon) {
-      kana += 'っ';
+      kana += katakana ? 'ッ' : 'っ';
       pos += sokuon;
       continue;
     }
 
     const match = ROMAJI_KEYS.find(key => input.startsWith(key, pos));
     if (!match) break; // unrecognized from here on - stop, leave the rest as leftover
-    kana += ROMAJI_TO_KANA[match];
+    kana += katakana ? hiraganaToKatakana(ROMAJI_TO_KANA[match]) : ROMAJI_TO_KANA[match];
     pos += match.length;
   }
 
   return {
     kana,
     complete: pos === input.length && kana.length > 0,
-    leftover: input.slice(pos)
+    leftover: raw.slice(pos)
   };
 }
 
@@ -78,4 +91,10 @@ export function parseRomajiToKana(rawInput) {
 // range (ー, punctuation, ...) is left untouched.
 export function hiraganaToKatakana(hiragana) {
   return hiragana.replace(/[ぁ-ゖ]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+}
+
+// Inverse of the above, for comparing two readings while ignoring which
+// script each was written in (i.e. comparing pronunciation only).
+export function katakanaToHiragana(katakana) {
+  return katakana.replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
 }

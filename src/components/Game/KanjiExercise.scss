@@ -156,7 +156,8 @@
     .kanji-flip-romaji {
       color: var(--text-muted);
       font-size: 0.95em;
-      text-transform: uppercase;
+      /* Case is meaningful now (it says which script to type in), so it
+         comes from the data - see primaryReadingRomaji. */
       letter-spacing: 0.05em;
     }
     .kanji-flip-meaning {
@@ -252,7 +253,8 @@
     .kanji-flip-romaji {
       color: var(--text-muted);
       font-size: 0.95em;
-      text-transform: uppercase;
+      /* Case is meaningful now (it says which script to type in), so it
+         comes from the data - see primaryReadingRomaji. */
       letter-spacing: 0.05em;
     }
     .kanji-flip-meaning {
@@ -319,6 +321,43 @@
     font-size: 0.85em;
     margin-top: 10px;
     margin-bottom: 40px;
+  }
+
+  /* Shown on a CORRECT answer written in the other script, so it reads as
+     an aside rather than an error: muted text, soft orange rule, no glow. */
+  .kanji-script-note {
+    max-width: 420px;
+    margin: 0 auto 18px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--accent-orange);
+    border-radius: 4px;
+    background: rgba(255, 183, 3, 0.07);
+    color: var(--text-muted);
+    font-size: 0.82em;
+    line-height: 1.5;
+    text-align: left;
+
+    strong { color: var(--accent-orange); font-weight: bold; }
+
+    code {
+      background: var(--bg-input);
+      border: 1px solid rgba(255, 183, 3, 0.35);
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: var(--accent-orange);
+      font-size: 0.95em;
+    }
+  }
+
+  .kanji-script-note-kana {
+    color: var(--text);
+    font-size: 1.25em;
+    font-weight: bold;
+    vertical-align: middle;
+  }
+
+  .kanji-script-note-other {
+    opacity: 0.75;
   }
 
   .kanji-results {
