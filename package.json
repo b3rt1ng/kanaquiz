@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "jszip": "^3.10.2",
     "lodash": "^4.17.15",
     "lodash.template": "^4.5.0",
     "prop-types": "^15.6.2",
@@ -56,6 +57,7 @@
     "react-toggle-switch": "^3.0.4",
     "react-transition-group": "^2.5.0",
     "serialize-javascript": "^2.1.1",
+    "sql.js": "^1.8.0",
     "workbox-window": "^4.3.1"
   }
 }

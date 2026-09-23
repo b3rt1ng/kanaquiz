@@ -14,6 +14,13 @@ module.exports = {
     chunkFilename: '[name].[chunkhash].bundle.js',
     path: path.resolve(__dirname, 'dist'),
   },
+  // sql.js's glue (Anki export) has a Node branch that require()s fs;
+  // it never runs in a browser, so it's stubbed rather than shimmed.
+  node: {
+    fs: 'empty',
+    path: 'empty',
+    crypto: 'empty'
+  },
   resolve: {
     extensions: ['.js', '.jsx']
   },
@@ -35,7 +42,13 @@ module.exports = {
       swDest: 'sw.js',
       // Keep the ~2.5MB of sound samples out of the install-time precache;
       // they're fetched on demand and land in the regular HTTP cache.
-      exclude: [/\.(wav|ogg|mp3)$/, /\.map$/]
+      //
+      // The whole Anki-export path is excluded for the same reason: its
+      // wasm alone is 599KB. Excluding the wasm but precaching its JS
+      // chunks would be the worst of both - you'd pay ~170KB at install
+      // AND the export would still fail offline for want of the wasm. So
+      // it's all on demand, and the picker says as much if it fails.
+      exclude: [/\.(wav|ogg|mp3)$/, /\.map$/, /\.wasm$/, /anki.*\.bundle\.js$/]
     })
   ],
   devtool: "source-map",
@@ -77,6 +90,15 @@ module.exports = {
       },
       {
         test: /\.(ogg|mp3|wav)$/,
+        loader: 'file-loader'
+      },
+      {
+        // sql.js's wasm, pulled in only by the Anki .apkg export. `type:
+        // 'javascript/auto'` opts out of webpack's own WebAssembly handling
+        // so file-loader can just emit the file and hand back its URL,
+        // which is what sql.js's locateFile() wants.
+        test: /\.wasm$/,
+        type: 'javascript/auto',
         loader: 'file-loader'
       }
     ]

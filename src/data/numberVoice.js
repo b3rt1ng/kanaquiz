@@ -1,10 +1,19 @@
-// Pronounces any 1-9999 number by concatenating pre-recorded morpheme
-// clips (see numbers.js's numberToMorphemes and generate_number_audio in
-// the repo history for how they were made - VOICEVOX, same voice/pipeline
-// as the kana clips). There's no way to pre-render one clip per number
-// (9999 of them), but the morphemes themselves are a closed, small set
-// (28 total: 9 digits, juu, 9 hyaku-forms, 9 sen-forms), which is what
-// numberToMorphemes already treats as the atomic building blocks.
+// Pronounces any number in range by concatenating pre-recorded morpheme
+// clips (see numbers.js's numberToMorphemes). There's no way to pre-render
+// one clip per number, but the morphemes themselves are a closed, small
+// set (29: 9 digits, juu, 9 hyaku-forms, 9 sen-forms, man), which is what
+// numberToMorphemes already treats as the atomic building blocks - and why
+// adding the whole 万 range only cost one new clip.
+//
+// VOICEVOX 満別花丸・ノーマル (speaker 69), synthesized from the reading in
+// hiragana ("まん"), then trimmed at -50dB and encoded mono 24kHz 64kbps -
+// the same post-processing as the kanji clips. One exception: "hachi" comes
+// from the KATAKANA ハチ, because a bare "はち" is read with the particle
+// value of は and comes out "wachi". happyaku/hassen escape it - the sokuon
+// stops は being taken for a particle - so they stay hiragana. Note this is NOT the kana
+// exercise's voice (もち子さん #20), despite what this comment used to say;
+// the speaker was identified by correlating a fresh synthesis against the
+// existing clips.
 //
 // Playback uses the Web Audio API (not HTMLAudioElement, unlike
 // kanaVoice.js/complimentVoice.js) because gapless back-to-back scheduling

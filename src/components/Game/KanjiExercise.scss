@@ -3,6 +3,12 @@
    (reused wholesale, see renderPicker) - just the loose elements below
    the panel (Correct Later toggle, start button) need their own spacing. */
 .kanji-picker {
+  /* Room for the floating export button, which sits over the bottom right
+     corner on a phone - without this the last row of controls can never be
+     scrolled out from under it. */
+  @media (max-width: 768px) {
+    padding-bottom: 72px;
+  }
   margin: 40px auto 60px;
   text-align: center;
 
@@ -40,6 +46,102 @@
 
 .kanji-start-button {
   margin-bottom: 14px;
+}
+
+/* Anki export - a floating affordance rather than a step in the picker.
+   Top right on a wide screen (clear of the 70px fixed navbar), bottom
+   right on a phone, where that corner is the one a thumb reaches. */
+.kanji-export-fab-wrap {
+  position: fixed;
+  top: 84px;
+  right: 20px;
+  z-index: 40;
+  text-align: right;
+}
+
+.kanji-export-fab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 22px;
+  border: 1px solid var(--accent-orange);
+  background: var(--bg-panel-raised);
+  color: var(--accent-orange);
+  font-size: 0.82em;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  transition: color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+
+  .glyphicon { top: 0; font-size: 1.05em; }
+
+  &:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--accent-coral);
+    box-shadow: 0 2px 18px rgba(255, 77, 109, 0.45);
+    transform: translateY(-1px);
+  }
+
+  /* Still visible when nothing is ticked, so the feature is discoverable -
+     just clearly inert, and the tooltip says what to do about it. */
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+    border-color: var(--text-muted);
+    color: var(--text-muted);
+  }
+
+  /* Building is also a disabled state (no second click), but it has a
+     running count to show, so it stays at full contrast. */
+  &.building {
+    opacity: 1;
+    border-color: var(--accent-orange);
+    color: var(--accent-orange);
+  }
+}
+
+.kanji-export-spin {
+  animation: kq-export-spin 1s linear infinite;
+}
+
+@keyframes kq-export-spin {
+  to { transform: rotate(360deg); }
+}
+
+.kanji-export-popover {
+  max-width: 260px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--error);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: 0.72em;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .kanji-export-fab-wrap {
+    top: auto;
+    bottom: 16px;
+    right: 14px;
+  }
+  /* The popover would run off the bottom edge down here, so it opens
+     upward instead. */
+  .kanji-export-popover {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+  .kanji-export-fab-wrap {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+  }
 }
 
 /* --- Quiz --- */

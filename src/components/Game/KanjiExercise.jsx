@@ -6,6 +6,7 @@ import { playKanjiPronunciation, stopKanjiPronunciation, hasKanjiAudio } from '.
 import { pickCompliment } from '../../data/compliments';
 import { getEffectSettings } from '../../data/effectSettings';
 import { shuffle } from '../../data/helperFuncs';
+import { downloadAnkiDeck, downloadAnkiPackage, selectedCardCount } from '../../data/ankiExport';
 import { GrindHelper, requeueAfter } from '../../data/grindHelper';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
@@ -47,6 +48,12 @@ class KanjiExercise extends Component {
       // Set when the answer was the right reading written in the other
       // script - see submit(). Never blocks, only teaches.
       scriptNote: null,
+      // .apkg export: null when idle, otherwise {done, total} while the
+      // audio clips are being gathered. `exportError` carries the reason
+      // when it fails - most likely being offline, since the generator and
+      // its wasm are fetched on demand rather than precached.
+      exportProgress: null,
+      exportError: null,
       results: [],
       combo: 0,
       compliment: null,
@@ -67,6 +74,7 @@ class KanjiExercise extends Component {
   }
 
   componentWillUnmount() {
+    this.mounted = false;
     clearTimeout(this.complimentTimeout);
     clearTimeout(this.flipFallbackTimeout);
     clearTimeout(this.celebrateTimeout);
@@ -107,6 +115,27 @@ class KanjiExercise extends Component {
 
   toggleFirstTimer = () => {
     this.setState(prev => ({ firstTimerEnabled: !prev.firstTimerEnabled }));
+  }
+
+  exportAnkiDeck = () => {
+    if (this.state.selectedThemes.length === 0) return;
+    downloadAnkiDeck(this.state.selectedThemes);
+  }
+
+  exportAnkiPackage = async () => {
+    if (this.state.selectedThemes.length === 0 || this.state.exportProgress) return;
+    this.setState({ exportProgress: { done: 0, total: selectedCardCount(this.state.selectedThemes) }, exportError: null });
+    try {
+      await downloadAnkiPackage(this.state.selectedThemes, (done, total) => {
+        if (this.mounted !== false) this.setState({ exportProgress: { done, total } });
+      });
+      this.setState({ exportProgress: null });
+    } catch (err) {
+      this.setState({
+        exportProgress: null,
+        exportError: 'Could not build the package - the export has to be online the first time.'
+      });
+    }
   }
 
   startQuiz = () => {
@@ -455,7 +484,48 @@ class KanjiExercise extends Component {
           disabled={this.state.selectedThemes.length === 0}
           onClick={this.startQuiz}
         >Start</button>
+        {this.renderExport()}
         <p><button className="btn btn-default" onClick={this.props.handleEndGame}>Back to menu</button></p>
+      </div>
+    );
+  }
+
+  // Floating, rather than a block under the Start button: exporting is a
+  // side errand, not a step of the flow, so it sits out of the way - top
+  // right on a wide screen, bottom right on a phone where that corner is
+  // the reachable one (see the scss).
+  //
+  // Labelled "Export" rather than "Download" because this is one half of a
+  // pair: importing an Anki deck back INTO the app is planned, and will sit
+  // here as its mirror image (glyphicon-import, "Import"). Naming it after
+  // the direction rather than the delivery keeps the two symmetrical.
+  renderExport() {
+    const count = selectedCardCount(this.state.selectedThemes);
+    const none = this.state.selectedThemes.length === 0;
+    const progress = this.state.exportProgress;
+    const title = none
+      ? 'Tick a theme to export it as an Anki deck'
+      : `Export ${count} cards as an Anki deck, with audio`;
+    return (
+      <div className="kanji-export-fab-wrap">
+        <button
+          className={'kanji-export-fab' + (progress ? ' building' : '')}
+          disabled={none || !!progress}
+          onClick={this.exportAnkiPackage}
+          title={title}
+          aria-label={title}
+        >
+          <span className={'glyphicon ' + (progress ? 'glyphicon-refresh kanji-export-spin' : 'glyphicon-export')}></span>
+          <span className="kanji-export-fab-label">
+            {progress ? `${progress.done}/${progress.total}` : 'Export'}
+          </span>
+        </button>
+        {this.state.exportError &&
+          <div className="kanji-export-popover">
+            {this.state.exportError}{' '}
+            <a href="javascript:;" onClick={this.exportAnkiDeck}>Export a plain text file instead</a>
+            {' '}— no audio, but it works offline and on older Anki.
+          </div>}
       </div>
     );
   }

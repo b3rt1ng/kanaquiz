@@ -43,6 +43,12 @@ export function hasKanjiAudio(kanji) {
   return !!urlByKanji[kanji];
 }
 
+// The clip's bundled URL, for callers that need the FILE rather than to
+// play it - the Anki .apkg export fetches these to embed in the package.
+export function kanjiAudioUrl(kanji) {
+  return urlByKanji[kanji] || null;
+}
+
 // One element, reused for every clip - see kanaVoice.js for why: a fresh
 // `new Audio()` per play leaves abandoned elements' fetches in flight,
 // which piles up over a long session and eventually starves later clips of

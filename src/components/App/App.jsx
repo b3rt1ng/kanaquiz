@@ -51,7 +51,24 @@ class App extends Component {
     this.setState({helpContent});
   }
 
+  // start/stopTimer are the EXERCISES' intent ("a drill is under way"),
+  // while resume/pauseTimer are the window merely losing and regaining
+  // focus. Keeping the two apart is what stops a menu screen from starting
+  // the clock: coming back to the page resumes only a timer that an
+  // exercise had actually started - see handleVisibilityChange.
+  timerWanted = false;
+
   startTimer = () => {
+    this.timerWanted = true;
+    this.resumeTimer();
+  }
+
+  stopTimer = () => {
+    this.timerWanted = false;
+    this.pauseTimer();
+  }
+
+  resumeTimer = () => {
     if(this.timerInterval) return;
     this.timerStartedAt = Date.now();
     this.timerInterval = setInterval(() => {
@@ -64,7 +81,7 @@ class App extends Component {
     }, 100);
   }
 
-  stopTimer = () => {
+  pauseTimer = () => {
     if(this.timerInterval) {
       this.elapsedMs += Date.now() - this.timerStartedAt;
       this.timerStartedAt = null;
@@ -106,12 +123,12 @@ class App extends Component {
   }
 
   handleWindowBlur = () => {
-    this.stopTimer();
+    this.pauseTimer();
   }
 
   handleWindowFocus = () => {
-    if(this.state.gameState === 'game') {
-      this.startTimer();
+    if(this.timerWanted) {
+      this.resumeTimer();
     }
   }
 
@@ -120,11 +137,16 @@ class App extends Component {
   // most WMs never blur the browser window when you just switch workspaces
   // away from it, which let the timer keep running the whole time you were
   // gone.
+  // gameState was the wrong test here: the kanji theme picker, the stage
+  // intro and the results screen all run under gameState 'game' with the
+  // timer deliberately stopped, so switching virtual desktop away and back
+  // started the clock on a menu. timerWanted tracks the exercise's own
+  // intent instead.
   handleVisibilityChange = () => {
     if(document.hidden) {
-      this.stopTimer();
-    } else if(this.state.gameState === 'game') {
-      this.startTimer();
+      this.pauseTimer();
+    } else if(this.timerWanted) {
+      this.resumeTimer();
     }
   }
 

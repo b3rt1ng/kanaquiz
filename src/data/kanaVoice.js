@@ -3,6 +3,15 @@
 // src/assets/sounds/kana). Recorded audio instead of the browser's
 // speechSynthesis, whose voice/accent quality is entirely up to whatever the
 // OS happens to have installed.
+//
+// GOTCHA when regenerating any of these: VOICEVOX applies Japanese PARTICLE
+// readings to a bare hiragana, so synthesizing "は" gives "wa" and "へ"
+// gives "e" - the sound of the particle, not the name of the character.
+// Those two are therefore rendered from their katakana twins (ハ, ヘ),
+// which read correctly. を/ぢ/づ look like the same trap but aren't: "o",
+// "ji" and "zu" ARE their modern readings. フュ is a genuine engine limit -
+// VOICEVOX has no single fyu mora and always splits it into フ+ユ, even
+// inside a real word like フュージョン, so that clip says "fu-yu".
 import manifest from './kanaAudioManifest.json';
 
 // Eagerly resolves every clip to its bundled URL. Cheap: file-loader turns

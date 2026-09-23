@@ -68,31 +68,36 @@ class Navbar extends Component {
               )
             }
             {
-              this.props.gameState == 'game' && (
-                <div className="timer-help-group">
-                  <p className="nav navbar-text timer-display">
-                    <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
-                  </p>
-                  {
-                    this.props.helpContent && (
-                      <button
-                        className="help-toggle"
-                        title="How to type"
-                        onClick={this.toggleHelp}
-                      >
-                        <span className="glyphicon glyphicon-question-sign"></span>
-                      </button>
-                    )
-                  }
-                  {
-                    this.props.helpContent && this.state.helpOpen && (
-                      <div className="help-panel help-panel-right">
-                        {this.props.helpContent}
-                      </div>
-                    )
-                  }
-                </div>
-              )
+              /* Shown on every screen, not just during an exercise: the
+                 total is cumulative across the whole visit (nothing resets
+                 elapsedMs - see App), so hiding it on the menus made the
+                 count look like it restarted every time you came back. It
+                 simply sits frozen while no exercise is running. The help
+                 toggle stays tied to helpContent, which only an exercise
+                 ever sets. */
+              <div className="timer-help-group">
+                <p className="nav navbar-text timer-display">
+                  <span className="glyphicon glyphicon-time"></span> {this.formatTime(this.props.totalTimeMs)}
+                </p>
+                {
+                  this.props.helpContent && (
+                    <button
+                      className="help-toggle"
+                      title="How to type"
+                      onClick={this.toggleHelp}
+                    >
+                      <span className="glyphicon glyphicon-question-sign"></span>
+                    </button>
+                  )
+                }
+                {
+                  this.props.helpContent && this.state.helpOpen && (
+                    <div className="help-panel help-panel-right">
+                      {this.props.helpContent}
+                    </div>
+                  )
+                }
+              </div>
             }
           </div>
         </div>

@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
-import { randomCountingNumber, numberToKanji, numberToRomaji, parseCountingInput } from '../../data/numbers';
+import { randomCountingNumber, numberToKanji, numberToRomaji, parseCountingInput, MAX_COUNTING_NUMBER } from '../../data/numbers';
 import { playWrongSound, playComboSound, playComboBreakSound, playSpellingNoteSound } from '../../data/soundEffects';
 import { playNumberPronunciation, stopNumberPronunciation, hasNumberAudio } from '../../data/numberVoice';
 import { getEffectSettings } from '../../data/effectSettings';
 import { GrindHelper, requeueAfter } from '../../data/grindHelper';
+import { shuffle } from '../../data/helperFuncs';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -13,10 +14,94 @@ import './CountingExercise.scss';
 
 const QUESTION_COUNT = 15;
 
-function buildQuestionList() {
+// Picking a ceiling is the whole point of the opening screen: 万 only turns
+// up from 10,000, but a flat draw over the full range would make almost
+// every question eight digits long (~55 characters of romaji), which is
+// exhausting rather than instructive. So the ranges are offered as levels,
+// the way stage 4 offers word lengths.
+// The opening screen is two sliders, so any window inside 1 - 99,999,999
+// can be dialled in. They move on a LOG scale: linearly, everything below
+// a million would be crammed into the last few pixels of the track, and
+// the 1-9999 range - the one you actually start from - would be
+// unreachable. Each notch is rounded to two significant figures, which
+// keeps the readouts tidy and still lands exactly on the round values that
+// matter (10,000, where 万 begins, sits dead on the middle of the track).
+const SLIDER_STEPS = 1000;
+const DECADES = Math.log10(MAX_COUNTING_NUMBER + 1); // 8
+
+function roundSignificant(x) {
+  if (x < 10) return Math.max(1, Math.round(x));
+  const mag = Math.pow(10, Math.floor(Math.log10(x)) - 1);
+  return Math.round(x / mag) * mag;
+}
+
+function sliderToNumber(t) {
+  const raw = Math.pow(10, (t / SLIDER_STEPS) * DECADES);
+  return Math.min(MAX_COUNTING_NUMBER, Math.max(1, roundSignificant(raw)));
+}
+
+function numberToSlider(n) {
+  return Math.round((Math.log10(n) / DECADES) * SLIDER_STEPS);
+}
+
+const MAN = 10000;
+
+// Decade marks along the ruler. Their positions come from the same log
+// mapping the handles use, so a label always sits exactly under the value
+// it names. 万 is flagged because it's the threshold the exercise is about.
+const TICKS = [
+  { value: 1, label: '1' },
+  { value: 10, label: '10' },
+  { value: 100, label: '100' },
+  { value: 1000, label: '1K' },
+  { value: MAN, label: '10K', man: true },
+  { value: 100000, label: '100K' },
+  { value: 1000000, label: '1M' },
+  { value: 10000000, label: '10M' },
+  { value: MAX_COUNTING_NUMBER, label: '100M' }
+];
+
+function sliderPercent(n) {
+  return (numberToSlider(n) / SLIDER_STEPS) * 100;
+}
+const DEFAULT_RANGE = { min: 1, max: 99999 };
+const RANGE_STORAGE_KEY = 'countingRange';
+
+function loadRange() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RANGE_STORAGE_KEY));
+    if (saved && saved.min >= 1 && saved.max <= MAX_COUNTING_NUMBER && saved.min <= saved.max) return saved;
+  } catch (e) { /* unreadable or absent - fall through to the default */ }
+  return DEFAULT_RANGE;
+}
+
+// Cycles the question list through every digit width the chosen window
+// spans, rather than drawing flat across it. A flat draw is dominated by
+// the widest numbers - over 1 - 99,999,999 it lands on eight digits about
+// 99% of the time - so a wide window would only ever ask its longest
+// question. Where the window covers a single width this degenerates to a
+// plain uniform draw, which is what it should be.
+function buildQuestionList({ min, max }) {
+  const loDigits = String(min).length;
+  const hiDigits = String(max).length;
+  const widths = hiDigits - loDigits + 1;
   const list = [];
-  for (let i = 0; i < QUESTION_COUNT; i++) list.push(randomCountingNumber());
+  for (let i = 0; i < QUESTION_COUNT; i++) {
+    const digits = loDigits + (i % widths);
+    list.push(randomCountingNumber(
+      Math.max(min, Math.pow(10, digits - 1)),
+      Math.min(max, Math.pow(10, digits) - 1)
+    ));
+  }
+  shuffle(list);
   return list;
+}
+
+// Eight digits in a row are unreadable; Japanese writes the digits with the
+// same 3-digit commas as everywhere else (the FOUR-digit 万 grouping is a
+// fact about the reading, not about how the figure is printed).
+function groupDigits(n) {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 // Cheat-sheet shown from the "?" in the header - see numbers.js for the
@@ -50,8 +135,17 @@ function CountingHelp() {
         <li><strong>10</strong> = juu (十)</li>
         <li><strong>100</strong> = hyaku (百) - but 300 = sanbyaku, 600 = roppyaku, 800 = happyaku</li>
         <li><strong>1000</strong> = sen (千) - but 3000 = sanzen, 8000 = hassen</li>
+        <li>
+          <strong>10000</strong> = ichiman (一万) - 万 always needs a number in
+          front of it, so it's never a bare "man". No sound changes of its own:
+          sanman, rokuman, hachiman. Above it, the multiplier fuses as usual -
+          8,000,000 = happyakuman (八百万).
+        </li>
       </ul>
       <p className="counting-help-example">Example: 2945 → <strong>nisenkyuuhyakuyonjuugo</strong> → 二千九百四十五</p>
+      <p className="counting-help-example">
+        With 万: 12,345 → <strong>ichimannisensanbyakuyonjuugo</strong> → 一万二千三百四十五
+      </p>
       <p className="counting-help-example">
         Typing the plain form (e.g. "hachihyaku" for 800) still counts as
         correct - you'll just get a note showing the standard spelling. After
@@ -65,8 +159,21 @@ function CountingHelp() {
 class CountingExercise extends Component {
   constructor(props) {
     super(props);
-    this.numbers = buildQuestionList();
+    // null until a range is picked - see renderRangePicker.
+    this.numbers = [];
     this.state = {
+      // null until the range is confirmed - see renderRangePicker. The
+      // bounds themselves live in rangeMin/rangeMax so the sliders can move
+      // before the exercise starts.
+      // null until the range is confirmed - see renderRangePicker. The
+      // bounds themselves live in bounds so the sliders can move before the
+      // exercise starts.
+      range: null,
+      bounds: loadRange(),
+      // Text held while a bound is being typed, so a half-finished entry
+      // ("1", on the way to "10000") isn't clamped out from under the
+      // cursor. Committed on blur or Enter, see commitBound.
+      editing: { min: null, max: null },
       index: 0,
       input: '',
       results: [],
@@ -88,9 +195,47 @@ class CountingExercise extends Component {
   }
 
   componentDidMount() {
-    this.questionShownAt = Date.now();
-    this.focusInput();
     if (this.props.setHelpContent) this.props.setHelpContent(<CountingHelp />);
+  }
+
+  // Both the slider and the typed field end up here: whichever bound moved
+  // wins and shoves the other, rather than refusing to cross it.
+  applyBound = (which, value) => {
+    this.setState(prev => ({
+      bounds: which === 'min'
+        ? { min: value, max: Math.max(value, prev.bounds.max) }
+        : { min: Math.min(value, prev.bounds.min), max: value }
+    }));
+  }
+
+  editBound = (which, text) => {
+    this.setState(prev => ({ editing: { ...prev.editing, [which]: text.replace(/[^\d,]/g, '') } }));
+  }
+
+  commitBound = (which) => {
+    const text = this.state.editing[which];
+    this.setState(prev => ({ editing: { ...prev.editing, [which]: null } }));
+    if (text === null || text === '') return; // left blank - keep what was there
+    const parsed = parseInt(text.replace(/,/g, ''), 10);
+    if (!Number.isFinite(parsed)) return;
+    this.applyBound(which, Math.min(MAX_COUNTING_NUMBER, Math.max(1, parsed)));
+  }
+
+  setBound = (which, sliderValue) => {
+    this.applyBound(which, sliderToNumber(Number(sliderValue)));
+  }
+
+  startWithRange = (range) => {
+    this.grinder.reset();
+    try { localStorage.setItem(RANGE_STORAGE_KEY, JSON.stringify(range)); } catch (e) { /* private mode */ }
+    this.numbers = buildQuestionList(range);
+    this.setState({
+      range, index: 0, input: '', results: [], combo: 0,
+      correction: null, note: null, previousNumber: null, progressCount: 0
+    }, () => {
+      this.questionShownAt = Date.now();
+      this.focusInput();
+    });
   }
 
   componentWillUnmount() {
@@ -202,7 +347,7 @@ class CountingExercise extends Component {
       this.grind(this.grinder.keys);
       return;
     }
-    this.numbers = buildQuestionList();
+    this.numbers = buildQuestionList(this.state.range);
     this.setState({ index: 0, input: '', results: [], combo: 0, correction: null, note: null, previousNumber: null, progressCount: 0 }, () => {
       this.questionShownAt = Date.now();
       this.focusInput();
@@ -259,7 +404,100 @@ class CountingExercise extends Component {
     return { characterStats, confusionPairs };
   }
 
+  renderBoundField(which, label) {
+    const edited = this.state.editing[which];
+    return (
+      <span className="counting-bound">
+        <label className="counting-bound-label" htmlFor={'bound-field-' + which}>{label}</label>
+        <input
+          id={'bound-field-' + which}
+          className="counting-bound-input"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={edited !== null ? edited : groupDigits(this.state.bounds[which])}
+          onChange={e => this.editBound(which, e.target.value)}
+          onFocus={e => e.target.select()}
+          onBlur={() => this.commitBound(which)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }}
+        />
+      </span>
+    );
+  }
+
+  renderRangePicker() {
+    const { min, max } = this.state.bounds;
+    const withMan = max >= MAN;
+    const lowPct = sliderPercent(min);
+    const highPct = sliderPercent(max);
+    // Both handles live on one track, stacked. When the low one is pushed
+    // far right the two thumbs overlap, and whichever input is on top is
+    // the only one still grabbable - so the low one is raised once it gets
+    // there, which is the handle you'd be dragging in that situation.
+    const lowOnTop = lowPct > 90;
+
+    return (
+      <div className="counting-range-picker text-center">
+        <h2 className="counting-range-title">How high?</h2>
+        <p className="counting-range-intro">
+          Japanese counts in groups of four, not three: above 千 comes 万
+          (10,000). 12,345 is <strong>ichiman</strong> nisen sanbyaku yonjuu go.
+        </p>
+
+        <div className="counting-bounds">
+          {this.renderBoundField('min', 'From')}
+          <span className="counting-bounds-arrow">→</span>
+          {this.renderBoundField('max', 'To')}
+        </div>
+
+        <div className="counting-ruler">
+          <div className="counting-ruler-track"></div>
+          <div
+            className="counting-ruler-span"
+            style={{ left: lowPct + '%', width: (highPct - lowPct) + '%' }}
+          ></div>
+          <input
+            className={'counting-ruler-input' + (lowOnTop ? ' on-top' : '')}
+            type="range" min="0" max={SLIDER_STEPS} value={numberToSlider(min)}
+            aria-label="Lowest number"
+            onChange={e => this.setBound('min', e.target.value)}
+          />
+          <input
+            className="counting-ruler-input"
+            type="range" min="0" max={SLIDER_STEPS} value={numberToSlider(max)}
+            aria-label="Highest number"
+            onChange={e => this.setBound('max', e.target.value)}
+          />
+          <div className="counting-ruler-ticks">
+            {TICKS.map(t => (
+              <span
+                key={t.value}
+                className={'counting-tick' + (t.man ? ' man' : '')}
+                style={{ left: sliderPercent(t.value) + '%' }}
+              >
+                <span className="counting-tick-mark"></span>
+                <span className="counting-tick-label">{t.label}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <p className={'counting-range-man' + (withMan ? ' active' : '')}>
+          {withMan
+            ? <span>万 included — the longest answer here is <strong>{numberToRomaji(max)}</strong></span>
+            : <span>No 万 in this range — drag past the 10K mark to bring it in</span>}
+        </p>
+
+        <p>
+          <button className="btn btn-primary counting-range-start" onClick={() => this.startWithRange(this.state.bounds)}>Start</button>
+        </p>
+        <p><button className="btn btn-default" onClick={this.props.handleEndGame}>Back to menu</button></p>
+      </div>
+    );
+  }
+
   render() {
+    if (this.state.range === null) return this.renderRangePicker();
     const complete = this.state.index >= this.numbers.length;
 
     const effects = getEffectSettings();
@@ -287,7 +525,7 @@ class CountingExercise extends Component {
                 <p className="counting-progress">
                   {this.grinder.active ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.numbers.length}`}
                 </p>
-                <div className="counting-number">{currentNumber}</div>
+                <div className="counting-number">{groupDigits(currentNumber)}</div>
                 <div className="counting-kanji-preview">
                   {preview.kanji || <span className="counting-kanji-placeholder">?</span>}
                   {preview.leftover && <span className="counting-leftover">{preview.leftover}</span>}

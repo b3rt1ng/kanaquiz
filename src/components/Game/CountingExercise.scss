@@ -190,3 +190,210 @@
     }
   }
 }
+
+/* --- Range picker (opening screen) --- */
+.counting-range-picker {
+  max-width: 560px;
+  margin: 50px auto 60px;
+}
+
+.counting-range-title {
+  color: var(--accent-orange);
+  text-shadow: var(--glow-orange);
+  margin-bottom: 12px;
+}
+
+.counting-range-intro {
+  color: var(--text-muted);
+  font-size: 0.88em;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.counting-bounds {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.counting-bound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.counting-bound-label {
+  margin: 0;
+  font-size: 0.68em;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+/* Typed as well as dragged - the field is the readout. */
+.counting-bound-input {
+  width: 160px;
+  padding: 6px 10px;
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-orange);
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 10px rgba(255, 183, 3, 0.35);
+  }
+}
+
+.counting-bounds-arrow {
+  color: var(--text-muted);
+  font-size: 1.3em;
+  padding-bottom: 8px;
+}
+
+/* One track, two handles: the range inputs are stacked transparently on
+   top of a drawn track, with only their thumbs catching the pointer. */
+.counting-ruler {
+  position: relative;
+  height: 64px;
+  margin: 0 14px 6px;
+}
+
+.counting-ruler-track,
+.counting-ruler-span {
+  position: absolute;
+  top: 9px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.counting-ruler-track {
+  left: 0;
+  right: 0;
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 183, 3, 0.25);
+}
+
+.counting-ruler-span {
+  background: var(--accent-orange);
+  box-shadow: 0 0 10px rgba(255, 183, 3, 0.5);
+}
+
+.counting-ruler-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  outline: none;
+  pointer-events: none; /* the track belongs to the drawn one above */
+  z-index: 2;
+
+  &.on-top { z-index: 3; }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-orange);
+    border: 2px solid var(--bg);
+    cursor: grab;
+    pointer-events: auto;
+    box-shadow: 0 0 8px rgba(255, 183, 3, 0.8);
+  }
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-orange);
+    border: 2px solid var(--bg);
+    cursor: grab;
+    pointer-events: auto;
+    box-shadow: 0 0 8px rgba(255, 183, 3, 0.8);
+  }
+  &::-moz-range-track { background: none; border: none; }
+}
+
+.counting-ruler-ticks {
+  position: absolute;
+  top: 26px;
+  left: 0;
+  right: 0;
+  height: 30px;
+}
+
+.counting-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.counting-tick-mark {
+  /* Every mark is the same height so the labels underneath share a
+     baseline; 万 is picked out by colour and weight instead. */
+  width: 1px;
+  height: 8px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+.counting-tick-label {
+  margin-top: 3px;
+  font-size: 0.62em;
+  color: var(--text-muted);
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The 万 threshold is what the whole screen is about, so its mark is the
+   one that stands out. */
+.counting-tick.man {
+  .counting-tick-mark { background: var(--accent-coral); opacity: 1; width: 2px; }
+  .counting-tick-label { color: var(--accent-coral); opacity: 1; font-weight: bold; }
+}
+
+.counting-range-man {
+  min-height: 2.6em;
+  margin: 18px 0 8px;
+  font-size: 0.8em;
+  line-height: 1.5;
+  color: var(--text-muted);
+
+  strong {
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  &.active strong { color: var(--accent-orange); }
+}
+
+.counting-range-start {
+  margin-bottom: 14px;
+  min-width: 140px;
+}
+
+@media (max-width: 560px) {
+  .counting-bound-input { width: 128px; font-size: 1.25em; }
+  /* Only the decade labels that fit; the ruler stays readable. */
+  .counting-tick-label { font-size: 0.55em; }
+}

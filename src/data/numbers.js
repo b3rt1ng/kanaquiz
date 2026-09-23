@@ -1,5 +1,15 @@
 // Japanese number reading/writing logic for the Counting exercise.
-// Scope: 1-9999 (no man/10000 yet - see buildCountingQuestion's range).
+// Scope: 1 - 99,999,999 (i.e. up to 9999万).
+//
+// Japanese groups digits in FOURS, not threes: the unit above 千 is 万
+// (10,000), and everything from 10,000 to 99,999,999 reads as
+// "<a 1-9999 number> man" followed by another 1-9999 number. So the whole
+// man range is built by reusing the 1-9999 logic twice, which is what the
+// *Under10000 helpers below exist for. Unlike 百 and 千, which stand alone
+// (100 is "hyaku", not "ichihyaku"), 万 always needs its multiplier:
+// 10,000 is "ichiman", never a bare "man". 万 also triggers no sound
+// fusion of its own - sanman/rokuman/hachiman are all regular - though the
+// number in front of it still fuses normally (8,000,000 = hassenman).
 //
 // The hundreds and thousands places have real sound-fusion in Japanese
 // (300 is "sanbyaku", not "sanhyaku"; 8000 is "hassen", not "hachisen"),
@@ -35,15 +45,16 @@ const ALL_TOKENS = [
   ...HYAKU_TOKENS.map(([romaji, value]) => ({ romaji, value, kind: 'hyaku' })),
   ...SEN_TOKENS.map(([romaji, value]) => ({ romaji, value, kind: 'sen' })),
   ...DIGIT_TOKENS.map(([romaji, value]) => ({ romaji, value, kind: 'digit' })),
-  { romaji: 'juu', value: 10, kind: 'juu' }
+  { romaji: 'juu', value: 10, kind: 'juu' },
+  { romaji: 'man', value: 10000, kind: 'man' }
 ].sort((a, b) => b.romaji.length - a.romaji.length);
+
+export const MAX_COUNTING_NUMBER = 99999999;
 
 // Official kanji for a 1-9999 number, using the fixed forms (no yon/shi
 // ambiguity in the OUTPUT - the preview always shows the standard reading's
 // kanji regardless of which accepted romaji variant the player typed).
-export function numberToKanji(n) {
-  if (n <= 0 || n > 9999) return '';
-
+function kanjiUnder10000(n) {
   const thousands = Math.floor(n / 1000);
   const hundreds = Math.floor((n % 1000) / 100);
   const tens = Math.floor((n % 100) / 10);
@@ -57,11 +68,18 @@ export function numberToKanji(n) {
   return out;
 }
 
+export function numberToKanji(n) {
+  if (n <= 0 || n > MAX_COUNTING_NUMBER) return '';
+  const man = Math.floor(n / 10000);
+  const rest = n % 10000;
+  // kanjiUnder10000(1) is '一', so 10,000 comes out as 一万 rather than a
+  // bare 万 - see the note up top.
+  return (man > 0 ? kanjiUnder10000(man) + '万' : '') + (rest > 0 ? kanjiUnder10000(rest) : '');
+}
+
 // Standard (non-alternate) romaji reading, used as the canonical answer
 // shown in results/review screens.
-export function numberToRomaji(n) {
-  if (n <= 0 || n > 9999) return '';
-
+function romajiUnder10000(n) {
   const thousands = Math.floor(n / 1000);
   const hundreds = Math.floor((n % 1000) / 100);
   const tens = Math.floor((n % 100) / 10);
@@ -73,6 +91,13 @@ export function numberToRomaji(n) {
   if (tens > 0) out += (tens === 1 ? 'juu' : DIGIT_TOKENS.find(([, v]) => v === tens)[0] + 'juu');
   if (units > 0) out += DIGIT_TOKENS.find(([, v]) => v === units)[0];
   return out;
+}
+
+export function numberToRomaji(n) {
+  if (n <= 0 || n > MAX_COUNTING_NUMBER) return '';
+  const man = Math.floor(n / 10000);
+  const rest = n % 10000;
+  return (man > 0 ? romajiUnder10000(man) + 'man' : '') + (rest > 0 ? romajiUnder10000(rest) : '');
 }
 
 // Greedily tokenizes `input` (lowercase, no spaces) left to right, always
@@ -104,57 +129,73 @@ function tokenize(input) {
 //   contraction, still lands on the right number and the right kanji -
 //   only the ROMAJI shown back to them (numberToRomaji) stays the
 //   textbook-correct contracted form.
+//
+// 万 closes a group rather than adding to it: everything accumulated since
+// the last 万 is its multiplier, so "ichi|man|nisen" is 1*10000 + 2000.
+// `group` is that running 1-9999 accumulation and `total` the man-groups
+// already closed. Two inputs are rejected outright (`invalid`), because
+// they aren't numbers at all rather than merely unusual: a bare "man" with
+// nothing in front (10,000 is "ichiman"), and a second "man" after one has
+// already been closed.
 function reduceTokens(tokens) {
-  let value = 0;
+  let total = 0;
+  let group = 0;
   let kanji = '';
   let usedRegularForm = false;
+  let seenMan = false;
+  let invalid = false;
   let i = 0;
   while (i < tokens.length) {
     const t = tokens[i];
     const next = tokens[i + 1];
 
-    if (t.kind === 'digit' && next && next.kind === 'sen' && next.value === 1000) {
-      value += t.value * 1000;
+    if (t.kind === 'man') {
+      if (group === 0 || seenMan) { invalid = true; break; }
+      total += group * 10000;
+      group = 0;
+      seenMan = true;
+      kanji += '万';
+      i++;
+    } else if (t.kind === 'digit' && next && next.kind === 'sen' && next.value === 1000) {
+      group += t.value * 1000;
       kanji += SEN_KANJI[t.value];
       if (t.value === 1 || t.value === 3 || t.value === 8) usedRegularForm = true;
       i += 2;
     } else if (t.kind === 'digit' && next && next.kind === 'hyaku' && next.value === 100) {
-      value += t.value * 100;
+      group += t.value * 100;
       kanji += HYAKU_KANJI[t.value];
       if (t.value === 1 || t.value === 3 || t.value === 6 || t.value === 8) usedRegularForm = true;
       i += 2;
     } else if (t.kind === 'digit' && next && next.kind === 'juu') {
-      value += t.value * 10;
+      group += t.value * 10;
       kanji += (t.value === 1 ? '十' : DIGIT_KANJI[t.value] + '十');
       i += 2;
     } else if (t.kind === 'hyaku') {
-      value += t.value;
+      group += t.value;
       kanji += HYAKU_KANJI[t.value / 100];
       i++;
     } else if (t.kind === 'sen') {
-      value += t.value;
+      group += t.value;
       kanji += SEN_KANJI[t.value / 1000];
       i++;
     } else if (t.kind === 'juu') {
-      value += 10;
+      group += 10;
       kanji += '十';
       i++;
     } else {
-      value += t.value;
+      group += t.value;
       kanji += DIGIT_KANJI[t.value];
       i++;
     }
   }
-  return { value, kanji, usedRegularForm };
+  return { value: total + group, kanji, usedRegularForm, invalid };
 }
 
 // Canonical reading split into its individual morphemes, in speaking
 // order - e.g. 2945 -> ['nisen', 'kyuuhyaku', 'yon', 'juu', 'go']. Used to
 // pronounce a number by playing pre-recorded morpheme clips back to back
 // (see numberVoice.js) instead of needing one clip per possible number.
-export function numberToMorphemes(n) {
-  if (n <= 0 || n > 9999) return [];
-
+function morphemesUnder10000(n) {
   const thousands = Math.floor(n / 1000);
   const hundreds = Math.floor((n % 1000) / 100);
   const tens = Math.floor((n % 100) / 10);
@@ -171,6 +212,18 @@ export function numberToMorphemes(n) {
   return morphemes;
 }
 
+// 万 is its own clip, appended after the morphemes of whatever multiplies
+// it: 12,345 -> ['ichi','man','nisen','sanbyaku','yon','juu','go'].
+export function numberToMorphemes(n) {
+  if (n <= 0 || n > MAX_COUNTING_NUMBER) return [];
+  const man = Math.floor(n / 10000);
+  const rest = n % 10000;
+  return [
+    ...(man > 0 ? morphemesUnder10000(man).concat('man') : []),
+    ...(rest > 0 ? morphemesUnder10000(rest) : [])
+  ];
+}
+
 // Live parse of whatever the player has typed so far. Returns the running
 // kanji preview, the numeric value parsed so far, whether the WHOLE input
 // was consumed (no leftover unrecognized text), and the leftover text (if
@@ -180,16 +233,22 @@ export function parseCountingInput(rawInput) {
   if (!input) return { value: 0, kanji: '', complete: false, leftover: '', usedRegularForm: false };
 
   const { tokens, consumed } = tokenize(input);
-  const { value, kanji, usedRegularForm } = reduceTokens(tokens);
+  const { value, kanji, usedRegularForm, invalid } = reduceTokens(tokens);
   return {
     value,
     kanji,
-    complete: consumed === input.length && tokens.length > 0,
+    complete: consumed === input.length && tokens.length > 0 && !invalid,
     leftover: input.slice(consumed),
     usedRegularForm
   };
 }
 
-export function randomCountingNumber() {
-  return 1 + Math.floor(Math.random() * 9999);
+// Uniform in [min, max]. The exercise's picker supplies the bounds (see
+// CountingExercise's RANGES) - a min above 9999 is what makes a level
+// always land in 万 territory.
+export function randomCountingNumber(min = 1, max = 9999) {
+  const lo = Math.max(1, min);
+  const hi = Math.min(max, MAX_COUNTING_NUMBER);
+  if (hi <= lo) return lo;
+  return lo + Math.floor(Math.random() * (hi - lo + 1));
 }
