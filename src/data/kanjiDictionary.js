@@ -108,6 +108,16 @@ export const kanjiDictionary = {
       { kanji: '音', readings: ['oto'], meaning: 'sound', readingType: 'kun', kunyomi: ['oto'], onyomi: ['on', 'in'] }
     ]
   },
+  places: {
+    label: 'Places',
+    kanji: [
+      // Ordered widest to narrowest - 国 › 町 › 店 nest inside each other,
+      // which is easier to hold onto than three unrelated places.
+      { kanji: '国', readings: ['kuni'], meaning: 'country', readingType: 'kun', kunyomi: ['kuni'], onyomi: ['koku'] },
+      { kanji: '町', readings: ['machi'], meaning: 'town', readingType: 'kun', kunyomi: ['machi'], onyomi: ['chou'] },
+      { kanji: '店', readings: ['mise'], meaning: 'shop', readingType: 'kun', kunyomi: ['mise'], onyomi: ['ten'] }
+    ]
+  },
   numbers: {
     label: 'Numbers',
     kanji: [
