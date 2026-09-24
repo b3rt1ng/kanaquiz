@@ -14,16 +14,11 @@ import './CountingExercise.scss';
 
 const QUESTION_COUNT = 15;
 
-// Picking a ceiling is the whole point of the opening screen: 万 only turns
-// up from 10,000, but a flat draw over the full range would make almost
-// every question eight digits long (~55 characters of romaji), which is
-// exhausting rather than instructive. So the ranges are offered as levels,
-// the way stage 4 offers word lengths.
-// The opening screen is two sliders, so any window inside 1 - 99,999,999
-// can be dialled in. They move on a LOG scale: linearly, everything below
-// a million would be crammed into the last few pixels of the track, and
-// the 1-9999 range - the one you actually start from - would be
-// unreachable. Each notch is rounded to two significant figures, which
+// The opening screen is a ruler with two handles, so any window inside
+// 1 - 99,999,999 can be dialled in. The handles move on a LOG scale:
+// linearly, everything below a million would be crammed into the last few
+// pixels of the track, and the 1-9999 range - the one you actually start
+// from - would be unreachable. Each notch is rounded to two significant figures, which
 // keeps the readouts tidy and still lands exactly on the round values that
 // matter (10,000, where 万 begins, sits dead on the middle of the track).
 const SLIDER_STEPS = 1000;
@@ -70,38 +65,96 @@ const RANGE_STORAGE_KEY = 'countingRange';
 function loadRange() {
   try {
     const saved = JSON.parse(localStorage.getItem(RANGE_STORAGE_KEY));
-    if (saved && saved.min >= 1 && saved.max <= MAX_COUNTING_NUMBER && saved.min <= saved.max) return saved;
+    if (saved && saved.min >= 1 && saved.max <= MAX_COUNTING_NUMBER
+        && saved.max - saved.min + 1 >= MIN_SPAN) return saved;
   } catch (e) { /* unreadable or absent - fall through to the default */ }
   return DEFAULT_RANGE;
 }
 
-// Cycles the question list through every digit width the chosen window
-// spans, rather than drawing flat across it. A flat draw is dominated by
-// the widest numbers - over 1 - 99,999,999 it lands on eight digits about
-// 99% of the time - so a wide window would only ever ask its longest
-// question. Where the window covers a single width this degenerates to a
-// plain uniform draw, which is what it should be.
-function buildQuestionList({ min, max }) {
-  const loDigits = String(min).length;
-  const hiDigits = String(max).length;
-  const widths = hiDigits - loDigits + 1;
-  const list = [];
-  for (let i = 0; i < QUESTION_COUNT; i++) {
-    const digits = loDigits + (i % widths);
-    list.push(randomCountingNumber(
-      Math.max(min, Math.pow(10, digits - 1)),
-      Math.min(max, Math.pow(10, digits) - 1)
-    ));
+// A session asks QUESTION_COUNT DISTINCT numbers, so the window has to hold
+// at least that many - and comfortably more, or the draw degenerates into
+// the same handful every time. 100 is the floor the picker enforces.
+const MIN_SPAN = 100;
+
+// Splits the window into one bucket per digit width. Widths matter because
+// a flat draw is dominated by the widest numbers (over 1 - 99,999,999 it
+// lands on eight digits about 99% of the time), so the questions are dealt
+// round-robin across the buckets instead.
+//
+// Buckets are NOT all the same size, which is the part that bit: in 1 - 100
+// the three-digit bucket holds exactly one number, so dealing to it five
+// times asked for "100" five times. Each bucket therefore tracks how many
+// distinct values it still has, and is skipped once drained.
+function widthBuckets(min, max) {
+  const buckets = [];
+  for (let d = String(min).length; d <= String(max).length; d++) {
+    const lo = Math.max(min, Math.pow(10, d - 1));
+    const hi = Math.min(max, Math.pow(10, d) - 1);
+    if (hi >= lo) buckets.push({ lo, hi, size: hi - lo + 1, taken: 0 });
   }
+  return buckets;
+}
+
+// Draws a value from `bucket` that isn't in `used`. Small buckets are
+// enumerated (rejection sampling on a nearly-drained one can spin for a
+// long time); large ones are sampled, where a collision is rare.
+function drawDistinct(bucket, used) {
+  if (bucket.size <= 256) {
+    const free = [];
+    for (let n = bucket.lo; n <= bucket.hi; n++) if (!used.has(n)) free.push(n);
+    if (!free.length) return null;
+    return free[Math.floor(Math.random() * free.length)];
+  }
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const n = randomCountingNumber(bucket.lo, bucket.hi);
+    if (!used.has(n)) return n;
+  }
+  return null;
+}
+
+function buildQuestionList({ min, max }) {
+  const buckets = widthBuckets(min, max);
+  const used = new Set();
+  const list = [];
+
+  let i = 0;
+  // Stops either when the session is full or when every bucket is drained,
+  // which the MIN_SPAN floor should make unreachable - but a corrupted
+  // stored range shouldn't hang the exercise.
+  while (list.length < QUESTION_COUNT && i < QUESTION_COUNT * buckets.length * 2) {
+    const bucket = buckets[i % buckets.length];
+    i++;
+    if (bucket.taken >= bucket.size) continue; // drained - e.g. "100" in 1-100
+    const value = drawDistinct(bucket, used);
+    if (value === null) { bucket.taken = bucket.size; continue; }
+    used.add(value);
+    bucket.taken++;
+    list.push(value);
+  }
+
   shuffle(list);
   return list;
 }
 
-// Eight digits in a row are unreadable; Japanese writes the digits with the
-// same 3-digit commas as everywhere else (the FOUR-digit 万 grouping is a
-// fact about the reading, not about how the figure is printed).
-function groupDigits(n) {
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+// Digits are shown bare by default. The optional grouping is a READING aid
+// and splits them in FOURS - where the 万 boundaries actually fall, so
+// 78148868 reads as 7814,8868 = 7814万8868. That is deliberately not how
+// Japanese prints a figure (it uses the same 3-digit commas as everywhere
+// else); grouping in threes would have been worse than nothing here, since
+// it puts the separators exactly where the reading does NOT break.
+function formatNumber(n, grouped) {
+  const digits = String(n);
+  return grouped ? digits.replace(/\B(?=(\d{4})+(?!\d))/g, ',') : digits;
+}
+
+const GROUPING_STORAGE_KEY = 'countingGrouping';
+
+function loadGrouping() {
+  try {
+    return localStorage.getItem(GROUPING_STORAGE_KEY) === 'on';
+  } catch (e) {
+    return false;
+  }
 }
 
 // Cheat-sheet shown from the "?" in the header - see numbers.js for the
@@ -170,6 +223,7 @@ class CountingExercise extends Component {
       // exercise starts.
       range: null,
       bounds: loadRange(),
+      grouping: loadGrouping(),
       // Text held while a bound is being typed, so a half-finished entry
       // ("1", on the way to "10000") isn't clamped out from under the
       // cursor. Committed on blur or Enter, see commitBound.
@@ -199,13 +253,26 @@ class CountingExercise extends Component {
   }
 
   // Both the slider and the typed field end up here: whichever bound moved
-  // wins and shoves the other, rather than refusing to cross it.
+  // wins and shoves the other, rather than refusing to cross it. The shove
+  // also keeps MIN_SPAN numbers between them, so the window can never get
+  // too narrow to hold a session of distinct questions.
   applyBound = (which, value) => {
-    this.setState(prev => ({
-      bounds: which === 'min'
-        ? { min: value, max: Math.max(value, prev.bounds.max) }
-        : { min: Math.min(value, prev.bounds.min), max: value }
-    }));
+    this.setState(prev => {
+      let { min, max } = prev.bounds;
+      if (which === 'min') {
+        min = Math.min(value, MAX_COUNTING_NUMBER - MIN_SPAN + 1);
+        max = Math.max(max, min + MIN_SPAN - 1);
+      } else {
+        max = Math.max(value, MIN_SPAN);
+        min = Math.min(min, max - MIN_SPAN + 1);
+      }
+      return {
+        bounds: {
+          min: Math.max(1, min),
+          max: Math.min(MAX_COUNTING_NUMBER, max)
+        }
+      };
+    });
   }
 
   editBound = (which, text) => {
@@ -219,6 +286,14 @@ class CountingExercise extends Component {
     const parsed = parseInt(text.replace(/,/g, ''), 10);
     if (!Number.isFinite(parsed)) return;
     this.applyBound(which, Math.min(MAX_COUNTING_NUMBER, Math.max(1, parsed)));
+  }
+
+  toggleGrouping = () => {
+    this.setState(prev => {
+      const grouping = !prev.grouping;
+      try { localStorage.setItem(GROUPING_STORAGE_KEY, grouping ? 'on' : 'off'); } catch (e) { /* private mode */ }
+      return { grouping };
+    });
   }
 
   setBound = (which, sliderValue) => {
@@ -415,7 +490,7 @@ class CountingExercise extends Component {
           type="text"
           inputMode="numeric"
           autoComplete="off"
-          value={edited !== null ? edited : groupDigits(this.state.bounds[which])}
+          value={edited !== null ? edited : formatNumber(this.state.bounds[which], this.state.grouping)}
           onChange={e => this.editBound(which, e.target.value)}
           onFocus={e => e.target.select()}
           onBlur={() => this.commitBound(which)}
@@ -449,6 +524,11 @@ class CountingExercise extends Component {
           <span className="counting-bounds-arrow">→</span>
           {this.renderBoundField('max', 'To')}
         </div>
+
+        <p className="counting-span">
+          {formatNumber(max - min + 1, this.state.grouping)} numbers in range
+          {max - min + 1 === MIN_SPAN && <span className="counting-span-floor"> · the narrowest allowed</span>}
+        </p>
 
         <div className="counting-ruler">
           <div className="counting-ruler-track"></div>
@@ -488,6 +568,15 @@ class CountingExercise extends Component {
             : <span>No 万 in this range — drag past the 10K mark to bring it in</span>}
         </p>
 
+        <label className="counting-toggle">
+          <input type="checkbox" checked={this.state.grouping} onChange={this.toggleGrouping} />
+          <span className="counting-toggle-label">Split the digits</span>
+          <span className="counting-toggle-hint">
+            Groups them in fours, where the 万 breaks fall: 78148868 → 7814,8868.
+            A reading aid only - Japanese prints its figures with 3-digit commas like everyone else.
+          </span>
+        </label>
+
         <p>
           <button className="btn btn-primary counting-range-start" onClick={() => this.startWithRange(this.state.bounds)}>Start</button>
         </p>
@@ -525,7 +614,7 @@ class CountingExercise extends Component {
                 <p className="counting-progress">
                   {this.grinder.active ? `${this.state.progressCount} / ${this.progressTarget}` : `${this.state.index + 1} / ${this.numbers.length}`}
                 </p>
-                <div className="counting-number">{groupDigits(currentNumber)}</div>
+                <div className="counting-number">{formatNumber(currentNumber, this.state.grouping)}</div>
                 <div className="counting-kanji-preview">
                   {preview.kanji || <span className="counting-kanji-placeholder">?</span>}
                   {preview.leftover && <span className="counting-leftover">{preview.leftover}</span>}

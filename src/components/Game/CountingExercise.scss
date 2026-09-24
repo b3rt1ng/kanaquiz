@@ -261,6 +261,20 @@
   padding-bottom: 8px;
 }
 
+.counting-span {
+  margin: -10px 0 14px;
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.counting-span-floor {
+  color: var(--accent-coral);
+  opacity: 1;
+}
+
 /* One track, two handles: the range inputs are stacked transparently on
    top of a drawn track, with only their thumbs catching the pointer. */
 .counting-ruler {
@@ -385,6 +399,35 @@
   }
 
   &.active strong { color: var(--accent-orange); }
+}
+
+.counting-toggle {
+  display: block;
+  max-width: 420px;
+  margin: 0 auto 22px;
+  text-align: left;
+  font-weight: normal;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    margin: 0 8px 0 0;
+    accent-color: var(--accent-pink); /* matches the kanji picker's toggles */
+    vertical-align: middle;
+    cursor: pointer;
+  }
+}
+
+.counting-toggle-label {
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+.counting-toggle-hint {
+  display: block;
+  margin: 4px 0 0 24px;
+  font-size: 0.72em;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 .counting-range-start {

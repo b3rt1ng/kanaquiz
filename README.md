@@ -19,9 +19,13 @@ This is my fork of kanapro, it has a more "game like" UI, makes the exercices mo
   1 - 99,999,999, so 万 is in or out as you like. The choice is
   remembered. The ruler is graduated by decade and runs on a log scale,
   which is what keeps the low end usable - 10,000, where 万 starts, sits
-  at the middle of the track and is marked. A session cycles through
-  every digit width the window spans; a flat draw over a wide range
-  would be eight digits almost every time.
+  at the middle of the track and is marked. The window must hold at least
+  100 numbers, and a session asks 15 distinct ones, so nothing repeats.
+  Questions are dealt round-robin across the digit widths the window
+  spans; a flat draw over a wide range would be eight digits almost every
+  time. Numbers are shown as bare digits; a **Split the digits** toggle
+  groups them in FOURS (78148868 → 7814,8868), which is where the 万
+  breaks fall - a reading aid, not how Japanese actually prints a figure.
 - **Kanji**: flip-card drills for kanji vocabulary, grouped by theme
   (people, elements, nature, numbers, colors, ...). Each card shows the
   reading in both hiragana and katakana on the back, with whichever one is
