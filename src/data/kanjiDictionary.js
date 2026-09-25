@@ -118,6 +118,13 @@ export const kanjiDictionary = {
       { kanji: '店', readings: ['mise'], meaning: 'shop', readingType: 'kun', kunyomi: ['mise'], onyomi: ['ten'] }
     ]
   },
+  directions: {
+    label: 'Directions',
+    kanji: [
+      { kanji: '左', readings: ['hidari'], meaning: 'left', readingType: 'kun', kunyomi: ['hidari'], onyomi: ['sa'] },
+      { kanji: '右', readings: ['migi'], meaning: 'right', readingType: 'kun', kunyomi: ['migi'], onyomi: ['u', 'yuu'] }
+    ]
+  },
   numbers: {
     label: 'Numbers',
     kanji: [
@@ -144,7 +151,11 @@ export const kanjiDictionary = {
       // Two unrelated meanings share this kanji: the on'yomi "fun" is the
       // minute counter, the kun'yomi wakaru/wakeru is "to understand" /
       // "to divide". The card teaches the on'yomi, hence the katakana.
-      { kanji: '分', readings: ['fun'], meaning: 'minute; to understand', kanaOverride: 'フン', readingType: 'on', kunyomi: ['wakaru', 'wakeru'], onyomi: ['bun', 'fun', 'bu'] }
+      { kanji: '分', readings: ['fun'], meaning: 'minute; to understand', kanaOverride: 'フン', readingType: 'on', kunyomi: ['wakaru', 'wakeru'], onyomi: ['bun', 'fun', 'bu'] },
+      // 週 is on'yomi only - it has no everyday kun'yomi at all, so the kun
+      // badge shows "n/a", same as 百 and 地.
+      { kanji: '週', readings: ['shuu'], meaning: 'week', kanaOverride: 'シュウ', readingType: 'on', onyomi: ['shuu'] },
+      { kanji: '年', readings: ['toshi'], meaning: 'year', readingType: 'kun', kunyomi: ['toshi'], onyomi: ['nen'] }
     ]
   },
   colors: {
