@@ -214,7 +214,9 @@ export const kanjiDictionary = {
       // actually use, and it's what the audio says. The kanji alone would
       // give the on'yomi カイ for 買 and a truncated ウレ for 売.
       { kanji: '買', readings: ['kau'], meaning: 'to buy', readingType: 'kun', kunyomi: ['kau'], onyomi: ['bai'] },
-      { kanji: '売', readings: ['uru'], meaning: 'to sell', readingType: 'kun', kunyomi: ['uru'], onyomi: ['bai'] }
+      { kanji: '売', readings: ['uru'], meaning: 'to sell', readingType: 'kun', kunyomi: ['uru'], onyomi: ['bai'] },
+      { kanji: '食', readings: ['taberu'], meaning: 'to eat', readingType: 'kun', kunyomi: ['taberu', 'kuu'], onyomi: ['shoku'] },
+      { kanji: '飲', readings: ['nomu'], meaning: 'to drink', readingType: 'kun', kunyomi: ['nomu'], onyomi: ['in'] }
     ]
   },
   body: {
