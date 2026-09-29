@@ -122,7 +122,9 @@ export const kanjiDictionary = {
     label: 'Directions',
     kanji: [
       { kanji: '左', readings: ['hidari'], meaning: 'left', readingType: 'kun', kunyomi: ['hidari'], onyomi: ['sa'] },
-      { kanji: '右', readings: ['migi'], meaning: 'right', readingType: 'kun', kunyomi: ['migi'], onyomi: ['u', 'yuu'] }
+      { kanji: '右', readings: ['migi'], meaning: 'right', readingType: 'kun', kunyomi: ['migi'], onyomi: ['u', 'yuu'] },
+      { kanji: '外', readings: ['soto'], meaning: 'outside', readingType: 'kun', kunyomi: ['soto', 'hoka'], onyomi: ['gai', 'ge'] },
+      { kanji: '内', readings: ['uchi'], meaning: 'inside', readingType: 'kun', kunyomi: ['uchi'], onyomi: ['nai', 'dai'] }
     ]
   },
   numbers: {
@@ -202,6 +204,17 @@ export const kanjiDictionary = {
       // okurigana reading is what's taught and what the audio says.
       { kanji: '古', readings: ['furui'], meaning: 'old', readingType: 'kun', kunyomi: ['furui'], onyomi: ['ko'] },
       { kanji: '新', readings: ['atarashii'], meaning: 'new', readingType: 'kun', kunyomi: ['atarashii'], onyomi: ['shin'] }
+    ]
+  },
+  verbs: {
+    label: 'Verbs',
+    kanji: [
+      // Like the -i adjectives in Qualities, a verb is taught with its
+      // okurigana reading (kau, not the bare "ka") - that's the form you
+      // actually use, and it's what the audio says. The kanji alone would
+      // give the on'yomi カイ for 買 and a truncated ウレ for 売.
+      { kanji: '買', readings: ['kau'], meaning: 'to buy', readingType: 'kun', kunyomi: ['kau'], onyomi: ['bai'] },
+      { kanji: '売', readings: ['uru'], meaning: 'to sell', readingType: 'kun', kunyomi: ['uru'], onyomi: ['bai'] }
     ]
   },
   body: {
