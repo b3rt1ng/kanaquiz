@@ -46,8 +46,10 @@ type is being taught, both kun'yomi/on'yomi, and the audio - so they stay
 searchable and re-stylable in Anki. The whole deck is 109 cards for about
 450KB.
 
-Re-exporting is safe: notes are keyed on the kanji, so importing again
-revises what is already there instead of piling up duplicates.
+Re-exporting is safe: notes are keyed on the kanji and the note type has a
+fixed id, so importing again revises what is already there, adds whatever
+is new, and leaves your review history alone - no duplicates, and no
+second copy of the note type.
 
 The `.apkg` generator (SQLite via sql.js, plus JSZip) is pulled in only
 when the button is pressed and is deliberately left out of the service

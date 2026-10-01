@@ -216,7 +216,11 @@ export const kanjiDictionary = {
       { kanji: '買', readings: ['kau'], meaning: 'to buy', readingType: 'kun', kunyomi: ['kau'], onyomi: ['bai'] },
       { kanji: '売', readings: ['uru'], meaning: 'to sell', readingType: 'kun', kunyomi: ['uru'], onyomi: ['bai'] },
       { kanji: '食', readings: ['taberu'], meaning: 'to eat', readingType: 'kun', kunyomi: ['taberu', 'kuu'], onyomi: ['shoku'] },
-      { kanji: '飲', readings: ['nomu'], meaning: 'to drink', readingType: 'kun', kunyomi: ['nomu'], onyomi: ['in'] }
+      { kanji: '飲', readings: ['nomu'], meaning: 'to drink', readingType: 'kun', kunyomi: ['nomu'], onyomi: ['in'] },
+      { kanji: '聞', readings: ['kiku'], meaning: 'to hear, to listen', readingType: 'kun', kunyomi: ['kiku', 'kikoeru'], onyomi: ['bun', 'mon'] },
+      { kanji: '読', readings: ['yomu'], meaning: 'to read', readingType: 'kun', kunyomi: ['yomu'], onyomi: ['doku', 'toku'] },
+      // 言 is the component inside 語 (Culture) - same "speech" idea.
+      { kanji: '言', readings: ['iu'], meaning: 'to say', readingType: 'kun', kunyomi: ['iu', 'koto'], onyomi: ['gen', 'gon'] }
     ]
   },
   body: {

@@ -115,10 +115,23 @@ function guidFor(key) {
   return 'kq' + sha1Hex(key).substring(0, 16);
 }
 
+// The note type needs the same treatment, and for a less obvious reason.
+// Anki matches an incoming note type by ID, not by name: give it a fresh
+// one (a timestamp, say) on every export and it decides this is a DIFFERENT
+// note type that happens to share a name, files it alongside as "Kanaquiz
+// Kanji+", and reports every note you already had as a conflict rather than
+// updating it. Deriving the id from the name instead makes re-importing an
+// updated deck do what you'd expect: existing cards revised, new ones added.
+function stableModelId(name) {
+  return parseInt(sha1Hex(name).substring(0, 11), 16);
+}
+
+const NOTE_TYPE_NAME = 'Kanaquiz Kanji';
+
 function noteTypeJson(modelId, deckId, css, front, back, fieldNames) {
   return {
     id: modelId,
-    name: 'Kanaquiz Kanji',
+    name: NOTE_TYPE_NAME,
     type: 0,
     mod: Math.floor(Date.now() / 1000),
     usn: -1,
@@ -184,7 +197,7 @@ export async function buildApkg({ decks, media, css, front, back, fieldNames, de
   const crt = Math.floor(new Date(new Date().setHours(4, 0, 0, 0)).getTime() / 1000);
 
   const nextId = idFactory(now);
-  const modelId = nextId();
+  const modelId = stableModelId(NOTE_TYPE_NAME);
 
   const deckIds = {};
   const decksJson = { 1: deckJson(1, 'Default') };
