@@ -220,7 +220,9 @@ export const kanjiDictionary = {
       { kanji: '聞', readings: ['kiku'], meaning: 'to hear, to listen', readingType: 'kun', kunyomi: ['kiku', 'kikoeru'], onyomi: ['bun', 'mon'] },
       { kanji: '読', readings: ['yomu'], meaning: 'to read', readingType: 'kun', kunyomi: ['yomu'], onyomi: ['doku', 'toku'] },
       // 言 is the component inside 語 (Culture) - same "speech" idea.
-      { kanji: '言', readings: ['iu'], meaning: 'to say', readingType: 'kun', kunyomi: ['iu', 'koto'], onyomi: ['gen', 'gon'] }
+      { kanji: '言', readings: ['iu'], meaning: 'to say', readingType: 'kun', kunyomi: ['iu', 'koto'], onyomi: ['gen', 'gon'] },
+      { kanji: '寝', readings: ['neru'], meaning: 'to sleep, to lie down', readingType: 'kun', kunyomi: ['neru', 'nekasu'], onyomi: ['shin'] },
+      { kanji: '立', readings: ['tatsu'], meaning: 'to stand', readingType: 'kun', kunyomi: ['tatsu', 'tateru'], onyomi: ['ritsu', 'ryuu'] }
     ]
   },
   body: {
