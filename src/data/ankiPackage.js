@@ -257,5 +257,13 @@ export async function buildApkg({ decks, media, css, front, back, fieldNames, de
   });
   zip.file('media', JSON.stringify(mediaMap));
 
-  return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  // An .apkg IS a zip, but it must not be LABELLED one: left to its default
+  // JSZip tags the blob "application/zip", and the browser then trusts the
+  // type over the .apkg filename - the download arrives as a plain archive
+  // that Anki won't take. A neutral type keeps the extension meaningful.
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/octet-stream',
+    compression: 'DEFLATE'
+  });
 }
