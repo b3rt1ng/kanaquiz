@@ -222,7 +222,13 @@ export const kanjiDictionary = {
       // 言 is the component inside 語 (Culture) - same "speech" idea.
       { kanji: '言', readings: ['iu'], meaning: 'to say', readingType: 'kun', kunyomi: ['iu', 'koto'], onyomi: ['gen', 'gon'] },
       { kanji: '寝', readings: ['neru'], meaning: 'to sleep, to lie down', readingType: 'kun', kunyomi: ['neru', 'nekasu'], onyomi: ['shin'] },
-      { kanji: '立', readings: ['tatsu'], meaning: 'to stand', readingType: 'kun', kunyomi: ['tatsu', 'tateru'], onyomi: ['ritsu', 'ryuu'] }
+      { kanji: '立', readings: ['tatsu'], meaning: 'to stand', readingType: 'kun', kunyomi: ['tatsu', 'tateru'], onyomi: ['ritsu', 'ryuu'] },
+      // Two accepted answers here: 生 carries both halves of the same idea,
+      // so "umareru" (to be born) counts as well as the displayed "ikiru".
+      { kanji: '生', readings: ['ikiru', 'umareru'], meaning: 'to live; to be born', readingType: 'kun', kunyomi: ['ikiru', 'umareru', 'nama'], onyomi: ['sei', 'shou'] },
+      { kanji: '死', readings: ['shinu'], meaning: 'to die, death', readingType: 'kun', kunyomi: ['shinu'], onyomi: ['shi'] },
+      { kanji: '書', readings: ['kaku'], meaning: 'to write', readingType: 'kun', kunyomi: ['kaku'], onyomi: ['sho'] },
+      { kanji: '来', readings: ['kuru'], meaning: 'to come', readingType: 'kun', kunyomi: ['kuru', 'kitaru'], onyomi: ['rai'] }
     ]
   },
   body: {
