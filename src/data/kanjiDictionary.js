@@ -228,7 +228,9 @@ export const kanjiDictionary = {
       { kanji: '生', readings: ['ikiru', 'umareru'], meaning: 'to live; to be born', readingType: 'kun', kunyomi: ['ikiru', 'umareru', 'nama'], onyomi: ['sei', 'shou'] },
       { kanji: '死', readings: ['shinu'], meaning: 'to die, death', readingType: 'kun', kunyomi: ['shinu'], onyomi: ['shi'] },
       { kanji: '書', readings: ['kaku'], meaning: 'to write', readingType: 'kun', kunyomi: ['kaku'], onyomi: ['sho'] },
-      { kanji: '来', readings: ['kuru'], meaning: 'to come', readingType: 'kun', kunyomi: ['kuru', 'kitaru'], onyomi: ['rai'] }
+      { kanji: '来', readings: ['kuru'], meaning: 'to come', readingType: 'kun', kunyomi: ['kuru', 'kitaru'], onyomi: ['rai'] },
+      { kanji: '入', readings: ['hairu'], meaning: 'to enter', readingType: 'kun', kunyomi: ['hairu', 'ireru'], onyomi: ['nyuu'] },
+      { kanji: '出', readings: ['deru'], meaning: 'to go out, to leave', readingType: 'kun', kunyomi: ['deru', 'dasu'], onyomi: ['shutsu', 'sui'] }
     ]
   },
   body: {
