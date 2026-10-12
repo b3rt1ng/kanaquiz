@@ -105,7 +105,13 @@ export const kanjiDictionary = {
       { kanji: '刀', readings: ['katana'], meaning: 'sword', readingType: 'kun', kunyomi: ['katana'], onyomi: ['tou'] },
       { kanji: '本', readings: ['hon'], meaning: 'origin; book', kanaOverride: 'ホン', readingType: 'on', kunyomi: ['moto'], onyomi: ['hon'] },
       { kanji: '語', readings: ['go'], meaning: 'language; to tell', kanaOverride: 'ゴ', readingType: 'on', kunyomi: ['kataru'], onyomi: ['go'] },
-      { kanji: '音', readings: ['oto'], meaning: 'sound', readingType: 'kun', kunyomi: ['oto'], onyomi: ['on', 'in'] }
+      { kanji: '音', readings: ['oto'], meaning: 'sound', readingType: 'kun', kunyomi: ['oto'], onyomi: ['on', 'in'] },
+      // Taught as the on'yomi because that's the reading that actually pays:
+      // 学校 gakkou, 学生 gakusei, 大学 daigaku all use ガク, while the
+      // kun'yomi 学ぶ is the only common word that doesn't. The kun badge
+      // still shows まなぶ, so the verb isn't hidden - it just isn't the
+      // answer being asked for.
+      { kanji: '学', readings: ['gaku'], meaning: 'study, learning', kanaOverride: 'ガク', readingType: 'on', kunyomi: ['manabu'], onyomi: ['gaku'] }
     ]
   },
   places: {
@@ -230,7 +236,12 @@ export const kanjiDictionary = {
       { kanji: '書', readings: ['kaku'], meaning: 'to write', readingType: 'kun', kunyomi: ['kaku'], onyomi: ['sho'] },
       { kanji: '来', readings: ['kuru'], meaning: 'to come', readingType: 'kun', kunyomi: ['kuru', 'kitaru'], onyomi: ['rai'] },
       { kanji: '入', readings: ['hairu'], meaning: 'to enter', readingType: 'kun', kunyomi: ['hairu', 'ireru'], onyomi: ['nyuu'] },
-      { kanji: '出', readings: ['deru'], meaning: 'to go out, to leave', readingType: 'kun', kunyomi: ['deru', 'dasu'], onyomi: ['shutsu', 'sui'] }
+      { kanji: '出', readings: ['deru'], meaning: 'to go out, to leave', readingType: 'kun', kunyomi: ['deru', 'dasu'], onyomi: ['shutsu', 'sui'] },
+      // Another intransitive/transitive pair, like 入る/入れる and 出る/出す:
+      // とまる is something coming to a stop, とめる is stopping something.
+      { kanji: '止', readings: ['tomaru'], meaning: 'to stop', readingType: 'kun', kunyomi: ['tomaru', 'tomeru'], onyomi: ['shi'] },
+      { kanji: '歩', readings: ['aruku'], meaning: 'to walk', readingType: 'kun', kunyomi: ['aruku', 'ayumu'], onyomi: ['ho', 'bu', 'fu'] },
+      { kanji: '話', readings: ['hanasu'], meaning: 'to speak', readingType: 'kun', kunyomi: ['hanasu', 'hanashi'], onyomi: ['wa'] }
     ]
   },
   body: {
