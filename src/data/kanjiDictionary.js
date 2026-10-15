@@ -130,7 +130,11 @@ export const kanjiDictionary = {
       { kanji: '左', readings: ['hidari'], meaning: 'left', readingType: 'kun', kunyomi: ['hidari'], onyomi: ['sa'] },
       { kanji: '右', readings: ['migi'], meaning: 'right', readingType: 'kun', kunyomi: ['migi'], onyomi: ['u', 'yuu'] },
       { kanji: '外', readings: ['soto'], meaning: 'outside', readingType: 'kun', kunyomi: ['soto', 'hoka'], onyomi: ['gai', 'ge'] },
-      { kanji: '内', readings: ['uchi'], meaning: 'inside', readingType: 'kun', kunyomi: ['uchi'], onyomi: ['nai', 'dai'] }
+      { kanji: '内', readings: ['uchi'], meaning: 'inside', readingType: 'kun', kunyomi: ['uchi'], onyomi: ['nai', 'dai'] },
+      { kanji: '前', readings: ['mae'], meaning: 'front, before', readingType: 'kun', kunyomi: ['mae'], onyomi: ['zen'] },
+      { kanji: '後', readings: ['ato', 'ushiro'], meaning: 'behind, after', readingType: 'kun', kunyomi: ['ato', 'ushiro', 'nochi'], onyomi: ['go', 'kou'] },
+      { kanji: '上', readings: ['ue'], meaning: 'above, up', readingType: 'kun', kunyomi: ['ue', 'agaru', 'noboru'], onyomi: ['jou', 'shou'] },
+      { kanji: '下', readings: ['shita'], meaning: 'below, down', readingType: 'kun', kunyomi: ['shita', 'sagaru', 'kudaru'], onyomi: ['ka', 'ge'] }
     ]
   },
   numbers: {
