@@ -71,6 +71,22 @@
     }
   }
 
+  /* Mistake-review sessions only: how much remembered debt got paid off. */
+  .kana-grind-cleared {
+    color: var(--text-muted);
+    font-size: 0.95em;
+    margin-top: -4px;
+
+    strong {
+      color: var(--success);
+      text-shadow: var(--glow-success);
+    }
+
+    .kana-grind-cleared-left {
+      font-size: 0.9em;
+    }
+  }
+
   .kana-grind-results {
     max-width: 700px;
     margin: 40px auto 60px;

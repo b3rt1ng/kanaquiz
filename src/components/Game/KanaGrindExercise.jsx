@@ -6,6 +6,7 @@ import { pickCompliment } from '../../data/compliments';
 import { playComplimentVoice } from '../../data/complimentVoice';
 import { getEffectSettings } from '../../data/effectSettings';
 import { GrindHelper, requeueAfter } from '../../data/grindHelper';
+import { recordAnswers, getDebt, getMasteryByKey, KANA } from '../../data/mistakeMemory';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -24,11 +25,25 @@ import './KanaGrindExercise.scss';
 // menu. Always typed-answer, regardless of which stage(s) the confused
 // characters came from - simplest common ground across stages 1/2's
 // multiple choice and 3/4's typing.
+// In a mistake review the session is sized by the remembered debt: a
+// character missed three times owes 6 correct answers and so keeps coming
+// back around, one missed once owes 2 - "the more you got it wrong, the
+// more you see it". Outside a review every card needs the same flat
+// GRIND_MASTERY_NEEDED, so there's no map to hand over.
+function masteryFor(isMistakeReview, keys) {
+  if (!isMistakeReview) return undefined;
+  const remembered = getMasteryByKey(KANA);
+  const mastery = {};
+  keys.forEach(key => { if (remembered[key]) mastery[key] = remembered[key]; });
+  return mastery;
+}
+
 class KanaGrindExercise extends Component {
   constructor(props) {
     super(props);
     this.grinder = new GrindHelper();
-    this.cards = this.grinder.start((props.kanaKeys || []).slice(), props.kanaKeys || []);
+    const keys = props.kanaKeys || [];
+    this.cards = this.grinder.start(keys.slice(), keys, masteryFor(props.isMistakeReview, keys));
     this.totalCards = this.cards.length;
     this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.state = {
@@ -99,6 +114,11 @@ class KanaGrindExercise extends Component {
 
     if (isCorrect) this.showCompliment(elapsedMs < 1000, newCombo);
 
+    // Feeds the same cross-session memory the other kana exercises do:
+    // a review session is where the remembered debt actually gets paid
+    // off, and a character missed again here earns its place back.
+    recordAnswers([{ kana, romaji: acceptable[0], given: isCorrect ? '' : this.state.input.trim(), isCorrect }]);
+
     const { shouldRequeue } = this.grinder.recordAnswer(kana, isCorrect);
     if (shouldRequeue) requeueAfter(this.cards, this.state.index, kana);
 
@@ -148,7 +168,7 @@ class KanaGrindExercise extends Component {
     if (!valid.length) return;
 
     this.props.startTimer();
-    this.cards = this.grinder.start(valid.slice(), kanaKeys);
+    this.cards = this.grinder.start(valid.slice(), valid, masteryFor(this.props.isMistakeReview, valid));
     this.totalCards = this.cards.length;
     this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.setState({ index: 0, input: '', isCorrect: null, results: [], combo: 0, progressCount: 0 }, () => {
@@ -156,6 +176,27 @@ class KanaGrindExercise extends Component {
       this.focusInput();
     });
     window.scrollTo(0, 0);
+  }
+
+  // How much of the remembered debt this session actually paid off. Read
+  // back from the memory rather than counted here, because paying a
+  // character off can need more than this session's correct answers: one
+  // that had been missed repeatedly still owes some. Either way nothing
+  // leaves the list - it stays there to be trained again later.
+  renderCleared() {
+    const reviewed = this.grinder.keys || [];
+    if (!reviewed.length) return null;
+    const cleared = reviewed.filter(kana => getDebt(kana) === 0).length;
+    const left = reviewed.length - cleared;
+    return (
+      <p className="kana-grind-cleared">
+        <strong>{cleared}/{reviewed.length}</strong> back under control
+        <span className="kana-grind-cleared-left">
+          {left > 0 ? ` — ${left} still shaky. ` : ' — '}
+          kept in your list, train them again whenever you want
+        </span>
+      </p>
+    );
   }
 
   buildResultsData() {
@@ -237,12 +278,19 @@ class KanaGrindExercise extends Component {
               return (
                 <div className="kana-grind-results">
                   {this.state.celebrate && effects.confetti !== false && <Confetti key={'confetti' + this.celebrateSeq} />}
-                  <h2>Results</h2>
+                  <h2>{this.props.isMistakeReview ? 'Mistake review' : 'Results'}</h2>
                   <p className="kana-grind-score">{correctCount}/{total} correct ({percentage}%)</p>
+                  {this.props.isMistakeReview && this.renderCleared()}
                   <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} onGrind={this.grind} />
-                  <p>
-                    <button className="btn btn-success continue-grind" onClick={this.props.onFinishGrind}>Continue →</button>
-                  </p>
+                  {
+                    /* A mistake review was launched from the menu, not from
+                       inside a game, so there's no progression to continue
+                       into - "Back to menu" below is the way out. */
+                    !this.props.isMistakeReview &&
+                      <p>
+                        <button className="btn btn-success continue-grind" onClick={this.props.onFinishGrind}>Continue →</button>
+                      </p>
+                  }
                   <p>
                     <button className="btn btn-primary try-again" onClick={this.retry}>Try Again</button>
                   </p>

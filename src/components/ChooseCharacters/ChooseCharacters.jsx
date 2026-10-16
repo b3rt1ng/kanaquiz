@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import './ChooseCharacters.scss';
 import CharacterGroup from './CharacterGroup';
+import { getMistakeEntries, getMistakeKeys, getShakyCount, clearMistakeMemory } from '../../data/mistakeMemory';
 
 class ChooseCharacters extends Component {
   state = {
@@ -18,7 +19,13 @@ class ChooseCharacters extends Component {
     // top-level mode) - local to this component, same pattern
     // stage4PickerOpen already used, so App.jsx/GameContainer.jsx don't
     // need to know about it (see the menu redesign plan).
-    phase: 'modeSelect'
+    phase: 'modeSelect',
+    // Read once on mount, which is enough: this screen unmounts for the
+    // duration of a game (see App's gameState switch), so coming back from
+    // a session always rebuilds it from the freshly updated memory.
+    mistakes: getMistakeEntries(),
+    shakyCount: getShakyCount(),
+    forgetArmed: false
   }
 
   componentDidMount() {
@@ -277,6 +284,95 @@ class ChooseCharacters extends Component {
     this.props.startKanjiExercise();
   }
 
+  // Also group-independent: the point is to drill what was missed across
+  // every past session, whatever was selected at the time.
+  startMistakeReview = () => {
+    const keys = getMistakeKeys();
+    if(!keys.length) return;
+    this.setState({ errMsg: '' });
+    this.props.startMistakeReview(keys);
+  }
+
+  // Two-step: wiping practice history is not something to do on a stray
+  // click next to the review button.
+  forgetMistakes = () => {
+    if(!this.state.forgetArmed) {
+      this.setState({ forgetArmed: true });
+      return;
+    }
+    clearMistakeMemory();
+    this.setState({ mistakes: [], shakyCount: 0, forgetArmed: false });
+  }
+
+  // The remembered mistakes, with the worst first (mistakeMemory sorts
+  // them). Shown even when empty, as one muted line: a button that only
+  // exists once you already have mistakes is a button nobody discovers,
+  // and the empty line is also what tells you the app is keeping score at
+  // all.
+  //
+  // Sits BELOW the Start button: it's a side door into a different kind of
+  // session, so it shouldn't push the picker's own call to action down the
+  // page.
+  renderMistakeMemory() {
+    const mistakes = this.state.mistakes;
+    if(!mistakes.length) {
+      return (
+        <div className="row">
+          <div className="col-xs-12">
+            <div className="mistake-memory empty">
+              <span className="mistake-memory-title">Your common mistakes</span>
+              <span className="mistake-memory-sub">Nothing to train yet - every kana you miss in any exercise lands here and stays, to drill whenever you want.</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const PREVIEW = 8;
+    const shown = mistakes.slice(0, PREVIEW);
+    const rest = mistakes.length - shown.length;
+
+    return (
+      <div className="row">
+        <div className="col-xs-12">
+          <div className="mistake-memory">
+            <div className="mistake-memory-head">
+              <span className="mistake-memory-title">Your common mistakes</span>
+              <span className="mistake-memory-sub">
+                {mistakes.length} character{mistakes.length > 1 ? 's' : ''} you have missed
+                {this.state.shakyCount > 0
+                  ? ` — ${this.state.shakyCount} still shaky, and the more you missed one the more it comes back`
+                  : ' — all recovered, drill them again whenever you want'}
+              </span>
+            </div>
+            <div className="mistake-chips">
+              {shown.map(entry => (
+                <span
+                  className={'mistake-chip' + (entry.recovered ? ' recovered' : '')}
+                  key={entry.kana}
+                  title={(entry.recovered ? 'Recovered — ' : 'Still shaky — ') + entry.givens.map(g => g.given + (g.count > 1 ? ' x' + g.count : '')).join(', ')}
+                >
+                  <span className="mistake-chip-glyph">{entry.kana}</span>
+                  <span className="mistake-chip-romaji">{entry.romaji}</span>
+                  <span className="mistake-chip-count">&times;{entry.wrong}</span>
+                </span>
+              ))}
+              {rest > 0 && <span className="mistake-chip mistake-chip-more">+{rest}</span>}
+            </div>
+            <div className="mistake-memory-actions">
+              <button className="btn btn-warning review-mistakes-btn" onClick={this.startMistakeReview}>
+                Train my mistakes ({mistakes.length})
+              </button>
+              <button className="btn btn-default forget-mistakes-btn" onClick={this.forgetMistakes}>
+                {this.state.forgetArmed ? 'Really forget them?' : 'Forget them'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   renderModeSelect() {
     return (
       <div className="mode-select">
@@ -413,6 +509,7 @@ class ChooseCharacters extends Component {
             Start
           </div>
         </div>
+        {this.renderMistakeMemory()}
       </div>
     );
   }

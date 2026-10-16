@@ -5,6 +5,7 @@ import { playWrongSound, playComboSound, playKeySound, playComboBreakSound } fro
 import { pickCompliment } from '../../data/compliments';
 import { playComplimentVoice } from '../../data/complimentVoice';
 import { GrindHelper } from '../../data/grindHelper';
+import { recordAnswers } from '../../data/mistakeMemory';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -106,7 +107,7 @@ class TableExercise extends Component {
     // attempted - a cell can cycle back through empty/wrong/partial
     // several times before that, see handleBlur/handleFocus.
     const attemptedCells = this.grinder.active
-      ? Object.keys(this.state.cells).filter(kana => (this.grinder.masteryCount[kana] || 0) >= this.grinder.masteryNeeded()).length
+      ? Object.keys(this.state.cells).filter(kana => (this.grinder.masteryCount[kana] || 0) >= this.grinder.masteryNeeded(kana)).length
       : Object.values(this.state.cells).filter(c => c.status !== 'empty').length;
     this.props.setTableHeaderInfo({
       title: 'Table Exercise',
@@ -155,6 +156,8 @@ class TableExercise extends Component {
       this.showCompliment(elapsedMs < 1000, newCombo);
     }
 
+    recordAnswers([{ kana, romaji: acceptable[0], given: isCorrect ? '' : cell.value.toLowerCase(), isCorrect }]);
+
     const { justMastered } = this.grinder.recordAnswer(kana, isCorrect);
     // Grinding: a correct answer that hasn't reached full mastery yet gets
     // its own "partial" status (styled distinctly from a truly done cell,
@@ -201,7 +204,7 @@ class TableExercise extends Component {
 
   isComplete() {
     if (this.grinder.active) {
-      return Object.keys(this.state.cells).every(kana => (this.grinder.masteryCount[kana] || 0) >= this.grinder.masteryNeeded());
+      return Object.keys(this.state.cells).every(kana => (this.grinder.masteryCount[kana] || 0) >= this.grinder.masteryNeeded(kana));
     }
     return Object.values(this.state.cells).every(c => c.status !== 'empty');
   }

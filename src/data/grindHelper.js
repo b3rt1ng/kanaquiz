@@ -7,7 +7,9 @@
 import { shuffle } from './helperFuncs';
 
 // A grind session needs this many correct answers per key (not just one)
-// before it's considered mastered - see recordAnswer().
+// before it's considered mastered - see recordAnswer(). A session started
+// with a per-key mastery map (mistake training, where the count is the
+// character's remembered debt) overrides this per key.
 const GRIND_MASTERY_NEEDED = 2;
 
 export class GrindHelper {
@@ -17,16 +19,20 @@ export class GrindHelper {
     // The key list a grind session was started with - kept so retry() can
     // re-launch the same grind instead of falling back to a fresh session.
     this.keys = null;
+    // Optional { key: correct answers needed }. Null means every key needs
+    // the same GRIND_MASTERY_NEEDED.
+    this.masteryByKey = null;
   }
 
   // Begins a grind session: shuffles `items` in place (same items the
   // caller already resolved from `keys` - resolving keys into whatever
   // shape a given exercise's deck uses is exercise-specific, so that part
   // stays with the caller) and returns them back for convenience.
-  start(items, keys) {
+  start(items, keys, masteryByKey) {
     this.active = true;
     this.masteryCount = {};
     this.keys = keys;
+    this.masteryByKey = masteryByKey || null;
     shuffle(items);
     return items;
   }
@@ -37,16 +43,26 @@ export class GrindHelper {
     this.active = false;
     this.masteryCount = {};
     this.keys = null;
+    this.masteryByKey = null;
   }
 
-  masteryNeeded() {
-    return this.active ? GRIND_MASTERY_NEEDED : 1;
+  // `key` is optional: without it (or for a key the map doesn't cover)
+  // this falls back to the session-wide default.
+  masteryNeeded(key) {
+    if (!this.active) return 1;
+    if (this.masteryByKey && this.masteryByKey[key] > 0) return this.masteryByKey[key];
+    return GRIND_MASTERY_NEEDED;
   }
 
   // How many correct answers the WHOLE session needs before it's done -
   // e.g. 6 confused keys in grind mode -> 12, or just `totalCards` outside
-  // grind mode (1 each).
+  // grind mode (1 each). With a per-key map it's the sum of what each key
+  // owes, which is what makes the progress counter line up with a session
+  // where the worst characters come back more often than the rest.
   progressTarget(totalCards) {
+    if (this.active && this.masteryByKey && this.keys) {
+      return this.keys.reduce((sum, key) => sum + this.masteryNeeded(key), 0);
+    }
     return totalCards * this.masteryNeeded();
   }
 
@@ -62,7 +78,7 @@ export class GrindHelper {
   recordAnswer(key, isCorrect) {
     let justMastered = false;
     if (isCorrect) {
-      const needed = this.masteryNeeded();
+      const needed = this.masteryNeeded(key);
       const count = (this.masteryCount[key] || 0) + 1;
       this.masteryCount[key] = count;
       justMastered = count >= needed;

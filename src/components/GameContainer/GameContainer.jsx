@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { kanaDictionary } from '../../data/kanaDictionary';
 import ChooseCharacters from '../ChooseCharacters/ChooseCharacters';
 import Game from '../Game/Game';
+import { recordAnswers } from '../../data/mistakeMemory';
 
 // PureComponent so App's 100ms timer tick (which only Navbar actually needs)
 // doesn't cascade a full re-render down through the entire game tree - the
@@ -15,6 +16,10 @@ class GameContainer extends PureComponent {
     stage4Difficulty: 1, // 1=3 chars, 2=5 chars, 3=8 chars
     grindOrigin: null,
     resumingFromGrind: false,
+    // Set only by startMistakeReview, so finishing that grind returns to
+    // the menu it was launched from instead of dropping into stage 1 (see
+    // endKanaGrind).
+    mistakeReview: false,
     stageStats: {
       1: { correct: 0, total: 0 },
       2: { correct: 0, total: 0 },
@@ -42,7 +47,8 @@ class GameContainer extends PureComponent {
       characterStats: {},
       confusionPairs: {},
       grindOrigin: null,
-      resumingFromGrind: false
+      resumingFromGrind: false,
+      mistakeReview: false
     });
     localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
     this.props.handleStartGame();
@@ -64,6 +70,7 @@ class GameContainer extends PureComponent {
       confusionPairs: {},
       grindOrigin: null,
       resumingFromGrind: false,
+      mistakeReview: false,
       ...(difficulty ? { stage4Difficulty: difficulty } : {})
     });
     localStorage.setItem('decidedGroups', JSON.stringify(decidedGroups));
@@ -123,10 +130,36 @@ class GameContainer extends PureComponent {
       stage: 'kanaGrind',
       isLocked: true,
       grindKanaKeys: kanaKeys,
+      mistakeReview: false,
       // Remember where we came from so finishing the grind can drop the
       // user back into their normal progression instead of dead-ending.
       grindOrigin: { stage: prevState.stage, isLocked: prevState.isLocked }
     }));
+  }
+
+  // "Review my mistakes" from the kana menu: the same grind exercise, but
+  // launched from OUTSIDE a game (hence handleStartGame()) and fed from the
+  // cross-session mistake memory rather than one results screen's confusion
+  // pairs. There's no origin stage to return to, so mistakeReview marks it
+  // as a session of its own.
+  startMistakeReview = (kanaKeys) => {
+    this.setState({
+      stage: 'kanaGrind',
+      isLocked: true,
+      grindKanaKeys: kanaKeys,
+      grindOrigin: null,
+      mistakeReview: true,
+      resumingFromGrind: false,
+      stageStats: {
+        1: { correct: 0, total: 0 },
+        2: { correct: 0, total: 0 },
+        3: { correct: 0, total: 0 },
+        4: { correct: 0, total: 0 }
+      },
+      characterStats: {},
+      confusionPairs: {}
+    });
+    this.props.handleStartGame();
   }
 
   // "Continue" from the KanaGrindExercise results screen: restore the
@@ -136,6 +169,13 @@ class GameContainer extends PureComponent {
   // reaching the grind button on stage 4 in the first place means a
   // difficulty was already chosen.
   endKanaGrind = () => {
+    // A mistake review was never layered on top of a game, so there is
+    // nothing to restore - leaving it means leaving the game entirely.
+    if(this.state.mistakeReview) {
+      this.setState({ grindKanaKeys: null, mistakeReview: false });
+      this.props.handleEndGame();
+      return;
+    }
     const origin = this.state.grindOrigin;
     this.setState({
       stage: origin ? origin.stage : 1,
@@ -161,6 +201,9 @@ class GameContainer extends PureComponent {
   // Single-character questions (stages 1-3) send one record; multi-character
   // words (stage 4) send one record per kana after romaji alignment.
   recordAnswer = (records) => {
+    // Stages 1-4 all funnel through here, so this one call covers the
+    // whole Question component for the cross-session memory too.
+    recordAnswers(records);
     this.setState(prevState => {
       const characterStats = { ...prevState.characterStats };
       let confusionPairs = prevState.confusionPairs;
@@ -213,6 +256,7 @@ class GameContainer extends PureComponent {
             <ChooseCharacters selectedGroups={this.state.decidedGroups}
               handleStartGame={this.startGame}
               startAtStage={this.startAtStage}
+              startMistakeReview={this.startMistakeReview}
               startTableExercise={this.startTableExercise}
               startListeningExercise={this.startListeningExercise}
               startCountingExercise={this.startCountingExercise}
@@ -236,6 +280,7 @@ class GameContainer extends PureComponent {
                 startKanaGrind={this.startKanaGrind}
                 endKanaGrind={this.endKanaGrind}
                 grindKanaKeys={this.state.grindKanaKeys}
+                isMistakeReview={this.state.mistakeReview}
                 resumingFromGrind={this.state.resumingFromGrind}
                 startTimer={this.props.startTimer}
                 stopTimer={this.props.stopTimer}

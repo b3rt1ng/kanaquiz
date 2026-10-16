@@ -5,6 +5,7 @@ import { playWrongSound, playComboSound, playComboBreakSound } from '../../data/
 import { playKana, stopKana, hasKanaAudio } from '../../data/kanaVoice';
 import { getEffectSettings } from '../../data/effectSettings';
 import { GrindHelper, requeueAfter } from '../../data/grindHelper';
+import { recordAnswers } from '../../data/mistakeMemory';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -105,6 +106,8 @@ class ListeningExercise extends Component {
     // only ever fires when grinding, so a plain session behaves exactly as
     // before (a wrong pick just shows the correct answer and moves on, no
     // retry).
+    recordAnswers([{ kana, romaji: acceptable[0], given: isCorrect ? '' : given, isCorrect }]);
+
     const { shouldRequeue } = this.grinder.recordAnswer(kana, isCorrect);
     if (shouldRequeue) requeueAfter(this.questions, this.state.index, kana);
 

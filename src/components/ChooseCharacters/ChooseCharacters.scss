@@ -181,6 +181,120 @@
   padding-bottom: 10px;
   font-weight: bold;
 }
+/* Cross-session mistake memory (see src/data/mistakeMemory.js): sits
+   between the group picker and the direct-practice row, because it is a
+   way INTO a session like those buttons are, not a setting. Rendered only
+   when something is actually remembered. */
+.mistake-memory {
+  margin: 26px auto 0;
+  max-width: 620px;
+  padding: 11px 16px 13px;
+  background-color: var(--bg-panel);
+  border: 1px solid rgba(255, 183, 3, 0.35);
+  border-radius: 8px;
+  text-align: center;
+
+  .mistake-memory-head {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-bottom: 8px;
+  }
+
+  .mistake-memory-title {
+    color: var(--accent-orange);
+    text-shadow: var(--glow-orange);
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .mistake-memory-sub {
+    color: var(--text-muted);
+    font-size: 12.5px;
+  }
+
+  .mistake-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  .mistake-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background-color: rgba(255, 77, 109, 0.12);
+    border: 1px solid rgba(255, 77, 109, 0.25);
+
+    .mistake-chip-glyph {
+      font-size: 18px;
+      color: var(--text);
+    }
+    .mistake-chip-romaji {
+      font-size: 12px;
+      color: var(--success);
+      font-weight: 600;
+    }
+    .mistake-chip-count {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  }
+
+  /* Still in the list (nothing ever leaves it), just no longer owing
+     anything - dimmed so the ones that actually need work stand out. */
+  .mistake-chip.recovered {
+    background-color: rgba(166, 255, 60, 0.06);
+    border-color: rgba(166, 255, 60, 0.2);
+    opacity: 0.6;
+  }
+
+  .mistake-chip-more {
+    color: var(--text-muted);
+    font-size: 12px;
+    align-self: center;
+  }
+
+  .mistake-memory-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .forget-mistakes-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+    opacity: 0.75;
+  }
+
+  /* Nothing recorded yet: one muted line, no chips, no buttons - present
+     enough to tell you the app keeps score, quiet enough not to compete
+     with the Start button. */
+  &.empty {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-color: rgba(255, 183, 3, 0.18);
+    opacity: 0.75;
+
+    .mistake-memory-title {
+      font-size: 14px;
+      text-shadow: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+}
+
 .kana-other-practice {
   text-align: center;
   margin: 24px 0 10px;

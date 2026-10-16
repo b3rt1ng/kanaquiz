@@ -8,6 +8,7 @@ import { getEffectSettings } from '../../data/effectSettings';
 import { shuffle } from '../../data/helperFuncs';
 import { downloadAnkiDeck, downloadAnkiPackage, selectedCardCount } from '../../data/ankiExport';
 import { GrindHelper, requeueAfter } from '../../data/grindHelper';
+import { recordAnswers, getMistakeEntries, getMistakeKeys, getMasteryByKey, getShakyCount, getDebt, clearMistakeMemory, KANJI } from '../../data/mistakeMemory';
 import ResultsCharts from './ResultsCharts';
 import ComboIndicator from './ComboIndicator';
 import GlitchEffect from './GlitchEffect';
@@ -32,6 +33,15 @@ class KanjiExercise extends Component {
     this.state = {
       phase: 'picker', // 'picker' | 'quiz' | 'results'
       selectedThemes: [],
+      // Kanji missed in past sessions, read once per picker visit (the
+      // picker is re-entered through backToPicker, which refreshes it).
+      mistakes: getMistakeEntries(KANJI),
+      shakyCount: getShakyCount(KANJI),
+      forgetArmed: false,
+      // True while the running session came from "Train my mistakes"
+      // rather than a theme selection - changes the results heading and
+      // adds the debt-cleared line.
+      mistakeReview: false,
       correctLaterEnabled: true,
       // "First Timer": cards are shown fully revealed (kanji + reading)
       // from the start instead of testing recall first - meant for a
@@ -153,6 +163,7 @@ class KanjiExercise extends Component {
     this.progressTarget = this.grinder.progressTarget(this.totalCards);
     this.setState({
       phase: 'quiz',
+      mistakeReview: false,
       index: 0,
       revealIndex: 0,
       input: '',
@@ -173,12 +184,13 @@ class KanjiExercise extends Component {
   // instead of a picked theme, and requires more than one correct answer
   // per card before it's done, see submit()/grindHelper.js. Reused for
   // both the initial launch from a results screen and for retry().
-  grind = (kanjiChars) => {
+  grind = (kanjiChars, masteryByKey) => {
     const entries = kanjiChars.map(findKanjiEntry).filter(Boolean);
     if (!entries.length) return;
 
+    const keys = entries.map(entry => entry.kanji);
     this.props.startTimer();
-    this.cards = this.grinder.start(entries, kanjiChars);
+    this.cards = this.grinder.start(entries, keys, masteryByKey);
     this.totalCards = this.cards.length;
     // The denominator is the full count of correct answers required to
     // finish - e.g. 6 confused cards needing 2 each -> 12 - not just the
@@ -207,6 +219,26 @@ class KanjiExercise extends Component {
       this.focusInput();
     });
     window.scrollTo(0, 0);
+  }
+
+  // "Train my mistakes" on the picker: the same grind, fed from the
+  // cross-session memory instead of a results screen, and weighted by it -
+  // a kanji missed three times owes 6 correct answers and so keeps coming
+  // back around, one missed once owes 2.
+  trainMistakes = () => {
+    const keys = getMistakeKeys(KANJI);
+    if (!keys.length) return;
+    this.setState({ mistakeReview: true });
+    this.grind(keys, getMasteryByKey(KANJI));
+  }
+
+  forgetMistakes = () => {
+    if (!this.state.forgetArmed) {
+      this.setState({ forgetArmed: true });
+      return;
+    }
+    clearMistakeMemory(KANJI);
+    this.setState({ mistakes: [], shakyCount: 0, forgetArmed: false });
   }
 
   // Compliments here are visual-only (no playComplimentVoice) - the kanji's
@@ -313,6 +345,17 @@ class KanjiExercise extends Component {
     // Grind mode needs more than one correct answer on THIS card before it
     // counts as mastered - tracked separately from `results`, since a card
     // can now legitimately have more than one correct result in it.
+    // Feeds the cross-session mistake memory (its own kanji namespace -
+    // see mistakeMemory.js), which is what "Train my mistakes" on the
+    // picker is built from. A training session pays the debt down here
+    // too, and a card missed again earns its place back.
+    recordAnswers([{
+      kana: entry.kanji,
+      romaji: entry.readings[0],
+      given: isCorrect ? '' : this.state.input.trim(),
+      isCorrect
+    }], KANJI);
+
     const { justMastered, shouldRequeue: shouldRequeueForGrind } = this.grinder.recordAnswer(entry.kanji, isCorrect);
 
     // "Correct Later": a missed card isn't removed from the deck - a
@@ -409,7 +452,12 @@ class KanjiExercise extends Component {
 
   retry = () => {
     stopKanjiPronunciation();
-    if (this.grinder.active) this.grind(this.grinder.keys);
+    if (this.grinder.active) {
+      // Re-reads the debts rather than reusing the map the session
+      // started from: whatever was cleared in the meantime shouldn't be
+      // dragged back in at its old weight.
+      this.grind(this.grinder.keys, this.state.mistakeReview ? getMasteryByKey(KANJI) : undefined);
+    }
     else this.startQuiz();
     window.scrollTo(0, 0);
   }
@@ -417,7 +465,14 @@ class KanjiExercise extends Component {
   backToPicker = () => {
     stopKanjiPronunciation();
     this.props.stopTimer();
-    this.setState({ phase: 'picker', selectedThemes: [] });
+    this.setState({
+      phase: 'picker',
+      selectedThemes: [],
+      mistakeReview: false,
+      forgetArmed: false,
+      mistakes: getMistakeEntries(KANJI),
+      shakyCount: getShakyCount(KANJI)
+    });
     window.scrollTo(0, 0);
   }
 
@@ -441,6 +496,83 @@ class KanjiExercise extends Component {
     });
 
     return { characterStats, confusionPairs };
+  }
+
+  // Mirrors the kana menu's panel (and reuses its styles, see
+  // ChooseCharacters.scss): kanji missed in past sessions, worst first,
+  // with a one-line empty state so the feature is visible before there's
+  // anything in it.
+  renderMistakeMemory() {
+    const mistakes = this.state.mistakes;
+    if (!mistakes.length) {
+      return (
+        <div className="mistake-memory empty">
+          <span className="mistake-memory-title">Your common mistakes</span>
+          <span className="mistake-memory-sub">Nothing to train yet - every kanji you miss lands here and stays, to drill whenever you want.</span>
+        </div>
+      );
+    }
+
+    const PREVIEW = 8;
+    const shown = mistakes.slice(0, PREVIEW);
+    const rest = mistakes.length - shown.length;
+
+    return (
+      <div className="mistake-memory">
+        <div className="mistake-memory-head">
+          <span className="mistake-memory-title">Your common mistakes</span>
+          <span className="mistake-memory-sub">
+            {mistakes.length} kanji you have missed
+            {this.state.shakyCount > 0
+              ? ` — ${this.state.shakyCount} still shaky, and the more you missed one the more it comes back`
+              : ' — all recovered, drill them again whenever you want'}
+          </span>
+        </div>
+        <div className="mistake-chips">
+          {shown.map(entry => (
+            <span
+              className={'mistake-chip' + (entry.recovered ? ' recovered' : '')}
+              key={entry.kana}
+              title={(entry.recovered ? 'Recovered — ' : 'Still shaky — ') + entry.givens.map(g => g.given + (g.count > 1 ? ' x' + g.count : '')).join(', ')}
+            >
+              <span className="mistake-chip-glyph">{entry.kana}</span>
+              <span className="mistake-chip-romaji">{entry.romaji}</span>
+              <span className="mistake-chip-count">&times;{entry.wrong}</span>
+            </span>
+          ))}
+          {rest > 0 && <span className="mistake-chip mistake-chip-more">+{rest}</span>}
+        </div>
+        <div className="mistake-memory-actions">
+          <button className="btn btn-warning review-mistakes-btn" onClick={this.trainMistakes}>
+            Train my mistakes ({mistakes.length})
+          </button>
+          <button className="btn btn-default forget-mistakes-btn" onClick={this.forgetMistakes}>
+            {this.state.forgetArmed ? 'Really forget them?' : 'Forget them'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // How much of the remembered debt a training session paid off. Read back
+  // from the memory rather than counted from this session's answers,
+  // because paying a kanji off can take more than one session: one that
+  // had been missed repeatedly still owes some. Either way nothing leaves
+  // the list - it stays there to be trained again later.
+  renderCleared() {
+    const trained = this.grinder.keys || [];
+    if (!trained.length) return null;
+    const cleared = trained.filter(kanji => getDebt(kanji, KANJI) === 0).length;
+    const left = trained.length - cleared;
+    return (
+      <p className="kanji-cleared">
+        <strong>{cleared}/{trained.length}</strong> back under control
+        <span className="kanji-cleared-left">
+          {left > 0 ? ` — ${left} still shaky. ` : ' — '}
+          kept in your list, train them again whenever you want
+        </span>
+      </p>
+    );
   }
 
   renderPicker() {
@@ -484,6 +616,7 @@ class KanjiExercise extends Component {
           disabled={this.state.selectedThemes.length === 0}
           onClick={this.startQuiz}
         >Start</button>
+        {this.renderMistakeMemory()}
         {this.renderExport()}
         <p><button className="btn btn-default" onClick={this.props.handleEndGame}>Back to menu</button></p>
       </div>
@@ -654,8 +787,9 @@ class KanjiExercise extends Component {
     return (
       <div className="kanji-results">
         {this.state.celebrate && getEffectSettings().confetti !== false && <Confetti key={'confetti' + this.celebrateSeq} />}
-        <h2>Results</h2>
+        <h2>{this.state.mistakeReview ? 'Mistake training' : 'Results'}</h2>
         <p className="kanji-score">{correctCount}/{total} correct ({percentage}%)</p>
+        {this.state.mistakeReview && this.renderCleared()}
         <ResultsCharts characterStats={characterStats} confusionPairs={confusionPairs} onGrind={this.grind} />
         <p>
           <button className="btn btn-primary try-again" onClick={this.retry}>Try Again</button>

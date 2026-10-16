@@ -110,6 +110,7 @@ class Game extends Component {
       return (
         <KanaGrindExercise
           kanaKeys={this.props.grindKanaKeys}
+          isMistakeReview={this.props.isMistakeReview}
           handleEndGame={this.props.handleEndGame}
           onFinishGrind={this.props.endKanaGrind}
           startTimer={this.props.startTimer}
