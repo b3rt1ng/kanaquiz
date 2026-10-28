@@ -152,7 +152,12 @@ export const kanjiDictionary = {
       { kanji: '十', readings: ['juu'], meaning: 'ten', kanaOverride: 'ジュウ', readingType: 'on', kunyomi: ['too'], onyomi: ['juu'] },
       { kanji: '百', readings: ['hyaku'], meaning: 'hundred', kanaOverride: 'ヒャク', readingType: 'on', onyomi: ['hyaku'] },
       { kanji: '千', readings: ['sen'], meaning: 'thousand', kanaOverride: 'セン', readingType: 'on', kunyomi: ['chi'], onyomi: ['sen'] },
-      { kanji: '万', readings: ['man'], meaning: 'ten thousand', kanaOverride: 'マン', readingType: 'on', kunyomi: ['yorozu'], onyomi: ['man', 'ban'] }
+      { kanji: '万', readings: ['man'], meaning: 'ten thousand', kanaOverride: 'マン', readingType: 'on', kunyomi: ['yorozu'], onyomi: ['man', 'ban'] },
+      // Not a numeral but the unit that gets attached to all of them:
+      // 百円, 千円, 一万円. Taught as the on'yomi because that's the
+      // currency reading - the kun'yomi まるい (round) exists but that
+      // word is almost always written 丸い instead.
+      { kanji: '円', readings: ['en'], meaning: 'yen; circle, round', kanaOverride: 'エン', readingType: 'on', kunyomi: ['marui'], onyomi: ['en'] }
     ]
   },
   time: {
@@ -164,6 +169,11 @@ export const kanjiDictionary = {
       // minute counter, the kun'yomi wakaru/wakeru is "to understand" /
       // "to divide". The card teaches the on'yomi, hence the katakana.
       { kanji: '分', readings: ['fun'], meaning: 'minute; to understand', kanaOverride: 'フン', readingType: 'on', kunyomi: ['wakaru', 'wakeru'], onyomi: ['bun', 'fun', 'bu'] },
+      // Finishes the 時/分 set: 二時半 is "half past two". Outside the
+      // clock it's the everyday "half" too (半分 hanbun), while the
+      // kun'yomi なかば only turns up in 半ば (halfway through) - so the
+      // on'yomi is the one worth drilling.
+      { kanji: '半', readings: ['han'], meaning: 'half', kanaOverride: 'ハン', readingType: 'on', kunyomi: ['nakaba'], onyomi: ['han'] },
       // 週 is on'yomi only - it has no everyday kun'yomi at all, so the kun
       // badge shows "n/a", same as 百 and 地.
       { kanji: '週', readings: ['shuu'], meaning: 'week', kanaOverride: 'シュウ', readingType: 'on', onyomi: ['shuu'] },
